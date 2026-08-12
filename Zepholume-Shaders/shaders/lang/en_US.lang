@@ -1,0 +1,105 @@
+profile.Potato=Potato
+profile.Low=Low
+profile.Balanced=Balanced
+profile.High=High
+profile.Ultra=Ultra
+profile.Ultra_Lite=Ultra Lite (deprecated; Low baseline)
+
+screen.Lighting=Lighting
+screen.Sky_Atmosphere=Sky and Atmosphere
+screen.Clouds=Clouds
+screen.Water=Water
+screen.Weather=Weather
+screen.Performance=Performance
+
+option.ZEPH_PROFILE_TIER=Profile capability tier
+value.ZEPH_PROFILE_TIER.0=Potato
+value.ZEPH_PROFILE_TIER.1=Low
+value.ZEPH_PROFILE_TIER.2=Balanced
+value.ZEPH_PROFILE_TIER.3=High
+value.ZEPH_PROFILE_TIER.4=Ultra
+comment.ZEPH_PROFILE_TIER=Set by profile selection; it caps optional feature work.
+
+option.ZEPH_EXPOSURE=Exposure
+value.ZEPH_EXPOSURE.0=Low
+value.ZEPH_EXPOSURE.1=Normal
+value.ZEPH_EXPOSURE.2=High
+comment.ZEPH_EXPOSURE=Applies bounded scene exposure before highlight compression.
+
+option.ZEPH_CONTRAST=Contrast
+value.ZEPH_CONTRAST.0=Soft
+value.ZEPH_CONTRAST.1=Balanced
+value.ZEPH_CONTRAST.2=Strong
+comment.ZEPH_CONTRAST=Adjusts bounded scene contrast without a global dimming pass.
+
+option.ZEPH_SATURATION=Saturation
+value.ZEPH_SATURATION.0=Reduced
+value.ZEPH_SATURATION.1=Balanced
+value.ZEPH_SATURATION.2=Vivid
+comment.ZEPH_SATURATION=Adjusts scene colour saturation after linear-light correction.
+
+option.ZEPH_COLOUR_TEMPERATURE=Colour temperature
+value.ZEPH_COLOUR_TEMPERATURE.0=Cool
+value.ZEPH_COLOUR_TEMPERATURE.1=Neutral
+value.ZEPH_COLOUR_TEMPERATURE.2=Warm-neutral
+comment.ZEPH_COLOUR_TEMPERATURE=Controls the bounded white-balance correction.
+
+option.ZEPH_FACE_LIGHTING_QUALITY=Directional lighting
+value.ZEPH_FACE_LIGHTING_QUALITY.0=Off
+value.ZEPH_FACE_LIGHTING_QUALITY.1=Low
+value.ZEPH_FACE_LIGHTING_QUALITY.2=Balanced
+value.ZEPH_FACE_LIGHTING_QUALITY.3=High
+comment.ZEPH_FACE_LIGHTING_QUALITY=Controls analytical face-orientation lighting quality.
+
+option.ZEPH_MATERIAL_QUALITY=Material separation
+value.ZEPH_MATERIAL_QUALITY.0=Off
+value.ZEPH_MATERIAL_QUALITY.1=On
+comment.ZEPH_MATERIAL_QUALITY=Enables the bounded analytical material-response approximation.
+
+option.ZEPH_FOG_QUALITY=Distance fog
+value.ZEPH_FOG_QUALITY.0=Lite
+value.ZEPH_FOG_QUALITY.1=Atmospheric
+comment.ZEPH_FOG_QUALITY=Controls the cloud and distance-fog response.
+
+option.ZEPH_ATMOSPHERE_QUALITY=Atmosphere quality
+value.ZEPH_ATMOSPHERE_QUALITY.0=Lite
+value.ZEPH_ATMOSPHERE_QUALITY.1=Balanced
+comment.ZEPH_ATMOSPHERE_QUALITY=Enables the bounded atmospheric fog curve.
+
+option.ZEPH_CLOUD_QUALITY=Cloud lighting
+value.ZEPH_CLOUD_QUALITY.0=Off
+value.ZEPH_CLOUD_QUALITY.1=On
+comment.ZEPH_CLOUD_QUALITY=Enables directional cloud lighting without volumetric clouds.
+
+option.ZEPH_CLOUD_TIER=Cloud quality tier
+value.ZEPH_CLOUD_TIER.0=Potato
+value.ZEPH_CLOUD_TIER.1=Low
+value.ZEPH_CLOUD_TIER.2=Balanced
+value.ZEPH_CLOUD_TIER.3=High
+value.ZEPH_CLOUD_TIER.4=Ultra
+comment.ZEPH_CLOUD_TIER=Sets the bounded cloud-detail and lighting tier.
+
+option.ZEPH_WATER_QUALITY=Water surface
+value.ZEPH_WATER_QUALITY.0=Vanilla-compatible
+value.ZEPH_WATER_QUALITY.1=Zepholume
+comment.ZEPH_WATER_QUALITY=Enables analytical water transmission and sky reflection.
+
+option.ZEPH_WATER_TIER=Water quality tier
+value.ZEPH_WATER_TIER.0=Potato
+value.ZEPH_WATER_TIER.1=Low
+value.ZEPH_WATER_TIER.2=Balanced
+value.ZEPH_WATER_TIER.3=High
+value.ZEPH_WATER_TIER.4=Ultra
+comment.ZEPH_WATER_TIER=Sets bounded water movement and reflection quality.
+
+option.ZEPH_WEATHER_QUALITY=Weather response
+value.ZEPH_WEATHER_QUALITY.0=Off
+value.ZEPH_WEATHER_QUALITY.1=Low
+value.ZEPH_WEATHER_QUALITY.2=High
+value.ZEPH_WEATHER_QUALITY.3=Ultra
+comment.ZEPH_WEATHER_QUALITY=Controls bounded rain and thunder colour response.
+
+option.ZEPH_WAVING_VEGETATION=Surface movement
+value.ZEPH_WAVING_VEGETATION.0=Off
+value.ZEPH_WAVING_VEGETATION.1=On
+comment.ZEPH_WAVING_VEGETATION=Enables the current vertex-stage water surface movement.

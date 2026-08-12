@@ -1,0 +1,10 @@
+dist/
+artifacts/
+runtime/
+*.log
+patched_shaders/
+tools/glslang/
+.idea/
+.vscode/
+*.tmp
+*.bak

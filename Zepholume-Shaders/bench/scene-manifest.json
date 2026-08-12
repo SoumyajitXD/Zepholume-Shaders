@@ -1,0 +1,31 @@
+{
+  "schemaVersion": 1,
+  "status": "capture-template-not-yet-executed",
+  "purpose": "Controlled Zepholume performance and visual-regression captures. Do not compare rows unless every locked field matches.",
+  "lockedEnvironment": {
+    "minecraftVersion": "1.20.1",
+    "javaMajor": 17,
+    "resolution": "1920x1080",
+    "renderScale": "100%",
+    "renderDistance": 16,
+    "simulationDistance": 12,
+    "fov": 70,
+    "vsync": false,
+    "fpsCap": "unlimited",
+    "resourcePack": "Default",
+    "warmupSeconds": 30,
+    "measurementSeconds": 60
+  },
+  "profiles": ["Shaders disabled", "Potato", "Low", "Balanced", "High", "Ultra"],
+  "viewpoints": [
+    { "id": "snow-overlook", "dimension": "Overworld", "biome": "snow", "time": 6000, "weather": "clear", "camera": "record before capture" },
+    { "id": "forest-overlook", "dimension": "Overworld", "biome": "forest", "time": 6000, "weather": "clear", "camera": "record before capture" },
+    { "id": "ocean-shore", "dimension": "Overworld", "biome": "ocean", "time": 6000, "weather": "clear", "camera": "record before capture" },
+    { "id": "sunset-rain", "dimension": "Overworld", "biome": "plains", "time": 12000, "weather": "rain", "camera": "record before capture" },
+    { "id": "cave", "dimension": "Overworld", "biome": "underground", "time": 18000, "weather": "clear", "camera": "record before capture" },
+    { "id": "nether", "dimension": "Nether", "biome": "any", "time": 6000, "weather": "none", "camera": "record before capture" },
+    { "id": "end", "dimension": "End", "biome": "any", "time": 18000, "weather": "none", "camera": "record before capture" }
+  ],
+  "requiredMetrics": ["medianFps", "onePercentLowFps", "meanFrameTimeMs", "p95FrameTimeMs", "p99FrameTimeMs", "gpuUtilisation", "vramMiB", "shaderReloadSeconds", "logWarnings", "logErrors"],
+  "captureRules": ["Use an isolated disposable instance only.", "Record exact seed, player coordinates, yaw, pitch, shader option export, GPU driver, loader and mod list before the first capture.", "A missing metric is recorded as unavailable, never estimated.", "Save lossless screenshots with profile and viewpoint IDs in their filename."]
+}
