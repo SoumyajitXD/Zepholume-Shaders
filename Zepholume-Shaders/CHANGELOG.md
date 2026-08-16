@@ -1,6 +1,15 @@
 # Changelog
 
-## 0.2.0-dev — unreleased
+## 1.0.1 — released
+
+- Centralised continuous sun-elevation and twilight response so terrain, clouds, sky, and Overworld fog no longer use incompatible day/night bands; hardened shared vector normalization against zero-length inputs.
+- Refined the analytical Overworld sky with loader-provided sky/fog colour integration, restrained twilight warmth, smoother horizon separation, sun/moon glow, and rain desaturation. Potato now compiles out analytic sky and cloud lighting work.
+- Reworked fog colour integration for clearer Overworld depth and restrained independent Nether/End atmosphere while retaining loader fog ranges and source alpha.
+- Replaced the misleading static “surface movement” control with `Water movement`; Balanced and above now use bounded, frame-time-driven vertex waves with no depth reconstruction, SSR, or extra buffer.
+- Removed the repeated display-to-linear decode in the generic scene route and removed the normal-route dependency on an Iris-specific thunder uniform, improving Iris/Oculus portability without claiming runtime verification.
+- Added release-metadata checks to structural validation. No loader runtime test, benchmark, or cross-vendor claim is implied.
+
+## 1.0.0 — released
 
 - Replaced two presets with Potato, Low, Balanced (default), High, and Ultra; Ultra Lite remains a documented Low compatibility alias.
 - Added a single profile configuration matrix, grouped option UI, and static profile/option validation.
@@ -8,7 +17,7 @@
 - Added profile-gated face/material response, atmospheric fog, analytical sky/celestial glow, directional cloud response, weather response, and Fresnel-style water treatment.
 - Added repeatable benchmark and visual-regression manifests. No runtime benchmark or screenshot result is claimed in this release candidate.
 
-## 0.1.0-dev
+## Historical development notes
 
 - Replaced the generic terrain treatment on `gbuffers_skybasic`, `gbuffers_skytextured`, and `gbuffers_clouds` with dedicated, bounded sky/cloud paths.
 - Preserved sun, moon, stars, custom sky texture, cloud alpha, and vanilla vertex colour instead of applying terrain lighting and global grading to them.

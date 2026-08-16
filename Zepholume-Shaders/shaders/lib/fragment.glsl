@@ -11,7 +11,7 @@ uniform vec3 fogColor;
 uniform float fogStart;
 uniform float fogEnd;
 uniform float rainStrength;
-uniform float thunderStrength;
+uniform vec3 sunPosition;
 varying vec4 zephVertexColour;
 varying float zephDistance;
 varying vec3 zephNormalView;
@@ -48,7 +48,7 @@ void main() {
 #ifdef ZEPH_WEATHER_PROGRAM
     linear = zephWeatherResponse(linear);
 #endif
-    graded = zephGradeScene(zephEncodeDisplay(linear));
+    graded = zephGradeLinearScene(linear);
 #endif
 #ifndef ZEPH_NO_FOG
     graded = mix(graded, zephFogColour(), zephFogFactor(zephDistance, zephViewUp));

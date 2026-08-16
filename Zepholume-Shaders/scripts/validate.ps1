@@ -6,6 +6,7 @@ param(
 $ErrorActionPreference = 'Stop'
 $Root = (Resolve-Path -LiteralPath $Root).Path
 $errors = [System.Collections.Generic.List[string]]::new()
+$packageEntries = @()
 if ($Package) {
     $Package = (Resolve-Path -LiteralPath $Package).Path
     if ([System.IO.Path]::GetExtension($Package) -ne '.zip') { $errors.Add("Package is not a ZIP file: $Package") }
@@ -13,10 +14,12 @@ if ($Package) {
         Add-Type -AssemblyName System.IO.Compression.FileSystem
         $archive = [System.IO.Compression.ZipFile]::OpenRead($Package)
         try {
-            $entries = @($archive.Entries | ForEach-Object FullName)
-            if ($entries | Where-Object { $_ -match '\\' }) { $errors.Add("ZIP contains backslash path(s): $Package") }
-            if (-not ($entries -contains 'shaders/shaders.properties')) { $errors.Add("ZIP does not contain shaders/ at its root: $Package") }
-            if ($entries | Where-Object { $_ -match '^(?:[^/]+/)?\.\.(?:/|$)' }) { $errors.Add("ZIP contains traversal path(s): $Package") }
+            $packageEntries = @($archive.Entries | ForEach-Object FullName)
+            if ($packageEntries | Where-Object { $_ -match '\\' }) { $errors.Add("ZIP contains backslash path(s): $Package") }
+            if (-not ($packageEntries -contains 'shaders/shaders.properties')) { $errors.Add("ZIP does not contain shaders/ at its root: $Package") }
+            if ($packageEntries | Where-Object { $_ -match '^(?:[^/]+/)?\.\.(?:/|$)' }) { $errors.Add("ZIP contains traversal path(s): $Package") }
+            foreach ($duplicate in ($packageEntries | Group-Object | Where-Object Count -gt 1)) { $errors.Add("ZIP contains duplicate entry: $($duplicate.Name)") }
+            if ($packageEntries | Where-Object { $_ -match '(^|/)(?:dist|artifacts|runtime|tools)(/|$)|\.(?:log|tmp|bak)$' }) { $errors.Add("ZIP contains generated/runtime artifact(s): $Package") }
         } finally { $archive.Dispose() }
     }
 }
@@ -29,6 +32,18 @@ foreach ($relative in $required) { if (-not (Test-Path -LiteralPath (Join-Path $
 $shaderRoot = Join-Path $Root 'shaders'
 $programs = @(Get-ChildItem -LiteralPath $shaderRoot -Recurse -File | Where-Object { $_.Extension -in '.vsh','.fsh' })
 if ($programs.Count -eq 0) { $errors.Add('No program shaders found.') }
+if ($Package) {
+    foreach ($requiredPackageEntry in @('README.md','CHANGELOG.md','THIRD_PARTY_NOTICES.md','docs/ARCHITECTURE.md','docs/PROFILE_GUIDE.md','shaders/shaders.properties')) {
+        if ($packageEntries -notcontains $requiredPackageEntry) { $errors.Add("ZIP missing required entry: $requiredPackageEntry") }
+    }
+    foreach ($shaderFile in (Get-ChildItem -LiteralPath $shaderRoot -Recurse -File)) {
+        $relative = $shaderFile.FullName.Substring($shaderRoot.Length + 1).Replace('\','/')
+        if ($packageEntries -notcontains "shaders/$relative") { $errors.Add("ZIP missing shader source: shaders/$relative") }
+    }
+}
+foreach ($sourceFile in (Get-ChildItem -LiteralPath $shaderRoot -Recurse -File | Where-Object { $_.Extension -in '.vsh','.fsh','.glsl','.properties','.lang' })) {
+    if ([System.IO.File]::ReadAllBytes($sourceFile.FullName) -contains 0) { $errors.Add("NUL byte in shader source: $($sourceFile.FullName)") }
+}
 
 function Resolve-ZephInclude {
     param([string]$Path, [System.Collections.Generic.List[string]]$Stack)
@@ -113,6 +128,16 @@ foreach ($pattern in @('*.csh','*.gsh','*.tcs','*.tes')) { foreach ($file in Get
 $settings = Get-Content -LiteralPath (Join-Path $shaderRoot 'lib/settings.glsl') -Raw
 $properties = Get-Content -LiteralPath (Join-Path $shaderRoot 'shaders.properties') -Raw
 $lang = Get-Content -LiteralPath (Join-Path $shaderRoot 'lang/en_US.lang') -Raw
+$readme = Get-Content -LiteralPath (Join-Path $Root 'README.md') -Raw
+$changelog = Get-Content -LiteralPath (Join-Path $Root 'CHANGELOG.md') -Raw
+foreach ($staleVersion in @('0.1.0-dev','0.2.0-dev')) {
+    if ($properties -match [regex]::Escape($staleVersion) -or $readme -match [regex]::Escape($staleVersion) -or $changelog -match [regex]::Escape($staleVersion)) {
+        $errors.Add("Stale development version remains in release-facing metadata: $staleVersion")
+    }
+}
+if ($properties -notmatch 'Zepholume 1\.0\.1(?:\D|$)') { $errors.Add('Shader properties must identify the 1.0.1 release.') }
+if ($changelog -notmatch '(?m)^## 1\.0\.1 .+released') { $errors.Add('Changelog must contain the released 1.0.1 heading.') }
+if ($readme -notmatch '(?i)current public release[^\r\n]*V1\.0\.1') { $errors.Add('README must identify V1.0.1 as the current public release.') }
 $definitions = @{}
 foreach ($m in [regex]::Matches($settings, '(?m)^#define\s+(ZEPH_[A-Z_]+)\s+(\d+)\s*//\s*\[([^\]]+)\]')) { $definitions[$m.Groups[1].Value] = @($m.Groups[3].Value -split '\s+' | ForEach-Object {[int]$_}) }
 $options = @([regex]::Matches($properties, 'ZEPH_[A-Z_]+') | ForEach-Object Value | Sort-Object -Unique)
@@ -122,7 +147,7 @@ foreach ($option in $options) {
     if ($lang -notmatch "(?m)^comment\.$option=") { $errors.Add("Missing language tooltip: $option") }
 }
 foreach ($profile in [regex]::Matches($properties, '(?m)^profile\.([^\s=]+)\s*=\s*(.+)$')) {
-    foreach ($assignment in $profile.Groups[2].Value -split '\s+') {
+    foreach ($assignment in ($profile.Groups[2].Value -split '\s+' | Where-Object { $_ })) {
         if ($assignment -notmatch '^(ZEPH_[A-Z_]+):(\d+)$') { $errors.Add("Invalid profile assignment in $($profile.Groups[1].Value): $assignment"); continue }
         $name,$value = $Matches[1],[int]$Matches[2]
         if (-not $definitions.ContainsKey($name)) { $errors.Add("Profile references unknown option: $name"); continue }
@@ -147,7 +172,7 @@ foreach ($profileName in $requiredProfiles) {
     $propertyMatch = [regex]::Match($properties, "(?m)^profile\.$profileName\s*=\s*(.+)$")
     if (-not $propertyMatch.Success) { continue }
     $actual = @{}
-    foreach ($assignment in $propertyMatch.Groups[1].Value -split '\s+') { if ($assignment -match '^(ZEPH_[A-Z_]+):(\d+)$') { $actual[$Matches[1]] = [int]$Matches[2] } }
+    foreach ($assignment in ($propertyMatch.Groups[1].Value -split '\s+' | Where-Object { $_ })) { if ($assignment -match '^(ZEPH_[A-Z_]+):(\d+)$') { $actual[$Matches[1]] = [int]$Matches[2] } }
     if (($actual.Count -ne $matrix[$profileName].Count) -or (Compare-Object ($actual.GetEnumerator() | ForEach-Object { "$($_.Key):$($_.Value)" } | Sort-Object) ($matrix[$profileName].GetEnumerator() | ForEach-Object { "$($_.Key):$($_.Value)" } | Sort-Object))) { $errors.Add("Profile does not match authoritative matrix: $profileName") }
 }
 $aliasMatch = [regex]::Match($properties, '(?m)^profile\.Ultra_Lite\s*=\s*(.+)$')

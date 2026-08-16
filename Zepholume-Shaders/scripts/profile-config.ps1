@@ -20,7 +20,7 @@ function Get-ZephProfiles {
     $profiles = [System.Collections.Generic.List[object]]::new()
     foreach ($match in [regex]::Matches((Get-Content -LiteralPath $propertiesPath -Raw), '(?m)^profile\.([^\s=]+)\s*=\s*(.+)$')) {
         $values = [ordered]@{}
-        foreach ($assignment in $match.Groups[2].Value -split '\s+') {
+        foreach ($assignment in ($match.Groups[2].Value -split '\s+' | Where-Object { $_ })) {
             if ($assignment -notmatch '^(ZEPH_[A-Z_]+):(\d+)$') { throw "Invalid profile assignment in $($match.Groups[1].Value): $assignment" }
             $option = $Matches[1]
             $value = [int]$Matches[2]

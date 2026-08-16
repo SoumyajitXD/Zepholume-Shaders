@@ -1,6 +1,7 @@
 #ifndef ZEPHO_VERTEX_GLSL
 #define ZEPHO_VERTEX_GLSL
 #include "/lib/profile.glsl"
+#include "/lib/common.glsl"
 #include "/lib/water.glsl"
 #ifndef ZEPH_UNTEXTURED_PROGRAM
 varying vec2 zephTexCoord;

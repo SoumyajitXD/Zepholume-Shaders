@@ -1,10 +1,10 @@
 # Runtime results
 
-Status: **runtime rendering verification remains unperformed** as of 2026-08-02.
+Status: **V1.0.1 runtime rendering verification remains unperformed** as of 2026-08-15. Project-local Iris and Oculus runtime-readiness checks pass; they do not launch Minecraft or establish compilation/rendering behaviour.
 
 Update, 2026-07-31: the saved Iris and Oculus evidence manifests are empty. There are no complete logs, compile logs, patched shaders, options, profile selections, or screenshots to inspect, so the reported cursed sky/cloud appearance was not reproduced and cannot be attributed to either loader or profile. The corrected final package has been prepared for manual retest; this is not runtime validation.
 
-No Zepholume build was loaded by Iris or Oculus in this stage. Existing complete logs were inspected without modifying either instance; they show no selected valid shader pack, so they cannot establish Zepholume compilation, linking, rendering, profile switching, or performance. The 0.2.0 isolated-package verification passes but is not a launch result.
+No V1.0.1 build was loaded by Iris or Oculus in this stage. Existing complete logs were inspected without modifying either instance; they show no selected valid shader pack, so they cannot establish Zepholume compilation, linking, rendering, profile switching, or performance. The isolated runtime-readiness check passes but is not a launch result.
 
 The local Iris candidate is Minecraft 1.20.1 Fabric with Iris 1.7.6 and Sodium 0.5.13. The local Oculus candidate is Minecraft 1.20.1 Forge with Oculus 1.8.0 and Embeddium 0.3.31. Both use Java 17 according to launcher runtime metadata. The latter is a normal modpack with saves. No authenticated launcher process or documented local command-line launch mechanism was available without exposing credentials.
 

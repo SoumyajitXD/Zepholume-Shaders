@@ -5,7 +5,7 @@ $ErrorActionPreference = 'Stop'
 $projectRoot = Split-Path -Parent (Split-Path -Parent $PSScriptRoot)
 $validator = Join-Path $projectRoot 'scripts/validate.ps1'
 $packager = Join-Path $projectRoot 'scripts/package.ps1'
-$package = Join-Path $projectRoot 'dist/Zepholume-Shaders-0.2.0-dev.zip'
+$package = Join-Path $projectRoot 'dist/Zepholume-Shaders-1.0.1.zip'
 $work = Join-Path ([IO.Path]::GetTempPath()) ('zepholume-validator-tests-' + [guid]::NewGuid().ToString('N'))
 $pwsh = (Get-Command pwsh -ErrorAction Stop).Source
 
@@ -57,12 +57,18 @@ try {
     Invoke-Invalid 'missing-include-guard' { param($root) $p=Join-Path $root 'shaders/lib/color.glsl'; (Get-Content -LiteralPath $p -Raw).Replace('#ifndef ZEPHO_COLOR_GLSL', '// guard removed') | Set-Content -LiteralPath $p -Encoding utf8NoBOM }
     Invoke-Invalid 'fog-uniform-after-helper' { param($root) $p=Join-Path $root 'shaders/lib/fragment.glsl'; $s=Get-Content -LiteralPath $p -Raw; $s=$s.Replace('#include "/lib/fog.glsl"', ''); $s=$s.Replace('uniform vec3 fogColor;', "#include `"/lib/fog.glsl`"`nuniform vec3 fogColor;"); Set-Content -LiteralPath $p -Value $s -Encoding utf8NoBOM }
     Invoke-Invalid 'missing-shader-pair' { param($root) Remove-Item -LiteralPath (Join-Path $root 'shaders/gbuffers_basic.fsh') -Force }
+    Invoke-Invalid 'stale-release-metadata' { param($root) $p=Join-Path $root 'README.md'; (Get-Content -LiteralPath $p -Raw).Replace('V1.0.1', '0.2.0-dev') | Set-Content -LiteralPath $p -Encoding utf8NoBOM }
     $badZip = Join-Path $work 'backslash-paths.zip'
     Add-Type -AssemblyName System.IO.Compression.FileSystem
     $zip = [IO.Compression.ZipFile]::Open($badZip, [IO.Compression.ZipArchiveMode]::Create)
     try { $zip.CreateEntry('shaders\\shaders.properties') | Out-Null } finally { $zip.Dispose() }
     if ((Invoke-Validator $projectRoot $badZip) -eq 0) { throw 'Expected validator rejection: backslash ZIP paths' }
     Write-Host 'Rejected as expected: backslash ZIP paths'
+    $duplicateZip = Join-Path $work 'duplicate-entry.zip'
+    $zip = [IO.Compression.ZipFile]::Open($duplicateZip, [IO.Compression.ZipArchiveMode]::Create)
+    try { $zip.CreateEntry('shaders/shaders.properties') | Out-Null; $zip.CreateEntry('shaders/shaders.properties') | Out-Null } finally { $zip.Dispose() }
+    if ((Invoke-Validator $projectRoot $duplicateZip) -eq 0) { throw 'Expected validator rejection: duplicate ZIP entry' }
+    Write-Host 'Rejected as expected: duplicate ZIP entry'
     Write-Host 'Validator regression tests passed.'
     exit 0
 } finally {

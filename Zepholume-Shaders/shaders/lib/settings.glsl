@@ -16,6 +16,6 @@
 #define ZEPH_CLOUD_TIER 2 // [0 1 2 3 4]
 #define ZEPH_WATER_QUALITY 1 // [0 1]
 #define ZEPH_WATER_TIER 2 // [0 1 2 3 4]
-#define ZEPH_WAVING_VEGETATION 1 // [0 1]
+#define ZEPH_WATER_WAVES 1 // [0 1]
 #define ZEPH_WEATHER_QUALITY 1 // [0 1 2 3]
 #endif

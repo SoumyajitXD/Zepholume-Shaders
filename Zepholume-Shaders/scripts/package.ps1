@@ -1,7 +1,7 @@
 [CmdletBinding()]
 param(
     [ValidatePattern('^[A-Za-z0-9][A-Za-z0-9._-]*\.zip$')]
-    [string]$OutputName = 'Zepholume-Shaders-0.2.0-dev.zip'
+    [string]$OutputName = 'Zepholume-Shaders-1.0.1.zip'
 )
 $ErrorActionPreference = 'Stop'
 $root = Split-Path -Parent $PSScriptRoot
@@ -22,6 +22,8 @@ Compress-Archive -LiteralPath (Get-ChildItem -LiteralPath $stage -Force | Select
 Remove-Item -LiteralPath $stage -Recurse -Force
 $sum = (Get-FileHash -LiteralPath $zip -Algorithm SHA256).Hash
 Set-Content -LiteralPath $hash -Value "$sum  $OutputName" -Encoding utf8NoBOM
+& (Join-Path $PSScriptRoot 'validate.ps1') -Package $zip
+if (-not $?) { throw 'Created ZIP did not pass package validation.' }
 Write-Host "Created: $zip"
 Write-Host "SHA-256: $sum"
 Write-Host 'ZIP entries:'

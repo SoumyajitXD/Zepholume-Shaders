@@ -99,7 +99,7 @@ value.ZEPH_WEATHER_QUALITY.2=High
 value.ZEPH_WEATHER_QUALITY.3=Ultra
 comment.ZEPH_WEATHER_QUALITY=Controls bounded rain and thunder colour response.
 
-option.ZEPH_WAVING_VEGETATION=Surface movement
-value.ZEPH_WAVING_VEGETATION.0=Off
-value.ZEPH_WAVING_VEGETATION.1=On
-comment.ZEPH_WAVING_VEGETATION=Enables the current vertex-stage water surface movement.
+option.ZEPH_WATER_WAVES=Water movement
+value.ZEPH_WATER_WAVES.0=Off
+value.ZEPH_WATER_WAVES.1=On
+comment.ZEPH_WATER_WAVES=Enables subtle animated water-surface movement; vegetation remains intentionally static for modded-content safety.

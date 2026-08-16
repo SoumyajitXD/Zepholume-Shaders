@@ -1,11 +1,11 @@
 # Shader variant matrix
 
-The generated offline corpus is `artifacts/portability-matrix/`. It expands all includes for every program stage under 252 mocked cases: seven vendor/renderer identities, three loader identities, two profiles, three dimensions, and two capability descriptions. Vendor macros are test inputs, not hardware tests; the pack contains no vendor-specific branch.
+The generated offline corpus is `artifacts/portability-matrix/`. It expands all includes for every program stage under mocked cases spanning seven vendor/renderer identities, three loader identities, Potato/Low/Balanced/High/Ultra plus the Ultra Lite alias, three dimensions, and two capability descriptions. Vendor macros are test inputs, not hardware tests; the pack contains no vendor-specific branch.
 
 | Item | Value |
 | --- | --- |
 | Programs | 24 pairs / 48 stages |
-| Profiles | Ultra Lite, Balanced |
+| Profiles | Potato, Low, Balanced, High, Ultra, Ultra Lite alias |
 | Dimensions | Overworld, Nether, End |
 | Loader macro sets | Iris-compatible, conservative Oculus-compatible, unknown fallback |
 | Vendor sets | NVIDIA GeForce, NVIDIA Quadro, AMD Radeon, Intel, Mesa Radeon, Mesa Intel, unknown |

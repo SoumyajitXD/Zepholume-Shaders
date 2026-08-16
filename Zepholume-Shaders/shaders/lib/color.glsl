@@ -34,16 +34,19 @@ float zephSaturationMultiplier() {
 
 vec3 zephDimensionTone(vec3 colour) {
 #ifdef ZEPH_DIM_NETHER
-    return colour * vec3(1.035, 0.975, 0.930);
+    // Preserve Nether emissive readability without applying an Overworld
+    // sunset grade to every surface.
+    return colour * vec3(1.025, 0.980, 0.945);
 #elif defined(ZEPH_DIM_END)
-    return colour * vec3(0.955, 0.965, 1.030);
+    // The End stays sparse and cool, with deliberately restrained chroma.
+    return colour * vec3(0.965, 0.970, 1.020);
 #else
     return colour;
 #endif
 }
 
-vec3 zephGradeScene(vec3 displayColour) {
-    vec3 linear = zephDecodeDisplay(zephDimensionTone(displayColour));
+vec3 zephGradeLinearScene(vec3 linear) {
+    linear = zephDimensionTone(linear);
     linear *= zephExposureMultiplier();
     linear = zephApplyContrast(linear, zephContrastMultiplier());
     linear = zephApplySaturation(linear, zephSaturationMultiplier());
@@ -57,6 +60,10 @@ vec3 zephGradeScene(vec3 displayColour) {
     linear *= vec3(1.015, 1.0, 0.985);
 #endif
     return zephEncodeDisplay(zephHighlightCompress(linear));
+}
+
+vec3 zephGradeScene(vec3 displayColour) {
+    return zephGradeLinearScene(zephDecodeDisplay(displayColour));
 }
 
 vec3 zephGradeHand(vec3 displayColour) {

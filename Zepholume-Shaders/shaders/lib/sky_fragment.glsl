@@ -10,7 +10,6 @@ uniform vec3 skyColor;
 uniform vec3 sunPosition;
 uniform vec3 moonPosition;
 uniform float rainStrength;
-uniform float thunderStrength;
 uniform int renderStage;
 
 varying vec2 zephSkyTexCoord;
@@ -19,7 +18,7 @@ varying float zephSkyUp;
 varying vec3 zephSkyDirection;
 
 float zephSkyDaylight() {
-    return clamp(normalize(sunPosition).y * 0.70 + 0.46, 0.0, 1.0);
+    return zephDaylightFromDirection(sunPosition);
 }
 
 vec3 zephWeatherSky(vec3 colour, float storm) {
@@ -28,16 +27,16 @@ vec3 zephWeatherSky(vec3 colour, float storm) {
 }
 
 vec3 zephAnalyticSky(float up, vec3 direction, float daylight, float storm) {
-    vec3 zenithDay = vec3(0.28, 0.48, 0.72);
-    vec3 horizonDay = vec3(0.72, 0.76, 0.77);
-    vec3 zenithNight = vec3(0.018, 0.029, 0.065);
-    vec3 horizonNight = vec3(0.075, 0.090, 0.130);
+    vec3 zenithDay = mix(vec3(0.23, 0.43, 0.70), skyColor, 0.38);
+    vec3 horizonDay = mix(vec3(0.69, 0.75, 0.80), fogColor, 0.34);
+    vec3 zenithNight = vec3(0.014, 0.024, 0.058);
+    vec3 horizonNight = mix(vec3(0.050, 0.070, 0.112), fogColor * 0.46, 0.28);
     float horizonMix = smoothstep(0.06, 0.84, up);
     vec3 atmosphere = mix(mix(horizonNight, zenithNight, horizonMix), mix(horizonDay, zenithDay, horizonMix), daylight);
 #if ZEPH_EFFECTIVE_PROFILE_TIER >= 1
-    float dawn = (1.0 - abs(normalize(sunPosition).y)) * smoothstep(0.04, 0.62, daylight);
-    float sunSide = zephSaturate(dot(normalize(direction), normalize(sunPosition)) * 0.5 + 0.5);
-    atmosphere = mix(atmosphere, vec3(0.94, 0.49, 0.25), dawn * (1.0 - horizonMix) * sunSide * 0.42);
+    float dawn = zephTwilightFromDirection(sunPosition);
+    float sunSide = zephSaturate(dot(zephSafeNormalize(direction), zephSafeNormalize(sunPosition)) * 0.5 + 0.5);
+    atmosphere = mix(atmosphere, vec3(0.92, 0.52, 0.32), dawn * (1.0 - horizonMix) * sunSide * 0.28);
 #endif
     return zephWeatherSky(atmosphere, storm);
 }
@@ -46,11 +45,11 @@ vec3 zephCelestialGlow(vec3 direction, float daylight, float storm) {
 #if ZEPH_EFFECTIVE_PROFILE_TIER == 0
     return vec3(0.0);
 #else
-    float sunDot = zephSaturate(dot(normalize(direction), normalize(sunPosition)));
+    float sunDot = zephSaturate(dot(zephSafeNormalize(direction), zephSafeNormalize(sunPosition)));
     float sunCore = smoothstep(0.9975, 0.9995, sunDot);
     float sunHalo = smoothstep(0.90, 0.998, sunDot);
     sunHalo *= sunHalo;
-    float moonDot = zephSaturate(dot(normalize(direction), normalize(moonPosition)));
+    float moonDot = zephSaturate(dot(zephSafeNormalize(direction), zephSafeNormalize(moonPosition)));
     float moonHalo = smoothstep(0.965, 0.998, moonDot);
     moonHalo *= moonHalo;
     vec3 sun = vec3(1.0, 0.76, 0.42) * (sunCore * 0.75 + sunHalo * 0.22) * daylight;
@@ -65,9 +64,8 @@ void main() {
 #else
     vec4 source = zephSkyVertexColour;
 #endif
-    float storm = clamp(max(rainStrength, thunderStrength), 0.0, 1.0);
+    float storm = clamp(rainStrength, 0.0, 1.0);
     float daylight = zephSkyDaylight();
-    vec3 analytic = zephAnalyticSky(zephSkyUp, zephSkyDirection, daylight, storm);
     vec3 result;
 
 #ifdef ZEPH_SKY_TEXTURED
@@ -76,8 +74,15 @@ void main() {
     // enlarging the square source texture.
     result = zephWeatherSky(source.rgb, storm);
 #else
+#if ZEPH_EFFECTIVE_PROFILE_TIER == 0
+    // Potato deliberately preserves the loader/vanilla sky with no analytic
+    // gradients or celestial work beyond the required source path.
+    result = source.rgb;
+#else
+    vec3 analytic = zephAnalyticSky(zephSkyUp, zephSkyDirection, daylight, storm);
     result = mix(source.rgb, analytic, 0.72);
     result += zephCelestialGlow(zephSkyDirection, daylight, storm);
+#endif
 #endif
 
 #if defined(MC_RENDER_STAGE_STARS)
