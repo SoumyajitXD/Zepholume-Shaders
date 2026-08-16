@@ -8,8 +8,8 @@ Zepholume Shaders is a performance-conscious shader pack for **Minecraft Java Ed
 
 ## Current release
 
-**Zepholume Shaders V1.0.0**  
-Release archive: `Zepholume-Shaders-1.0.0.zip`
+**Zepholume Shaders V1.0.1**  
+Release archive: `Zepholume-Shaders-1.0.1.zip`
 
 Zepholume requires a compatible shader loader:
 
@@ -19,6 +19,22 @@ Zepholume requires a compatible shader loader:
 Minecraft Java **1.20+** versions are the tested support range. Older Minecraft versions may or may not work and are **not guaranteed**.
 
 > OptiFine is not a supported target for Zepholume. Use Iris or Oculus.
+
+## What's new in V1.0.1
+
+V1.0.1 is a refinement release focused on making Zepholume's existing lightweight renderer more cohesive, stable, and useful across its quality tiers rather than bolting on expensive new pipelines.
+
+Highlights include:
+
+- smoother continuous sun-elevation and twilight response across terrain, sky, clouds, and fog
+- refined sky/horizon colour, restrained twilight warmth, and improved sun/moon glow
+- improved rainy-weather desaturation and dimension-aware fog treatment
+- subtle frame-time-driven water animation from **Balanced** upward
+- stronger compile-time scaling, including additional analytical sky/cloud work being removed on **Potato**
+- redundant shader-work cleanup and safer normalization to reduce invalid-value/NaN risk on malformed or unusual geometry
+- continued Iris/Oculus and cross-vendor portability work without adding shadow maps, post-processing chains, temporal buffers, compute stages, or extra heavyweight render targets
+
+No FPS uplift is claimed here without controlled runtime benchmarking. The release keeps performance work evidence-based instead of decorating the changelog with imaginary percentages.
 
 ## What Zepholume focuses on
 
@@ -36,11 +52,11 @@ Zepholume does **not** chase a feature checklist at any cost. The rendering desi
 
 | Profile | Best for | Direction |
 | --- | --- | --- |
-| **Potato** | Very weak or integrated GPUs | Minimum rendering cost |
-| **Low** | Lower-end hardware | Lightweight visual improvements |
-| **Balanced** | Most players | Recommended visuals/performance balance |
-| **High** | Capable gaming GPUs | Stronger atmosphere and material response |
-| **Ultra** | High-end hardware | Highest bounded Zepholume quality |
+| **Potato** | Very weak or integrated GPUs | Minimum rendering cost; compiles out additional analytical sky/cloud work |
+| **Low** | Lower-end hardware | Lightweight environmental treatment |
+| **Balanced** | Most players | Recommended visuals/performance balance; enables subtle animated water |
+| **High** | Capable gaming GPUs | Stronger bounded atmospheric/material treatment |
+| **Ultra** | High-end hardware | Highest bounded Zepholume quality within the same lightweight architecture |
 
 `Balanced` is the recommended starting point. See [Profiles](docs/PROFILES.md) for what each tier changes.
 
