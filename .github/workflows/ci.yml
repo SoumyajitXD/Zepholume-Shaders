@@ -1,0 +1,253 @@
+name: Zepholume Shaders CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+defaults:
+  run:
+    shell: bash
+
+jobs:
+  workflow-policy:
+    name: Workflow policy
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          fetch-depth: 1
+          persist-credentials: false
+          show-progress: false
+
+      - name: Enforce read-only pinned Actions policy
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          from __future__ import annotations
+          import re
+          import sys
+          from pathlib import Path
+
+          workflow = Path(".github/workflows/ci.yml")
+          text = workflow.read_text(encoding="utf-8")
+          errors = 0
+
+          if "pull_request_target:" in text:
+              print(f"::error file={workflow}::pull_request_target is forbidden")
+              errors += 1
+          if re.search(r"^\s+(?:contents|pull-requests|actions|id-token):\s+write\s*$", text, re.MULTILINE):
+              print(f"::error file={workflow}::CI must remain read-only")
+              errors += 1
+          for match in re.finditer(r"^\s*uses:\s*([^\s#]+)", text, re.MULTILINE):
+              action = match.group(1)
+              if not action.startswith("./") and not re.fullmatch(r"[^/]+/[^@]+@[0-9a-f]{40}", action):
+                  line = text.count("\n", 0, match.start()) + 1
+                  print(f"::error file={workflow},line={line}::Action is not pinned to an immutable commit: {action}")
+                  errors += 1
+
+          sys.exit(1 if errors else 0)
+          PY
+
+      - name: Install actionlint
+        run: |
+          set -euo pipefail
+          mkdir -p "$RUNNER_TEMP/bin"
+          for attempt in 1 2 3; do
+            if GOBIN="$RUNNER_TEMP/bin" go install github.com/rhysd/actionlint/cmd/actionlint@v1.7.7; then
+              break
+            fi
+            if [[ "$attempt" -eq 3 ]]; then
+              echo "::error::Failed to install actionlint after 3 attempts"
+              exit 1
+            fi
+            sleep $((attempt * 5))
+          done
+          echo "$RUNNER_TEMP/bin" >> "$GITHUB_PATH"
+
+      - name: Lint workflow
+        run: |
+          set -euo pipefail
+          actionlint .github/workflows/ci.yml
+
+  shader-validation:
+    name: Shader validation
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          fetch-depth: 1
+          persist-credentials: false
+          show-progress: false
+
+      - name: Run validator regression tests
+        working-directory: Zepholume-Shaders
+        run: |
+          set -euo pipefail
+          pwsh -NoLogo -NoProfile -File scripts/tests/validate-tests.ps1
+
+      - name: Validate shader source and metadata
+        working-directory: Zepholume-Shaders
+        run: |
+          set -euo pipefail
+          pwsh -NoLogo -NoProfile -File scripts/validate.ps1
+
+      - name: Validate portability matrix
+        working-directory: Zepholume-Shaders
+        run: |
+          set -euo pipefail
+          pwsh -NoLogo -NoProfile -File scripts/portability-matrix.ps1 \
+            -OutputRoot "$RUNNER_TEMP/zepholume-portability"
+
+          python3 - <<'PY'
+          import json
+          import os
+          from pathlib import Path
+
+          manifest = Path(os.environ["RUNNER_TEMP"]) / "zepholume-portability" / "manifest.json"
+          rows = json.loads(manifest.read_text(encoding="utf-8-sig"))
+          if not rows:
+              raise SystemExit("Portability matrix is empty")
+          print(f"Validated {len(rows)} mocked portability cases.")
+          PY
+
+  glsl-compiler:
+    name: GLSL compiler validation
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          fetch-depth: 1
+          persist-credentials: false
+          show-progress: false
+
+      - name: Install Khronos glslangValidator
+        run: |
+          set -euo pipefail
+          if ! command -v glslangValidator >/dev/null 2>&1; then
+            sudo apt-get update -qq
+            sudo apt-get install -y --no-install-recommends glslang-tools
+          fi
+          glslangValidator --version
+
+      - name: Generate compiled variants
+        working-directory: Zepholume-Shaders
+        run: |
+          set -euo pipefail
+          pwsh -NoLogo -NoProfile -File scripts/generate-compiled-variants.ps1 \
+            -OutputRoot "$RUNNER_TEMP/zepholume-variants"
+
+      - name: Compile all unique variants
+        working-directory: Zepholume-Shaders
+        run: |
+          set -euo pipefail
+          validator="$(command -v glslangValidator)"
+          pwsh -NoLogo -NoProfile -File scripts/validate-glsl.ps1 \
+            -VariantRoot "$RUNNER_TEMP/zepholume-variants" \
+            -ReportRoot "$RUNNER_TEMP/zepholume-glslang" \
+            -Validator "$validator"
+
+          cat "$RUNNER_TEMP/zepholume-glslang/glslang-report.md" >> "$GITHUB_STEP_SUMMARY"
+
+  package-validation:
+    name: Package validation
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          fetch-depth: 1
+          persist-credentials: false
+          show-progress: false
+
+      - name: Build and revalidate distribution ZIP
+        id: package
+        working-directory: Zepholume-Shaders
+        run: |
+          set -euo pipefail
+          pwsh -NoLogo -NoProfile -File scripts/package.ps1
+
+          mapfile -t zips < <(find dist -maxdepth 1 -type f -name '*.zip' -print | sort)
+          if [[ "${#zips[@]}" -ne 1 ]]; then
+            echo "::error file=Zepholume-Shaders/dist::Expected exactly one package ZIP, found ${#zips[@]}"
+            exit 1
+          fi
+
+          zip="${zips[0]}"
+          sha_file="${zip}.sha256"
+          test -s "$zip"
+          test -s "$sha_file"
+
+          package_name="$(basename "$zip")"
+          package_size="$(stat -c '%s' "$zip")"
+          package_hash="$(sha256sum "$zip" | awk '{print toupper($1)}')"
+
+          {
+            echo "### $package_name"
+            echo "- Size: \`$package_size\` bytes"
+            echo "- SHA-256: \`$package_hash\`"
+          } >> "$GITHUB_STEP_SUMMARY"
+
+          echo "zip=$zip" >> "$GITHUB_OUTPUT"
+          echo "sha=$sha_file" >> "$GITHUB_OUTPUT"
+          echo "name=$package_name" >> "$GITHUB_OUTPUT"
+
+      - name: Upload validated package
+        if: github.event_name != 'pull_request'
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: ${{ steps.package.outputs.name }}
+          path: |
+            Zepholume-Shaders/${{ steps.package.outputs.zip }}
+            Zepholume-Shaders/${{ steps.package.outputs.sha }}
+          if-no-files-found: error
+          retention-days: 7
+
+  required-checks:
+    name: Required checks
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    if: always()
+    needs:
+      - workflow-policy
+      - shader-validation
+      - glsl-compiler
+      - package-validation
+    steps:
+      - name: Enforce required job results
+        run: |
+          set -euo pipefail
+
+          declare -A results=(
+            [workflow-policy]="${{ needs.workflow-policy.result }}"
+            [shader-validation]="${{ needs.shader-validation.result }}"
+            [glsl-compiler]="${{ needs.glsl-compiler.result }}"
+            [package-validation]="${{ needs.package-validation.result }}"
+          )
+
+          failed=0
+          for job in "${!results[@]}"; do
+            result="${results[$job]}"
+            echo "$job: $result"
+            if [[ "$result" != "success" ]]; then
+              echo "::error::$job finished with result '$result'"
+              failed=1
+            fi
+          done
+          exit "$failed"
