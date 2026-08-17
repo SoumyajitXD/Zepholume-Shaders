@@ -44,8 +44,9 @@ jobs:
           text = workflow.read_text(encoding="utf-8")
           errors = 0
 
-          if "pull_request_target:" in text:
-              print(f"::error file={workflow}::pull_request_target is forbidden")
+          forbidden_trigger = "pull_request" + "_target:"
+          if forbidden_trigger in text:
+              print(f"::error file={workflow}::Untrusted pull requests must never run in a privileged target context")
               errors += 1
           if re.search(r"^\s+(?:contents|pull-requests|actions|id-token):\s+write\s*$", text, re.MULTILINE):
               print(f"::error file={workflow}::CI must remain read-only")
