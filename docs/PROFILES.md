@@ -1,67 +1,74 @@
 # Quality Profiles
 
-Zepholume exposes five quality profiles so the shader can scale from weak hardware to high-end GPUs without changing its core rendering philosophy.
+Zepholume exposes five quality profiles so the shader can scale across different hardware without changing its core direct-path rendering philosophy.
 
 ## Recommended default: Balanced
 
-Use **Balanced** first. It is the intended middle ground between visual quality and rendering cost.
+Use **Balanced** first. It is the intended general-gameplay baseline, not a disguised High preset.
 
-| Profile | Intended use | General behaviour |
+The selected profile caps which capability tiers are allowed to compile. Lower overrides can reduce work, but they cannot silently enable features above the chosen baseline.
+
+| Profile | Intended use | V1.0.2 baseline |
 | --- | --- | --- |
-| **Potato** | Very weak/integrated GPUs | Minimum-cost path; aggressively reduces optional work and compiles out additional analytical sky/cloud calculations |
-| **Low** | Lower-end hardware | Lightweight directional, fog, weather, cloud, and water treatment without the higher-tier animated-water path |
-| **Balanced** | Most systems | Recommended atmosphere/performance balance; stronger material response plus subtle frame-time-driven water animation |
-| **High** | Capable gaming GPUs | Raises bounded analytical quality for atmosphere, clouds, water, weather, and material response |
-| **Ultra** | High-end hardware | Highest bounded quality available within Zepholume's direct-path architecture |
+| **Potato** | Weak/integrated GPUs and compatibility triage | Direct scene grade and loader sky/fog only; analytical face/material/cloud/water/weather/underwater-colour work compiled out |
+| **Low** | Lower-end hardware | Directional face/cloud response, bounded analytical water/weather, and subtle underwater fog tint |
+| **Balanced** | General gameplay | Default; adds stronger material response, atmospheric depth, continuous time transitions, and animated low-amplitude water |
+| **High** | Systems with more headroom | Raises bounded face/cloud/water/weather detail within the same architecture |
+| **Ultra** | Maximum current Zepholume quality | Highest bounded analytical tiers without shadows, temporal effects, or framebuffer expansion |
 
-## V1.0.1 profile behaviour
+`Ultra Lite` remains a **deprecated compatibility alias for Low** so older selections remain meaningful.
 
-V1.0.1 makes the profiles more meaningful at compile time instead of treating them as cosmetic presets.
+## V1.0.2 profile behaviour
 
-- **Potato** removes additional analytical sky/cloud work so weak hardware does not pay for calculations it is not meant to use.
-- **Low** remains a lightweight environmental tier and avoids the animated-water path used by higher profiles.
-- **Balanced** and above use subtle frame-time-driven water movement rather than static pseudo-animation.
-- **High** and **Ultra** increase bounded analytical treatment without enabling a separate heavyweight renderer.
+V1.0.2 strengthens the distinction between the tiers:
 
-The goal is simple: moving down a tier should reduce actual shader work, not merely change a few constants and call it optimization.
+- **Potato** preserves the loader fog colour underwater and compiles out analytical water and other optional direct-path systems.
+- **Low** enables the lowest bounded face/cloud/water/weather tiers and a restrained underwater fog tint.
+- **Balanced** adds the intended core material/atmospheric treatment and low-amplitude two-wave water movement.
+- **High** and **Ultra** raise analytical quality inside the same one-colour-target renderer; they do not activate a hidden heavyweight pipeline.
+- Dimension and profile gates are validated so work intended to be absent is less likely to survive preprocessing by accident.
+
+The goal is simple: moving down a tier should remove or reduce actual shader work, not merely change a few constants and call it optimisation.
 
 ## What profiles do not do
 
-High and Ultra do not secretly replace Zepholume with an entirely different renderer. The project deliberately avoids turning higher presets into an excuse to add expensive subsystems such as:
+High and Ultra do not secretly replace Zepholume with a different renderer. The project deliberately avoids using higher presets as an excuse to add:
 
 - shadow maps
 - screen-space reflections
 - SSAO
-- TAA or temporal-history pipelines
+- bloom pipelines
+- TAA or temporal-history systems
 - volumetric lighting
 - ray tracing
 - compute-shader passes
 - geometry/tessellation stages
-- multiple heavyweight full-resolution post-processing buffers
+- SSBO/image pipelines
+- heavyweight full-resolution post-processing buffers
 
-The profiles scale quality **inside the same lightweight architectural boundary**.
+The profiles scale quality **inside the same direct-path architectural boundary**.
 
 ## Choosing the right profile
 
 ### Potato
 
-Use Potato when maintaining playability matters more than extra atmosphere. It is the first profile to try on weak integrated graphics or unusually heavy modpacks. V1.0.1 specifically cuts additional analytical sky/cloud work from this tier.
+Use Potato when maintaining playability or isolating compatibility matters more than extra atmosphere. It is the first tier to try on weak integrated graphics or unusually demanding modpacks.
 
 ### Low
 
-Use Low when Potato is comfortable and you want more environmental response without a large jump in shader work. It keeps water treatment lightweight and does not enable the higher-tier animated-water path.
+Use Low when Potato is comfortable and you want more directional, cloud, weather, water, and underwater response without the fuller Balanced feature baseline.
 
 ### Balanced
 
-Use Balanced for normal play. This is the recommended baseline for judging whether Zepholume suits your hardware. From V1.0.1 onward, Balanced enables subtle frame-time-driven water movement alongside the fuller atmospheric treatment.
+Use Balanced for normal play. This is the default profile and the best starting point for judging whether Zepholume suits your system.
 
 ### High
 
-Use High when Balanced has comfortable GPU headroom and you want stronger bounded analytical visual treatment.
+Use High when Balanced has comfortable GPU headroom and you want stronger bounded analytical detail.
 
 ### Ultra
 
-Use Ultra only when the extra visual refinement is worth the additional cost on your system. “Ultra” is not a moral achievement. If Balanced looks nearly identical during actual gameplay and runs better, Balanced wins.
+Use Ultra only when the extra refinement is worth the additional cost on your system. “Ultra” is not a moral achievement. If Balanced looks nearly identical during actual gameplay and runs better, Balanced wins.
 
 ## Performance tuning order
 
@@ -69,11 +76,12 @@ If you are losing FPS or frame-time consistency:
 
 1. Reduce the Zepholume profile by one tier.
 2. Check render distance and simulation distance.
-3. Check whether another rendering/resource-pack mod is adding substantial work.
-4. Disable unusually expensive Minecraft video settings.
-5. Update or roll back the GPU driver if the problem began after a driver change.
-6. Test the same scene in a minimal Iris/Oculus instance.
+3. Check resolution/render scale and FPS/VSync settings.
+4. Check whether another rendering/resource-pack mod is adding substantial work.
+5. Check GPU utilisation, temperatures, power limits, and VRAM pressure.
+6. Update or roll back the GPU driver if the problem began after a driver change.
+7. Test the same scene in a minimal Iris/Oculus instance.
 
-When comparing profiles, use the same world, position, camera direction, weather, time, render distance, resolution, and FPS/VSync settings. Otherwise the comparison is mostly decorative statistics.
+When comparing profiles, keep the world, position, camera direction, weather, time, render distance, resolution, and FPS/VSync settings fixed. Otherwise the comparison is mostly decorative statistics.
 
-Zepholume does not publish profile-specific FPS percentages without controlled runtime measurements. Hardware, scene complexity, resolution, loader stack, and modpack composition can move the result dramatically.
+Zepholume does not publish profile-specific FPS percentages without controlled runtime measurements. The final V1.0.2 package has not yet completed a real Iris/Oculus benchmark pass, so no profile performance delta should be invented from static source metrics.

@@ -1,56 +1,64 @@
 # Installation Guide
 
-Zepholume Shaders is a Minecraft Java Edition shader pack and **requires either Iris Shaders or Oculus** to load.
+Zepholume Shaders is a Minecraft Java Edition shader pack and **requires Iris Shaders or Oculus** to load.
 
-## Requirements
+## V1.0.2 requirements
 
-- Minecraft Java Edition
-- A supported shader loader:
-  - **Iris Shaders** for the Fabric ecosystem, or
-  - **Oculus** for the Forge ecosystem
-- A GPU and driver capable of running your chosen Minecraft version and shader loader
+V1.0.2 targets **Minecraft Java 1.20.1**.
 
-Minecraft **1.20+** versions are the tested support range. Older versions may or may not work and are not guaranteed.
+Prepared validation environments currently use:
+
+- **Iris 1.7.6 + Sodium 0.5.13** on Minecraft 1.20.1
+- **Oculus 1.8.0 + Embeddium 0.3.31 + Forge 47.4.22** on Minecraft 1.20.1
+- **Java 17**
+
+The final V1.0.2 package has not yet completed a real Iris/Oculus launch-and-render validation pass. Treat other Minecraft/loader combinations as unverified unless separately documented.
 
 ## Install with Iris
 
-1. Install Fabric and Iris for the Minecraft version you intend to use.
-2. Launch that installation once so Minecraft creates the required directories.
-3. Download the Zepholume release `.zip`.
-4. Copy the `.zip` into your Minecraft `shaderpacks` directory.
-5. Launch Minecraft.
-6. Open **Options → Video Settings → Shader Packs** (wording can vary by Iris version).
-7. Select **Zepholume Shaders**.
-8. Start with the **Balanced** profile.
-
-Do not extract the release archive unless a specific release explicitly tells you to do so.
+1. Create or use a **Minecraft 1.20.1** Fabric instance.
+2. Install Iris and its required Sodium stack.
+3. Launch the instance once so Minecraft creates the required directories.
+4. Download `Zepholume-Shaders-1.0.2.zip`.
+5. Copy the ZIP into that instance's `shaderpacks` directory.
+6. Launch Minecraft.
+7. Open the shader-pack menu (wording can vary by Iris version).
+8. Select **Zepholume Shaders**.
+9. Start with the **Balanced** profile.
 
 ## Install with Oculus
 
-1. Install Forge for the Minecraft version you intend to use.
-2. Install Oculus and any dependency required by the Oculus version you selected.
-3. Launch that installation once.
-4. Download the Zepholume release `.zip`.
-5. Copy the `.zip` into your Minecraft `shaderpacks` directory.
+1. Create or use a **Minecraft 1.20.1** Forge instance.
+2. Install Oculus, Embeddium, and any dependencies required by the selected builds.
+3. Launch the instance once.
+4. Download `Zepholume-Shaders-1.0.2.zip`.
+5. Copy the ZIP into that instance's `shaderpacks` directory.
 6. Launch Minecraft and open the shader-pack menu.
 7. Select **Zepholume Shaders**.
 8. Start with the **Balanced** profile.
 
+## Do not extract the release ZIP
+
+Place `Zepholume-Shaders-1.0.2.zip` directly in `shaderpacks` unless a future release explicitly says otherwise.
+
 ## Finding the shaderpacks folder
 
-The normal Windows location is inside your Minecraft game directory, for example:
+The normal Windows location is inside the Minecraft game directory, for example:
 
 ```text
 %APPDATA%\.minecraft\shaderpacks
 ```
 
-Third-party launchers and separate Minecraft instances can use a different game directory. Put Zepholume in the `shaderpacks` folder belonging to the **actual instance you launch**.
+Third-party launchers and separate instances can use a different game directory. Put Zepholume in the `shaderpacks` folder belonging to the **actual instance you launch**.
 
 ## Choosing a profile
 
-Start with **Balanced**. If performance is insufficient, move down to Low or Potato. If you have substantial GPU headroom and want stronger visual treatment, try High or Ultra.
+Start with **Balanced**. It is Zepholume's default general-gameplay tier.
 
-Changing to Ultra before checking whether Balanced already looks good is the shader equivalent of buying a forklift to move a chair.
+- move down to **Low** or **Potato** when you need to reduce shader work
+- move up to **High** or **Ultra** only when you have comfortable GPU headroom
+
+Changing to Ultra before checking whether Balanced already looks good is still the shader equivalent of buying a forklift to move a chair.
 
 See [Quality Profiles](PROFILES.md) for details.
 
@@ -63,7 +71,11 @@ When moving to a newer release:
 3. Keep the previous release temporarily if you want an easy rollback path.
 4. Launch Minecraft and select the new release.
 5. Re-check your profile and shader options.
-6. Remove the old archive after the new build is confirmed working.
+6. Remove the old archive after the new build is confirmed working on your setup.
+
+## Safer compatibility testing
+
+For loader, driver, or mod compatibility testing, prefer an **isolated or disposable Minecraft instance**. Do not use an irreplaceable modpack save as a test harness when a clean instance can answer the question more clearly.
 
 ## If it does not load
 

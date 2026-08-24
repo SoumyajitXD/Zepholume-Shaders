@@ -8,79 +8,84 @@ Zepholume Shaders is a performance-conscious shader pack for **Minecraft Java Ed
 
 ## Current release
 
-**Zepholume Shaders V1.0.1**  
-Release archive: `Zepholume-Shaders-1.0.1.zip`
+**Zepholume Shaders V1.0.2**  
+Release archive: `Zepholume-Shaders-1.0.2.zip`
 
-Zepholume requires a compatible shader loader:
+V1.0.2 targets **Minecraft Java 1.20.1** and is designed for the Iris/Fabric/Sodium and Oculus/Forge/Embeddium shader ecosystems.
 
-- **Iris Shaders** — Fabric ecosystem
-- **Oculus** — Forge ecosystem
+Prepared validation environments currently use:
 
-Minecraft Java **1.20+** versions are the tested support range. Older Minecraft versions may or may not work and are **not guaranteed**.
+- **Iris 1.7.6 + Sodium 0.5.13** on Minecraft 1.20.1
+- **Oculus 1.8.0 + Embeddium 0.3.31 + Forge 47.4.22** on Minecraft 1.20.1
+- **Java 17**
 
-> OptiFine is not a supported target for Zepholume. Use Iris or Oculus.
+> Runtime verification for the final V1.0.2 package is still pending. Static GLSL compilation and isolated environment/package checks do **not** prove Iris/Oculus-patched compilation, real-GPU rendering, screenshots, FPS, or cross-vendor behaviour.
 
-## What's new in V1.0.1
+OptiFine is not a supported target for Zepholume.
 
-V1.0.1 is a refinement release focused on making Zepholume's existing lightweight renderer more cohesive, stable, and useful across its quality tiers rather than bolting on expensive new pipelines.
+## What's new in V1.0.2
+
+V1.0.2 focuses on making the existing direct-path renderer behave more intelligently rather than adding heavyweight new pipelines.
 
 Highlights include:
 
-- smoother continuous sun-elevation and twilight response across terrain, sky, clouds, and fog
-- refined sky/horizon colour, restrained twilight warmth, and improved sun/moon glow
-- improved rainy-weather desaturation and dimension-aware fog treatment
-- subtle frame-time-driven water animation from **Balanced** upward
-- stronger compile-time scaling, including additional analytical sky/cloud work being removed on **Potato**
-- redundant shader-work cleanup and safer normalization to reduce invalid-value/NaN risk on malformed or unusual geometry
-- continued Iris/Oculus and cross-vendor portability work without adding shadow maps, post-processing chains, temporal buffers, compute stages, or extra heavyweight render targets
+- skylight-grounded sun/moon directional lighting to reduce cave and interior celestial leakage
+- relative block-light warmth based on block light versus skylight, reducing daytime orange tinting
+- tuned fourth-power Fresnel-inspired water response with dual-lobe celestial specular, horizon extinction, and storm softening
+- profile-gated underwater fog tint from Low through Ultra while Potato preserves loader fog colour
+- sun/moon directional cloud rim lighting, underside shaping, and restrained twilight warmth
+- analytical sky/horizon and fog alignment to reduce twilight/night seam artifacts
+- Nether and End lighting isolation that compiles out irrelevant Overworld celestial work
+- hot-path cleanup: one shared surface-normal normalization, fewer sky direction normalizations, and faster elevation helpers
+- stronger generated-source and structural regression checks for profile compile-outs and renderer-boundary violations
 
-No FPS uplift is claimed here without controlled runtime benchmarking. The release keeps performance work evidence-based instead of decorating the changelog with imaginary percentages.
+Water's reflectance model is deliberately a **tuned fourth-power Fresnel-inspired approximation**, not conventional fifth-power Fresnel-Schlick and not a physically based water simulation.
+
+No FPS uplift is claimed without controlled runtime benchmarking. Static shader complexity is useful engineering evidence; it is not a benchmark wearing a fake moustache.
 
 ## What Zepholume focuses on
 
 - Atmospheric lighting and environmental colour
-- Controlled contrast, exposure, and scene depth
-- Refined fog, sky, cloud, weather, and water treatment
-- Multiple quality profiles for very different hardware classes
+- Controlled exposure, contrast, temperature, and scene depth
+- Refined fog, sky, cloud, weather, water, and underwater treatment
+- Multiple quality profiles with real compile-time capability boundaries
 - Stable frame pacing and bounded rendering cost
-- A deliberately maintainable shader architecture
+- A deliberately maintainable shared-GLSL architecture
 - Broad GLSL portability rather than vendor-specific tricks
 
-Zepholume does **not** chase a feature checklist at any cost. The rendering design stays intentionally lean: no shadow-map pipeline, SSR, SSAO, temporal history, volumetric pipeline, ray tracing, compute shaders, geometry shaders, tessellation shaders, or a pile of extra full-resolution colour buffers.
+Zepholume does **not** chase a feature checklist at any cost. The rendering design stays intentionally lean: no shadow-map pipeline, SSR, SSAO, bloom pipeline, temporal history/TAA, volumetric pipeline, ray tracing, compute shaders, geometry/tessellation stages, SSBO/image pipeline, or a pile of extra full-resolution colour buffers.
 
 ## Quality profiles
 
-| Profile | Best for | Direction |
+| Profile | Intended use | Direct-path behaviour |
 | --- | --- | --- |
-| **Potato** | Very weak or integrated GPUs | Minimum rendering cost; compiles out additional analytical sky/cloud work |
-| **Low** | Lower-end hardware | Lightweight environmental treatment |
-| **Balanced** | Most players | Recommended visuals/performance balance; enables subtle animated water |
-| **High** | Capable gaming GPUs | Stronger bounded atmospheric/material treatment |
-| **Ultra** | High-end hardware | Highest bounded Zepholume quality within the same lightweight architecture |
+| **Potato** | Weak/integrated GPUs and compatibility triage | Direct grade and loader sky/fog; analytical face/material/cloud/water/weather/underwater-colour work compiled out |
+| **Low** | Lower-end hardware | Directional face/cloud response, bounded analytical water/weather, subtle underwater fog tint |
+| **Balanced** | General gameplay | Default; adds stronger material response, atmospheric depth, continuous time transitions, and animated low-amplitude water |
+| **High** | Systems with more headroom | Higher bounded face/cloud/water/weather detail within the same architecture |
+| **Ultra** | Maximum current Zepholume quality | Highest bounded analytical tiers; still no shadow/post/temporal renderer expansion |
 
-`Balanced` is the recommended starting point. See [Profiles](docs/PROFILES.md) for what each tier changes.
+`Balanced` is the default and recommended starting point. `Ultra Lite` remains a deprecated compatibility alias for Low. See [Profiles](docs/PROFILES.md).
 
 ## Installation
 
-1. Install **Iris Shaders** or **Oculus** for your Minecraft version.
-2. Download the appropriate Zepholume release.
-3. Put the Zepholume `.zip` directly in your Minecraft `shaderpacks` folder.
-4. Open Minecraft's shader menu and select **Zepholume Shaders**.
-5. Start with the **Balanced** profile, then tune up or down for your hardware.
+1. Use a **Minecraft 1.20.1** instance with a compatible Iris or Oculus shader setup.
+2. Download `Zepholume-Shaders-1.0.2.zip`.
+3. Put the ZIP directly in that instance's `shaderpacks` folder.
+4. Open Minecraft's shader-pack menu and select **Zepholume Shaders**.
+5. Start with the **Balanced** profile, then tune down or up for your hardware.
+
+Do not extract the release ZIP. For compatibility testing, prefer a disposable or isolated instance over an irreplaceable modpack save.
 
 Full instructions: [Installation Guide](docs/INSTALLATION.md)
 
-## Compatibility
+## Compatibility and validation status
 
-Zepholume is intended for Minecraft Java Edition with **Iris** or **Oculus**.
+V1.0.2 currently has strong **static/source validation** but incomplete **runtime validation**.
 
-- **Minecraft 1.20+**: tested support range
-- **Older than 1.20**: may work, but not tested or guaranteed
-- **Iris**: required/supported shader-loader path
-- **Oculus**: required/supported shader-loader path
-- **OptiFine**: not a supported target
+The maintained source validation covers the declared profile/dimension matrix and standalone compilation of **210 unique expanded GLSL stages**. That can catch source, preprocessor, interface, and architecture regressions; it cannot establish loader-patched compilation, driver behaviour, visual correctness, or measured performance.
 
-Compatibility can still vary with Minecraft version, loader version, GPU driver, graphics vendor, and mod combinations. See [Compatibility](docs/COMPATIBILITY.md).
+See [Compatibility](docs/COMPATIBILITY.md) for the public compatibility boundary.
 
 ## Documentation
 
@@ -90,7 +95,7 @@ Compatibility can still vary with Minecraft version, loader version, GPU driver,
 - [Architecture](docs/ARCHITECTURE.md)
 - [Troubleshooting](docs/TROUBLESHOOTING.md)
 - [Development](docs/DEVELOPMENT.md)
-- [Shader source](Zepholume-Shaders/)
+- [Shader source and developer tooling](Zepholume-Shaders/)
 
 ## Repository layout
 
@@ -110,11 +115,11 @@ Zepholume-Shaders/
 
 A beautiful still image is not enough if moving the camera turns the game into a slideshow. Zepholume treats performance, stability, portability, and maintainability as part of visual quality—not cleanup work for later.
 
-The project therefore prefers bounded analytical effects, shared GLSL libraries, compile-time quality control, and simple rendering paths over architecture cosplay and expensive effects with poor visual return.
+The project prefers bounded analytical effects, shared GLSL libraries, compile-time quality control, and simple rendering paths over architecture cosplay and expensive effects with poor visual return.
 
 ## Development status
 
-Zepholume is actively developed. Visual tuning, optimisation, compatibility work, and architectural improvements may continue between releases. Screenshots represent the shader at the time they were captured and can differ slightly from later builds.
+Zepholume is actively developed. Visual tuning, optimisation, compatibility work, and architecture improvements may continue between releases. Screenshots represent the shader at the time they were captured and can differ slightly from later builds.
 
 ## License
 

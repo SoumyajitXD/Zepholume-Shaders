@@ -2,35 +2,50 @@
 
 Zepholume Shaders targets **Minecraft Java Edition** and requires a compatible shader loader.
 
-## Supported loader paths
+## V1.0.2 target stack
 
-| Loader path | Status |
-| --- | --- |
-| **Iris Shaders** | Supported target |
-| **Oculus** | Supported target |
-| **OptiFine** | Not a supported target |
+V1.0.2 targets **Minecraft 1.20.1**. The prepared validation environments currently use:
 
-Zepholume does not include a shader loader. Install Iris or Oculus separately for the Minecraft version you are using.
+| Loader path | Prepared environment | Current evidence |
+| --- | --- | --- |
+| **Iris** | Minecraft 1.20.1, Iris 1.7.6, Sodium 0.5.13, Java 17 | Isolated directory/package checks and static GLSL validation; no completed real launch/render test for the final V1.0.2 package |
+| **Oculus** | Minecraft 1.20.1, Forge 47.4.22, Oculus 1.8.0, Embeddium 0.3.31, Java 17 | Isolated directory/package checks and static GLSL validation; no completed real launch/render test for the final V1.0.2 package |
+| **OptiFine** | — | Not supported or tested |
 
-## Minecraft versions
+Zepholume does not include a shader loader. Install Iris or Oculus separately.
 
-- **Minecraft 1.20+**: tested support range
-- **Minecraft versions older than 1.20**: may or may not work; not tested or guaranteed
+## What is actually verified
 
-A version being in the tested range does not mean every possible combination of loader build, modpack, graphics driver, and GPU has been validated. Shader compatibility is a stack, not a checkbox.
+The V1.0.2 source pipeline currently validates the declared profile/dimension matrix and standalone-compiles **210 unique expanded GLSL stages**. Structural checks also guard the direct one-colour-target architecture and reject accidental composite/deferred/shadow families.
+
+That is useful evidence for source correctness, preprocessing, interfaces, and compile-time profile isolation. It does **not** prove:
+
+- Iris/Oculus-patched shader compilation
+- real GPU driver behaviour
+- visual correctness
+- profile switching in-game
+- shader reload/dimension-transition behaviour
+- FPS or frame-time results
+- NVIDIA/AMD/Intel runtime parity
+
+Static validation is not a graphics card with excellent self-confidence.
 
 ## Graphics hardware
 
-Zepholume is designed around broadly portable GLSL rather than vendor-specific features. The project avoids requiring heavyweight modern GPU features such as compute shaders, geometry/tessellation stages, SSBO-based pipelines, ray tracing, or vendor-specific extensions.
+Zepholume is designed around broadly portable GLSL rather than vendor-specific features. The project avoids requiring compute shaders, geometry/tessellation stages, SSBO/image pipelines, ray tracing, or vendor-specific extensions.
 
-Actual runtime behaviour can still vary between:
+Current hardware evidence remains limited. Do not interpret the architecture as a claim that every NVIDIA, AMD, or Intel GPU/driver combination has been tested.
 
-- NVIDIA GPUs and driver versions
-- AMD GPUs and driver versions
-- Intel integrated/discrete GPUs and driver versions
-- operating systems and Java runtimes
-- Iris/Oculus releases
-- Sodium/Embeddium versions and other rendering mods
+Runtime behaviour can vary with:
+
+- GPU model and driver version
+- operating system and Java runtime
+- Iris/Oculus release
+- Sodium/Embeddium version
+- Minecraft graphics settings
+- resource packs
+- rendering-related mods
+- modpack composition
 
 ## Modpack compatibility
 
@@ -38,20 +53,17 @@ Zepholume can be used in modded Minecraft, but large rendering stacks can create
 
 When diagnosing a problem, first reproduce it with the smallest practical setup:
 
-- Minecraft
-- Fabric + Iris, or Forge + Oculus
-- required loader dependencies
-- Zepholume Shaders
+- Minecraft 1.20.1
+- Fabric + Iris + Sodium, or Forge + Oculus + Embeddium
+- Zepholume Shaders V1.0.2
 
 Then reintroduce rendering/resource-pack mods until the conflict appears.
 
-## What “tested” means here
+## Version policy
 
-The public compatibility statement is intentionally simple:
+For **V1.0.2**, Minecraft **1.20.1** is the evidence-backed target.
 
-> Zepholume requires Iris or Oculus. Minecraft 1.20+ versions are tested. Older versions may or may not work and are not guaranteed.
-
-This should not be expanded into claims about every patch release, every GPU, or every mod combination without evidence.
+Do not infer that every Minecraft 1.20.x/1.21.x/26.x release is validated because a project page or loader may expose broader version metadata. Older or newer versions may work, but they are not guaranteed by this release unless separately tested and documented.
 
 ## Reporting a compatibility problem
 
