@@ -10,7 +10,7 @@
 
 - Both `gbuffers_skybasic` wrappers contained `#define #define ZEPH_NO_FOG`, a malformed preprocessor directive. It is fixed and structurally guarded.
 - Sky/cloud generic-terrain processing and second vertex-colour lighting were removed at source level. Visual acceptance, Fast/Fancy/off cloud behavior, stage macro behavior, and loader parity remain manual-test items.
-## V1.0.1 status
+## V1.0.2 status
 
 - No real Iris or Oculus launch, shader compilation, render, screenshot, or benchmark has been recorded for this release. Static checks and standalone GLSL compilation are not substitutes.
 - Animated water uses the common `frameTimeCounter` uniform. Its loader/runtime behaviour is pending Iris and Oculus verification.

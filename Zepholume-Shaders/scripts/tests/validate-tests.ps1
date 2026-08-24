@@ -5,7 +5,7 @@ $ErrorActionPreference = 'Stop'
 $projectRoot = Split-Path -Parent (Split-Path -Parent $PSScriptRoot)
 $validator = Join-Path $projectRoot 'scripts/validate.ps1'
 $packager = Join-Path $projectRoot 'scripts/package.ps1'
-$package = Join-Path $projectRoot 'dist/Zepholume-Shaders-1.0.1.zip'
+$package = Join-Path $projectRoot 'dist/Zepholume-Shaders-1.0.2.zip'
 $work = Join-Path ([IO.Path]::GetTempPath()) ('zepholume-validator-tests-' + [guid]::NewGuid().ToString('N'))
 $pwsh = (Get-Command pwsh -ErrorAction Stop).Source
 
@@ -50,6 +50,8 @@ try {
     Invoke-Invalid 'profile-matrix-drift' { param($root) $p=Join-Path $root 'shaders/shaders.properties'; (Get-Content -LiteralPath $p -Raw).Replace('profile.Low = ZEPH_PROFILE_TIER:1 ZEPH_EXPOSURE:1', 'profile.Low = ZEPH_PROFILE_TIER:1 ZEPH_EXPOSURE:2') | Set-Content -LiteralPath $p -Encoding utf8NoBOM }
     Invoke-Invalid 'ultra-lite-alias-drift' { param($root) $p=Join-Path $root 'shaders/shaders.properties'; (Get-Content -LiteralPath $p -Raw).Replace('profile.Ultra_Lite = ZEPH_PROFILE_TIER:1', 'profile.Ultra_Lite = ZEPH_PROFILE_TIER:4') | Set-Content -LiteralPath $p -Encoding utf8NoBOM }
     Invoke-Invalid 'additional-colour-target' { param($root) Add-Content -LiteralPath (Join-Path $root 'shaders/gbuffers_basic.fsh') -Value "`ngl_FragData[1] = vec4(0.0);" }
+    Invoke-Invalid 'destroyed-output-alpha' { param($root) $p=Join-Path $root 'shaders/lib/fragment.glsl'; (Get-Content -LiteralPath $p -Raw).Replace('clamp(source.a, 0.0, 1.0)', '1.0') | Set-Content -LiteralPath $p -Encoding utf8NoBOM }
+    Invoke-Invalid 'forbidden-composite-program' { param($root) $s=Join-Path $root 'shaders'; Set-Content -LiteralPath (Join-Path $s 'composite.vsh') '#version 330 compatibility`nvoid main() { gl_Position = vec4(0.0); }' -Encoding utf8NoBOM; Set-Content -LiteralPath (Join-Path $s 'composite.fsh') '#version 330 compatibility`nvoid main() { gl_FragData[0] = vec4(1.0); }' -Encoding utf8NoBOM }
     Invoke-Invalid 'forbidden-extension' { param($root) Add-Content -LiteralPath (Join-Path $root 'shaders/gbuffers_basic.fsh') -Value "`n#extension GL_ARB_gpu_shader5 : enable" }
     Invoke-Invalid 'post-330-feature' { param($root) Add-Content -LiteralPath (Join-Path $root 'shaders/gbuffers_basic.fsh') -Value "`nvec4 testPost330() { return textureGather(texture, vec2(0.0)); }" }
     Invoke-Invalid 'literal-division-by-zero' { param($root) Add-Content -LiteralPath (Join-Path $root 'shaders/gbuffers_basic.fsh') -Value "`nfloat zephBad = 1.0 / 0.0;" }
@@ -57,7 +59,7 @@ try {
     Invoke-Invalid 'missing-include-guard' { param($root) $p=Join-Path $root 'shaders/lib/color.glsl'; (Get-Content -LiteralPath $p -Raw).Replace('#ifndef ZEPHO_COLOR_GLSL', '// guard removed') | Set-Content -LiteralPath $p -Encoding utf8NoBOM }
     Invoke-Invalid 'fog-uniform-after-helper' { param($root) $p=Join-Path $root 'shaders/lib/fragment.glsl'; $s=Get-Content -LiteralPath $p -Raw; $s=$s.Replace('#include "/lib/fog.glsl"', ''); $s=$s.Replace('uniform vec3 fogColor;', "#include `"/lib/fog.glsl`"`nuniform vec3 fogColor;"); Set-Content -LiteralPath $p -Value $s -Encoding utf8NoBOM }
     Invoke-Invalid 'missing-shader-pair' { param($root) Remove-Item -LiteralPath (Join-Path $root 'shaders/gbuffers_basic.fsh') -Force }
-    Invoke-Invalid 'stale-release-metadata' { param($root) $p=Join-Path $root 'README.md'; (Get-Content -LiteralPath $p -Raw).Replace('V1.0.1', '0.2.0-dev') | Set-Content -LiteralPath $p -Encoding utf8NoBOM }
+    Invoke-Invalid 'stale-release-metadata' { param($root) $p=Join-Path $root 'README.md'; (Get-Content -LiteralPath $p -Raw).Replace('V1.0.2', '0.2.0-dev') | Set-Content -LiteralPath $p -Encoding utf8NoBOM }
     $badZip = Join-Path $work 'backslash-paths.zip'
     Add-Type -AssemblyName System.IO.Compression.FileSystem
     $zip = [IO.Compression.ZipFile]::Open($badZip, [IO.Compression.ZipArchiveMode]::Create)

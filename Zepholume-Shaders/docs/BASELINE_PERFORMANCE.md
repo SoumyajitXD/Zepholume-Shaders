@@ -1,6 +1,6 @@
 # Baseline performance report
 
-Status: **no runtime performance measurement exists** for shaders disabled or any V1.0.1 profile. The reported 94–114 FPS observation is anecdotal and is not a baseline.
+Status: **no runtime performance measurement exists** for shaders disabled, V1.0.0, or any 1.0.1-dev profile. The reported 94–114 FPS observation is anecdotal and is not a baseline.
 
 Static measures after the five-profile expansion:
 

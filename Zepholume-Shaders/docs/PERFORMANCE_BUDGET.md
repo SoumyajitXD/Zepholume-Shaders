@@ -9,7 +9,8 @@
 | Extra colour buffers | 0 |
 | Fragment texture samples | 1 textured; 0 untextured |
 | Fragment loops | 0 |
-| Water animation | One sine and one cosine per water vertex in Balanced; none in Ultra Lite |
+| Water animation | One sine and one cosine per water vertex in Balanced; none in Potato/Ultra Lite |
+| Underwater treatment | Existing fog interpolation plus bounded arithmetic; no texture/depth/pass/exp/pow |
 | Temporal/custom resources | 0 |
 
 These are source-level facts, not GPU measurements.
@@ -19,7 +20,7 @@ These are source-level facts, not GPU measurements.
 - Ordinary textured fragment paths use one required texture sample.
 - Fragment paths use zero loops and zero trigonometric operations.
 - One main colour output; no temporal storage, shadow workload, or extra render targets.
-- Profile differences are compile-time branches; Ultra Lite removes disabled water and fog-quality work.
+- Profile differences are evaluated with the GLSL preprocessor before source metrics are recorded; Potato removes analytical water and terrain-normal consumers.
 - Validation limits include depth to eight (current maximum: three).
 
 ## Targets
@@ -28,9 +29,9 @@ One main colour attachment; no full-screen pass unless a measured visual benefit
 
 No FPS, utilisation, VRAM, or frame-time result is claimed before controlled runtime measurement.
 
-## Audit result
+## Static-evidence boundary
 
-No fragment loop, dynamic loop, repeated matrix calculation, or extra texture read was found. The only trigonometry is vertex-stage water motion behind the `ZEPH_WATER_PROGRAM` and `ZEPH_WATER_MOTION` compile-time conditions. `water.glsl` is included in the shared sources but its calls compile out for non-water wrappers; this is retained for a single consistent source rather than duplicated programs. Fog work is suppressed for sky and cloud wrappers. No source change beyond the corrected malformed sky directive was justified without runtime measurement.
+No fragment loop, dynamic loop, extra texture read, extra target, or extra pass is intentionally present. The only trigonometry is profile-gated water vertex motion. `water.glsl` remains a shared include, but its analytical call is preprocessed out of Potato and non-water routes. The underwater treatment reuses fragment fog distance and adds only bounded arithmetic at Low through Ultra. These are source/preprocessor facts; source calls are not native GPU instruction counts, and no runtime performance result follows from them.
 
 ## 2026-07-31 static cost delta
 

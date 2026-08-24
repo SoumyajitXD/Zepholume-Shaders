@@ -14,4 +14,4 @@ All 210 unique source-expanded GLSL stages compile with the local standalone `gl
 
 ## Runtime gate
 
-Before claiming loader compatibility, manually launch the isolated candidate, select the 1.0.1 ZIP, test every profile, repeat shader/resource reload and world/dimension transition, and collect `latest.log`, patched shaders, screenshots, and frame-time captures. See `MANUAL_RUNTIME_TEST.md` and `VISUAL_REGRESSION.md`.
+Before claiming loader compatibility, manually launch the isolated candidate, select the 1.0.2 ZIP, test every profile, repeat shader/resource reload and world/dimension transition, and collect `latest.log`, patched shaders, screenshots, and frame-time captures. See `MANUAL_RUNTIME_TEST.md` and `VISUAL_REGRESSION.md`.

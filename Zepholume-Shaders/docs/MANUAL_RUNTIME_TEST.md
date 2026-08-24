@@ -30,7 +30,7 @@ Do not delete or replace the existing `Fabric1.20.1` installation. The local ver
 3. Confirm the title screen reports Minecraft 1.20.1 with Fabric/Iris.
 4. Open Video Settings, then Shader Packs.
 5. Enable Iris shader debug mode with `F3 + V`; restart if Iris asks.
-6. Select `Zepholume-Shaders-1.0.1.zip`.
+6. Select `Zepholume-Shaders-1.0.2.zip`.
 7. Record whether shader compilation succeeds.
 8. Create a new disposable Creative test world. Do not open an existing world.
 9. Test daytime terrain, cutout leaves, glass, water from above and below, player hand, held item, entity, block entity, particles, rain, night, Nether, and End.
@@ -59,7 +59,7 @@ The detected local Forge loader is Forge 47.4.22 for Minecraft 1.20.1, represent
 3. Confirm the title screen reports Minecraft 1.20.1 with Forge/Oculus.
 4. Open Video Settings, then Shader Packs.
 5. Enable Oculus shader debug mode with `F3 + V`; restart if Oculus asks.
-6. Select `Zepholume-Shaders-1.0.1.zip` and record whether compilation succeeds.
+6. Select `Zepholume-Shaders-1.0.2.zip` and record whether compilation succeeds.
 7. Create a new disposable Creative test world. Do not open an existing world.
 8. Test daytime terrain, cutout leaves, glass, water from above and below, player hand, held item, entity, block entity, particles, rain, night, Nether, and End.
 9. Switch through Potato, Low, Balanced, High, and Ultra; verify reloads and profile switching.

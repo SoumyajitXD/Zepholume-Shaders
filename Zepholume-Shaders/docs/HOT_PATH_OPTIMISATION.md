@@ -1,4 +1,4 @@
-# Hot-path optimisation, 1.0.1
+# Hot-path optimisation, 1.0.1-dev
 
 This pass measures Zepholume-preprocessed source, not GPU instructions or FPS. Runtime benchmarking remains required.
 
@@ -9,7 +9,7 @@ This pass measures Zepholume-preprocessed source, not GPU instructions or FPS. R
 - Removed the dead `zephShapeLighting` helper and its unused `lighting.glsl` file.
 - Isolated sky and cloud interfaces from generic helpers, preventing generic clamp helpers and unrelated declarations entering those expanded stages.
 
-Texture sampling remains one essential source sample for textured geometry, water, clouds, and textured sky. No duplicate texture read was present to remove. There are no fragment `pow`, loops, or `discard` operations. Water trigonometry remains vertex-only and is compiled out below Balanced. V1.0.1 also removes a redundant display-to-linear decode from the generic scene grade.
+Texture sampling remains one essential source sample for textured geometry, water, clouds, and textured sky. No duplicate texture read was present to remove. There are no fragment `pow`, loops, or `discard` operations. Water trigonometry remains vertex-only and is compiled out below Balanced. V1.0.1-dev also removes a redundant display-to-linear decode from the generic scene grade.
 
 ## Source comparison
 

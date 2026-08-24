@@ -6,10 +6,10 @@
 #ifndef ZEPH_UNTEXTURED_PROGRAM
 varying vec2 zephTexCoord;
 #endif
+varying vec2 zephLightCoord;
 varying vec4 zephVertexColour;
 varying float zephDistance;
 varying vec3 zephNormalView;
-varying float zephViewUp;
 varying vec3 zephViewDirection;
 void main() {
     vec4 position = gl_Vertex;
@@ -19,8 +19,8 @@ void main() {
     vec4 viewPosition = gl_ModelViewMatrix * position;
     zephDistance = length(viewPosition.xyz);
     zephNormalView = gl_NormalMatrix * gl_Normal;
-    zephViewUp = clamp(viewPosition.y / max(zephDistance, 0.0001), -1.0, 1.0);
     zephViewDirection = -viewPosition.xyz / max(zephDistance, 0.0001);
+    zephLightCoord = clamp((gl_TextureMatrix[1] * gl_MultiTexCoord1).xy, 0.0, 1.0);
 #ifndef ZEPH_UNTEXTURED_PROGRAM
     zephTexCoord = gl_MultiTexCoord0.st;
 #endif

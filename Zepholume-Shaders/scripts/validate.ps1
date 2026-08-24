@@ -122,22 +122,24 @@ foreach ($vertex in $programs | Where-Object Extension -eq '.vsh') {
     if ((Compare-Object $vertexVaryings $fragmentVaryings)) { $errors.Add("Vertex/fragment varying mismatch: $($vertex.FullName)") }
     if ($resolved[$fragmentPath] -match 'gl_FragData\s*\[\s*[1-9]') { $errors.Add("Unexpected extra colour attachment: $fragmentPath") }
     if ($resolved[$fragmentPath] -notmatch 'gl_FragData\s*\[\s*0\s*\]') { $errors.Add("No main colour output: $fragmentPath") }
+    if ($resolved[$fragmentPath] -notmatch '(?s)gl_FragData\s*\[\s*0\s*\]\s*=\s*vec4\s*\(.*?,\s*clamp\s*\(\s*source\.a\s*,\s*0\.0\s*,\s*1\.0\s*\)\s*\)') { $errors.Add("Main colour output must preserve clamped source alpha: $fragmentPath") }
 }
 
 foreach ($pattern in @('*.csh','*.gsh','*.tcs','*.tes')) { foreach ($file in Get-ChildItem -LiteralPath $shaderRoot -Recurse -File -Filter $pattern) { $errors.Add("Forbidden high-cost stage: $($file.FullName)") } }
+foreach ($file in $programs) { if ($file.BaseName -match '^(?:composite|deferred|shadow)(?:\d+)?$') { $errors.Add("Forbidden render-program family: $($file.FullName)") } }
 $settings = Get-Content -LiteralPath (Join-Path $shaderRoot 'lib/settings.glsl') -Raw
 $properties = Get-Content -LiteralPath (Join-Path $shaderRoot 'shaders.properties') -Raw
 $lang = Get-Content -LiteralPath (Join-Path $shaderRoot 'lang/en_US.lang') -Raw
 $readme = Get-Content -LiteralPath (Join-Path $Root 'README.md') -Raw
 $changelog = Get-Content -LiteralPath (Join-Path $Root 'CHANGELOG.md') -Raw
-foreach ($staleVersion in @('0.1.0-dev','0.2.0-dev')) {
+foreach ($staleVersion in @('0.1.0-dev','0.2.0-dev','1.0.2-dev')) {
     if ($properties -match [regex]::Escape($staleVersion) -or $readme -match [regex]::Escape($staleVersion) -or $changelog -match [regex]::Escape($staleVersion)) {
         $errors.Add("Stale development version remains in release-facing metadata: $staleVersion")
     }
 }
-if ($properties -notmatch 'Zepholume 1\.0\.1(?:\D|$)') { $errors.Add('Shader properties must identify the 1.0.1 release.') }
-if ($changelog -notmatch '(?m)^## 1\.0\.1 .+released') { $errors.Add('Changelog must contain the released 1.0.1 heading.') }
-if ($readme -notmatch '(?i)current public release[^\r\n]*V1\.0\.1') { $errors.Add('README must identify V1.0.1 as the current public release.') }
+if ($properties -notmatch 'Zepholume 1\.0\.2') { $errors.Add('Shader properties must identify the V1.0.2 release.') }
+if ($changelog -notmatch '(?m)^## 1\.0\.2 — released') { $errors.Add('Changelog must contain the released V1.0.2 heading.') }
+if ($readme -notmatch '(?i)current public release[^\r\n]*V1\.0\.2') { $errors.Add('README must identify V1.0.2 as the current public release.') }
 $definitions = @{}
 foreach ($m in [regex]::Matches($settings, '(?m)^#define\s+(ZEPH_[A-Z_]+)\s+(\d+)\s*//\s*\[([^\]]+)\]')) { $definitions[$m.Groups[1].Value] = @($m.Groups[3].Value -split '\s+' | ForEach-Object {[int]$_}) }
 $options = @([regex]::Matches($properties, 'ZEPH_[A-Z_]+') | ForEach-Object Value | Sort-Object -Unique)
@@ -147,7 +149,7 @@ foreach ($option in $options) {
     if ($lang -notmatch "(?m)^comment\.$option=") { $errors.Add("Missing language tooltip: $option") }
 }
 foreach ($profile in [regex]::Matches($properties, '(?m)^profile\.([^\s=]+)\s*=\s*(.+)$')) {
-    foreach ($assignment in ($profile.Groups[2].Value -split '\s+' | Where-Object { $_ })) {
+    foreach ($assignment in $profile.Groups[2].Value -split '\s+') {
         if ($assignment -notmatch '^(ZEPH_[A-Z_]+):(\d+)$') { $errors.Add("Invalid profile assignment in $($profile.Groups[1].Value): $assignment"); continue }
         $name,$value = $Matches[1],[int]$Matches[2]
         if (-not $definitions.ContainsKey($name)) { $errors.Add("Profile references unknown option: $name"); continue }
@@ -172,7 +174,7 @@ foreach ($profileName in $requiredProfiles) {
     $propertyMatch = [regex]::Match($properties, "(?m)^profile\.$profileName\s*=\s*(.+)$")
     if (-not $propertyMatch.Success) { continue }
     $actual = @{}
-    foreach ($assignment in ($propertyMatch.Groups[1].Value -split '\s+' | Where-Object { $_ })) { if ($assignment -match '^(ZEPH_[A-Z_]+):(\d+)$') { $actual[$Matches[1]] = [int]$Matches[2] } }
+    foreach ($assignment in $propertyMatch.Groups[1].Value -split '\s+') { if ($assignment -match '^(ZEPH_[A-Z_]+):(\d+)$') { $actual[$Matches[1]] = [int]$Matches[2] } }
     if (($actual.Count -ne $matrix[$profileName].Count) -or (Compare-Object ($actual.GetEnumerator() | ForEach-Object { "$($_.Key):$($_.Value)" } | Sort-Object) ($matrix[$profileName].GetEnumerator() | ForEach-Object { "$($_.Key):$($_.Value)" } | Sort-Object))) { $errors.Add("Profile does not match authoritative matrix: $profileName") }
 }
 $aliasMatch = [regex]::Match($properties, '(?m)^profile\.Ultra_Lite\s*=\s*(.+)$')
@@ -186,7 +188,7 @@ foreach ($option in $definitions.Keys) {
     if ($balanced[$option] -ne [int]$defaultMatch.Groups[1].Value) { $errors.Add("Source default must match Balanced profile: $option") }
 }
 if ($properties -match '(?m)^(?:RENDERTARGETS|DRAWBUFFERS)\s*=.*[1-9]') { $errors.Add('Properties request an extra colour attachment.') }
-$invalid = Get-ChildItem -LiteralPath $Root -Recurse -File | Where-Object { $_.Name -match '\.(tmp|bak|log)$' -and $_.FullName -notmatch '[\\/]dist[\\/]' }
+$invalid = Get-ChildItem -LiteralPath $Root -Recurse -File | Where-Object { $_.Name -match '\.(tmp|bak|log)$' -and $_.FullName -notmatch '[\\/](?:dist|artifacts|runtime|tools)[\\/]' }
 foreach ($file in $invalid) { $errors.Add("Temporary file would be packaged: $($file.FullName)") }
 if ($errors.Count -gt 0) { $errors | ForEach-Object { Write-Error $_ }; exit 1 }
 Write-Host "Structural validation passed: $($programs.Count) program files checked; includes, entry points, pair interfaces, profiles, and colour-target policy checked."
