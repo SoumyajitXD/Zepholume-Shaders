@@ -4,7 +4,7 @@
 
 Zepholume Shaders is a performance-conscious shader pack for **Minecraft Java Edition**. It is built to make Minecraft feel richer, deeper, and more atmospheric without treating frame rate as disposable.
 
-![Vanilla vs Zepholume — Cherry Hillside](Screenshots/zepholume-cherry-hillside-vanilla-vs-shaders.png)
+![Vanilla vs Zepholume — Comparison 01](Screenshots/01-vanilla-vs-zepholume.png)
 
 ## Current release
 
