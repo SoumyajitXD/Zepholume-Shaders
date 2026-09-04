@@ -5,7 +5,7 @@ $ErrorActionPreference = 'Stop'
 $projectRoot = Split-Path -Parent (Split-Path -Parent $PSScriptRoot)
 $validator = Join-Path $projectRoot 'scripts/validate.ps1'
 $packager = Join-Path $projectRoot 'scripts/package.ps1'
-$package = Join-Path $projectRoot 'dist/Zepholume-Shaders-1.0.2.zip'
+$package = Join-Path $projectRoot 'dist/Zepholume-Shaders-1.0.3-dev.zip'
 $work = Join-Path ([IO.Path]::GetTempPath()) ('zepholume-validator-tests-' + [guid]::NewGuid().ToString('N'))
 $pwsh = (Get-Command pwsh -ErrorAction Stop).Source
 
@@ -38,6 +38,8 @@ try {
         & $pwsh -NoLogo -NoProfile -File $packager | Out-Host
         if ($LASTEXITCODE -ne 0) { throw "Failed to create validator package: $package" }
     }
+    & $pwsh -NoLogo -NoProfile -File (Join-Path $PSScriptRoot 'math-regression.ps1') | Out-Host
+    if ($LASTEXITCODE -ne 0) { throw 'Mathematical regression tests failed.' }
     Invoke-Valid $projectRoot $package
     Invoke-Invalid 'duplicated-malformed-define' { param($root) Add-Content -LiteralPath (Join-Path $root 'shaders/gbuffers_skybasic.vsh') -Value "`n#define #ZEPH_BROKEN`n#define #ZEPH_BROKEN" }
     Invoke-Invalid 'missing-main' { param($root) $p=Join-Path $root 'shaders/lib/vertex.glsl'; (Get-Content -LiteralPath $p -Raw).Replace('void main(', 'void not_main(') | Set-Content -LiteralPath $p -Encoding utf8NoBOM }

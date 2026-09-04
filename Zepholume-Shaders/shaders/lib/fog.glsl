@@ -1,7 +1,8 @@
 #ifndef ZEPHO_FOG_GLSL
 #define ZEPHO_FOG_GLSL
 #include "/lib/atmosphere.glsl"
-vec3 zephFogColour() {
+
+vec3 zephFogColour(vec3 viewDir) {
 #if ZEPH_EFFECTIVE_PROFILE_TIER == 0
     // Potato deliberately retains the loader-provided water/biome fog exactly.
     if (isEyeInWater == 1) return fogColor;
@@ -42,6 +43,11 @@ vec3 zephFogColour() {
     return haze;
 #endif
 }
+
+vec3 zephFogColour() {
+    return zephFogColour(vec3(0.0, 0.0, 1.0));
+}
+
 float zephFogFactor(float d, float viewDirectionY) {
     float factor = zephAtmosphereFactor(d, viewDirectionY, rainStrength);
 #if ZEPH_EFFECTIVE_PROFILE_TIER >= 1

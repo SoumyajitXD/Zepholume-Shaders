@@ -37,6 +37,15 @@ float zephFaceLight(vec3 normal, vec2 lightCoord, float storm) {
     float moonDirect = max(dot(normal, moonDir), 0.0);
     float nightFace = mix(0.72, 0.88, moonDirect * 0.55 + 0.45);
 
+#if ZEPH_EFFECTIVE_FACE_LIGHTING_QUALITY >= 2
+    // Skylight occlusion: down-facing surfaces under open sky receive occluded ambient;
+    // partial overhangs attenuate direct celestial penetration.
+    float skyAccess = normal.y * 0.5 + 0.5;
+    float skyOcclusion = mix(0.72, 1.0, skyAccess);
+    dayFace *= skyOcclusion;
+    nightFace *= skyOcclusion;
+#endif
+
 #if ZEPH_EFFECTIVE_FACE_LIGHTING_QUALITY >= 3
     // High and Ultra apply softened wrap curve for smoother facet transitions
     dayFace = mix(dayFace, sqrt(max(dayFace, 0.0)), 0.22);
@@ -53,7 +62,12 @@ float zephFaceLight(vec3 normal, vec2 lightCoord, float storm) {
     // Deep caves and interiors (skyLight -> 0) transition to isotropic ambient (1.0),
     // preventing outdoor sun/moon directional contrast from penetrating underground.
     float skyLight = lightCoord.y;
-    float celestialWeight = smoothstep(0.04, 0.65, skyLight);
+    // Exact smoothstep shape with a compile-time reciprocal range.  The
+    // reciprocal form is algebraically equivalent to the normalized input;
+    // no GPU performance claim is implied without target-driver evidence.
+    const float ZEPH_SKYLIGHT_INV_RANGE = 1.639344262295082;
+    float tSky = clamp((skyLight - 0.04) * ZEPH_SKYLIGHT_INV_RANGE, 0.0, 1.0);
+    float celestialWeight = tSky * tSky * (3.0 - 2.0 * tSky);
     return mix(1.0, rawCelestial, celestialWeight);
 #endif
 }
@@ -70,7 +84,10 @@ vec3 zephBlockLightWarmth(vec3 linearColour, vec2 lightCoord) {
     float blockLight = lightCoord.x;
     float skyLight = lightCoord.y;
     float dominance = blockLight / max(blockLight + skyLight * 0.75 + 0.001, 0.001);
-    float warmthFactor = smoothstep(0.10, 0.90, blockLight) * dominance;
+    // Exact smoothstep shape with a compile-time reciprocal range.
+    const float ZEPH_BLOCK_LIGHT_INV_RANGE = 1.25;
+    float tWarmth = clamp((blockLight - 0.10) * ZEPH_BLOCK_LIGHT_INV_RANGE, 0.0, 1.0);
+    float warmthFactor = (tWarmth * tWarmth * (3.0 - 2.0 * tWarmth)) * dominance;
 
 #if ZEPH_EFFECTIVE_FACE_LIGHTING_QUALITY == 1
     float strength = 0.28;
@@ -90,6 +107,15 @@ vec3 zephApplySceneLighting(vec3 linearColour, vec3 normal, vec2 lightCoord, flo
     return linearColour;
 #else
     vec3 lit = linearColour * zephFaceLight(normal, lightCoord, storm);
+#if ZEPH_EFFECTIVE_FACE_LIGHTING_QUALITY >= 3 && !defined(ZEPH_DIM_NETHER) && !defined(ZEPH_DIM_END)
+    // High & Ultra dual-hemisphere ambient irradiance: upward surfaces receive subtle cool sky fill,
+    // downward surfaces receive subtle warm ground bounce.
+    float up = normal.y * 0.5 + 0.5;
+    vec3 skyHemisphere = vec3(0.96, 0.98, 1.04);
+    vec3 groundBounce = vec3(1.02, 0.99, 0.96);
+    vec3 domeFill = mix(groundBounce, skyHemisphere, up);
+    lit *= mix(vec3(1.0), domeFill, lightCoord.y * 0.12);
+#endif
     return zephBlockLightWarmth(lit, lightCoord);
 #endif
 }

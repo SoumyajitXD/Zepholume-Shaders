@@ -9,7 +9,7 @@
 | Extra colour buffers | 0 |
 | Fragment texture samples | 1 textured; 0 untextured |
 | Fragment loops | 0 |
-| Water animation | One sine and one cosine per water vertex in Balanced; none in Potato/Ultra Lite |
+| Water animation | Two sine/cosine waves per water vertex in Balanced; none in Potato, Low, or Ultra Lite |
 | Underwater treatment | Existing fog interpolation plus bounded arithmetic; no texture/depth/pass/exp/pow |
 | Temporal/custom resources | 0 |
 
@@ -35,4 +35,4 @@ No fragment loop, dynamic loop, extra texture read, extra target, or extra pass 
 
 ## 2026-07-31 static cost delta
 
-Sky: before, zero extra texture samples for basic sky and one for textured sky, plus generic lighting/grade; after, the same sample counts, no normalisations, and one bounded weather mix. Iris upper sky adds one interpolated height and a few `smoothstep`/mix operations; stage-specific branches are uniform per draw. Clouds: still one texture sample, no loops, no normalisations, and one added distance varying; fog now uses loader fog endpoints rather than arbitrary constants. Ordinary paths remove one luma dot and multiply-equivalent lighting shaping. No measurement is claimed.
+Sky: before, zero extra texture samples for basic sky and one for textured sky, plus generic lighting/grade; after, the same sample counts, no normalisations, and one bounded weather mix. Iris upper sky adds one interpolated height and a few `smoothstep`/mix operations. Clouds: still one texture sample, no loops, no normalisations, and one added distance varying; fog uses loader fog endpoints rather than arbitrary constants. Ordinary paths remove one luma dot and multiply-equivalent lighting shaping. These are evaluated-source facts; branch lowering and native instruction changes are unknown. No measurement is claimed.

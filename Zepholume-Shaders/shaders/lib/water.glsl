@@ -31,10 +31,6 @@ vec3 zephWaterDecode(vec3 colour) {
     return max(colour, vec3(0.0)) * max(colour, vec3(0.0));
 }
 
-vec3 zephWaterEncode(vec3 colour) {
-    return sqrt(max(colour, vec3(0.0)));
-}
-
 // Bounded Blinn-Phong power 64 specular with dual-lobe intermediate
 float zephSpecularLobe(float nDotH) {
     float n2 = nDotH * nDotH;
@@ -50,7 +46,10 @@ float zephSpecularLobe(float nDotH) {
 #endif
 }
 
-vec3 zephWaterSurface(vec3 displayColour, vec3 normal, vec3 viewDirection, float distance) {
+// Returns working-space colour.  The ordinary scene route already grades in
+// that space, so encoding here only for fragment.glsl to decode immediately
+// afterward was redundant per-fragment work.
+vec3 zephWaterSurfaceLinear(vec3 displayColour, vec3 normal, vec3 viewDirection, float distance) {
 #if ZEPH_EFFECTIVE_WATER_TIER == 0 || ZEPH_EFFECTIVE_WATER_QUALITY == 0
     return displayColour;
 #else
@@ -64,7 +63,12 @@ vec3 zephWaterSurface(vec3 displayColour, vec3 normal, vec3 viewDirection, float
     float NdotV = clamp(dot(normal, viewDir), 0.0, 1.0);
     float fBase = 1.0 - NdotV;
     float f2 = fBase * fBase;
+#if ZEPH_EFFECTIVE_WATER_TIER >= 3
+    // High and Ultra use fifth-power Fresnel-Schlick for refined grazing reflectance
+    float fresnel = f2 * f2 * fBase;
+#else
     float fresnel = f2 * f2;
+#endif
 
     vec3 transmission = water * vec3(0.82, 0.98, 0.94);
     transmission = mix(transmission, transmission * vec3(0.75, 0.92, 0.90), clamp(distance * 0.00025, 0.0, 1.0) * 0.18);
@@ -77,9 +81,11 @@ vec3 zephWaterSurface(vec3 displayColour, vec3 normal, vec3 viewDirection, float
 #if defined(ZEPH_DIM_NETHER) || defined(ZEPH_DIM_END)
     // Non-Overworld dimensions omit celestial sun/moon specular calculations
     vec3 surface = mix(transmission, reflectedSky, reflectance * 0.65);
-    return zephWaterEncode(surface);
+    return max(surface, vec3(0.0));
 #else
-    // Analytical celestial specular highlight (independent sun and moon vectors)
+    // Analytical celestial specular highlight.  Keep both lobes evaluated so
+    // the V1.0.2 continuous day/night transfer remains exactly intact; branch
+    // lowering and savings are implementation-dependent without GPU ISA data.
     vec3 sunDir = zephSafeNormalize(sunPosition);
     float daylight = zephDaylightFromElevation(sunDir.y);
     vec3 sunHalf = zephSafeNormalize(viewDir + sunDir);
@@ -94,8 +100,9 @@ vec3 zephWaterSurface(vec3 displayColour, vec3 normal, vec3 viewDirection, float
     float moonHorizonFade = zephSaturate(moonDir.y * 6.0 + 0.1);
     float moonSpecFactor = zephSpecularLobe(moonNdotH) * (1.0 - daylight) * moonHorizonFade;
     vec3 moonSpecular = vec3(0.55, 0.68, 0.88) * (moonSpecFactor * 0.25);
+    vec3 celestialSpecular = sunSpecular + moonSpecular;
 
-    vec3 celestialSpecular = (sunSpecular + moonSpecular) * (1.0 - storm * 0.85);
+    celestialSpecular *= (1.0 - storm * 0.85);
 
 #if ZEPH_EFFECTIVE_WATER_TIER == 1
     reflectance *= 0.55;
@@ -106,7 +113,7 @@ vec3 zephWaterSurface(vec3 displayColour, vec3 normal, vec3 viewDirection, float
 #endif
 
     vec3 surface = mix(transmission, reflectedSky, reflectance) + celestialSpecular;
-    return zephWaterEncode(surface);
+    return max(surface, vec3(0.0));
 #endif
 #endif
 }

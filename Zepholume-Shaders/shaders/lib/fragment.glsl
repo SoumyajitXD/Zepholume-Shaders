@@ -32,11 +32,11 @@ varying vec3 zephViewDirection;
 #include "/lib/water.glsl"
 #include "/lib/color.glsl"
 #include "/lib/lighting.glsl"
+#include "/lib/materials.glsl"
+#include "/lib/weather.glsl"
 #undef ZEPH_HAS_RAIN_STRENGTH
 #undef ZEPH_HAS_SUN_POSITION
 #undef ZEPH_HAS_MOON_POSITION
-#include "/lib/materials.glsl"
-#include "/lib/weather.glsl"
 
 void main() {
 #ifdef ZEPH_UNTEXTURED_PROGRAM
@@ -50,19 +50,23 @@ void main() {
     // analytical work instead of relying on later compiler elimination.
     vec3 normal = zephSafeNormalize(zephNormalView);
 #endif
-#if defined(ZEPH_WATER_PROGRAM) && ZEPH_EFFECTIVE_WATER_TIER > 0 && ZEPH_EFFECTIVE_WATER_QUALITY > 0
-    source.rgb = zephWaterSurface(source.rgb, normal, zephViewDirection, zephDistance);
-#endif
     vec3 graded;
 #ifdef ZEPH_HAND_PROGRAM
     graded = zephGradeHand(source.rgb);
 #else
+#if defined(ZEPH_WATER_PROGRAM) && ZEPH_EFFECTIVE_WATER_TIER > 0 && ZEPH_EFFECTIVE_WATER_QUALITY > 0
+    // Keep the water result in working space.  This removes the former
+    // encode/decode round trip (a sqrt plus its inverse square) from every
+    // active water fragment while preserving the same bounded surface value.
+    vec3 linear = zephWaterSurfaceLinear(source.rgb, normal, zephViewDirection, zephDistance);
+#else
     vec3 linear = zephDecodeDisplay(source.rgb);
+#endif
 #if ZEPH_EFFECTIVE_FACE_LIGHTING_QUALITY > 0
     linear = zephApplySceneLighting(linear, normal, zephLightCoord, rainStrength);
 #endif
 #if ZEPH_EFFECTIVE_MATERIAL_QUALITY > 0
-    linear = zephMaterialResponse(linear, normal, zephDistance);
+    linear = zephMaterialResponse(linear, normal, zephDistance, zephViewDirection, zephLightCoord);
 #endif
 #ifdef ZEPH_WEATHER_PROGRAM
     linear = zephWeatherResponse(linear);
@@ -70,7 +74,7 @@ void main() {
     graded = zephGradeLinearScene(linear);
 #endif
 #ifndef ZEPH_NO_FOG
-    graded = mix(graded, zephFogColour(), zephFogFactor(zephDistance, zephViewDirection.y));
+    graded = mix(graded, zephFogColour(zephViewDirection), zephFogFactor(zephDistance, zephViewDirection.y));
 #endif
     gl_FragData[0] = vec4(graded, clamp(source.a, 0.0, 1.0));
 }

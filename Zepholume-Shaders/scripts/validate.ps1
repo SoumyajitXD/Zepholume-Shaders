@@ -25,7 +25,7 @@ if ($Package) {
 }
 $required = @(
     'README.md','CHANGELOG.md','THIRD_PARTY_NOTICES.md',
-    'docs/ARCHITECTURE.md','docs/BASELINE_PERFORMANCE.md','docs/COMPATIBILITY_MATRIX.md','docs/GPU_COMPATIBILITY_POLICY.md','docs/KNOWN_ISSUES.md','docs/PERFORMANCE_BUDGET.md','docs/PORTABILITY_AUDIT.md','docs/RESEARCH.md','docs/RUNTIME_RESULTS.md','docs/RUNTIME_TEST_CHANGES.md','docs/SHADER_COST_REPORT.md','docs/SHADER_VARIANT_MATRIX.md','docs/TESTING.md',
+    'docs/ARCHITECTURE.md','docs/BASELINE_PERFORMANCE.md','docs/COMPATIBILITY_MATRIX.md','docs/GPU_COMPATIBILITY_POLICY.md','docs/KNOWN_ISSUES.md','docs/PERFORMANCE_BUDGET.md','docs/PORTABILITY_AUDIT.md','docs/RESEARCH.md','docs/RUNTIME_RESULTS.md','docs/RUNTIME_TEST_CHANGES.md','docs/SHADER_COST_REPORT.md','docs/SHADER_VARIANT_MATRIX.md','docs/SOURCE_PROVENANCE.md','docs/TESTING.md','docs/UNRESOLVED_LOADER_ISSUES.md',
     'shaders/shaders.properties','shaders/lang/en_US.lang','shaders/lib/settings.glsl','shaders/lib/profile.glsl','shaders/lib/common.glsl','shaders/lib/color.glsl','shaders/lib/fog.glsl','shaders/lib/water.glsl','shaders/lib/vertex.glsl','shaders/lib/fragment.glsl'
 )
 foreach ($relative in $required) { if (-not (Test-Path -LiteralPath (Join-Path $Root $relative))) { $errors.Add("Missing required file: $relative") } }
@@ -132,14 +132,14 @@ $properties = Get-Content -LiteralPath (Join-Path $shaderRoot 'shaders.propertie
 $lang = Get-Content -LiteralPath (Join-Path $shaderRoot 'lang/en_US.lang') -Raw
 $readme = Get-Content -LiteralPath (Join-Path $Root 'README.md') -Raw
 $changelog = Get-Content -LiteralPath (Join-Path $Root 'CHANGELOG.md') -Raw
-foreach ($staleVersion in @('0.1.0-dev','0.2.0-dev','1.0.2-dev')) {
+foreach ($staleVersion in @('0.1.0-dev','0.2.0-dev')) {
     if ($properties -match [regex]::Escape($staleVersion) -or $readme -match [regex]::Escape($staleVersion) -or $changelog -match [regex]::Escape($staleVersion)) {
         $errors.Add("Stale development version remains in release-facing metadata: $staleVersion")
     }
 }
-if ($properties -notmatch 'Zepholume 1\.0\.2') { $errors.Add('Shader properties must identify the V1.0.2 release.') }
-if ($changelog -notmatch '(?m)^## 1\.0\.2 — released') { $errors.Add('Changelog must contain the released V1.0.2 heading.') }
-if ($readme -notmatch '(?i)current public release[^\r\n]*V1\.0\.2') { $errors.Add('README must identify V1.0.2 as the current public release.') }
+if ($properties -notmatch 'Zepholume 1\.0\.3-dev') { $errors.Add('Shader properties must identify the 1.0.3-dev development line.') }
+if ($changelog -notmatch '(?m)^## 1\.0\.3-dev .+unreleased') { $errors.Add('Changelog must contain the unreleased 1.0.3-dev heading.') }
+if ($readme -notmatch '(?i)current public release[^\r\n]*V1\.0\.2') { $errors.Add('README must retain V1.0.2 as the current public release until final publication.') }
 $definitions = @{}
 foreach ($m in [regex]::Matches($settings, '(?m)^#define\s+(ZEPH_[A-Z_]+)\s+(\d+)\s*//\s*\[([^\]]+)\]')) { $definitions[$m.Groups[1].Value] = @($m.Groups[3].Value -split '\s+' | ForEach-Object {[int]$_}) }
 $options = @([regex]::Matches($properties, 'ZEPH_[A-Z_]+') | ForEach-Object Value | Sort-Object -Unique)

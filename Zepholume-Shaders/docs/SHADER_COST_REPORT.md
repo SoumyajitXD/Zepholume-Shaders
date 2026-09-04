@@ -1,4 +1,4 @@
-# Source-Level Shader Cost Report (V1.0.2 Pass 4)
+# Source-Level Shader Cost Report (V1.0.2-dev Pass 4)
 
 ## Evidence boundary
 
@@ -46,4 +46,4 @@ Pass 3's include-expanded corpus was not an evaluated preprocessor corpus, so it
 
 ## Water terminology
 
-The water curve is a bounded fourth-power Fresnel-inspired approximation. Conventional Fresnel-Schlick uses a fifth power; Zepholume intentionally keeps the fourth-power artistic response. Its `F0 = 0.035` is stronger than common water-dielectric reference values near 0.02 and is documented as artistic tuning, not physical correctness.
+Potato has no analytical water path. Low and Balanced use a bounded fourth-power Fresnel-inspired approximation; High and Ultra intentionally use a fifth-power Fresnel-Schlick-shaped curve. The `F0 = 0.035` baseline is artistic tuning, not physical correctness. This is an output change by profile, not a performance claim.

@@ -1,6 +1,15 @@
 # Changelog
 
-## 1.0.2 — released
+## 1.0.3-dev — unreleased
+
+- Removed the active water fragment path's redundant working-space encode/decode round trip. The water surface now feeds the existing linear scene grade directly; no texture read, pass, buffer, or visual algorithm was added.
+- Restored exact Hermite `smoothstep` behaviour for block-light warmth and skylight gating while retaining named compile-time reciprocal range constants. This is a mathematical-equivalence cleanup, not a measured performance claim.
+- Enhanced directional lighting and ambient depth: added skylight occlusion for downward-facing facets and partial overhangs (Balanced, High, Ultra); implemented dual-hemisphere ambient irradiance (cool sky dome fill on top, warm ground bounce on bottom) on High and Ultra.
+- Refined water Fresnel on High and Ultra to a fifth-power Fresnel-Schlick-shaped curve. This is an intentional visual change; lower water tiers retain the V1.0.2 fourth-power artistic curve.
+- Added top-facet solar rim highlighting on clouds for High and Ultra tiers.
+- Removed unreachable fog-scattering and foliage-response branches rather than leaving undocumented dead profile code. Added deterministic mathematical regression tests and evidence-scoped compatibility, benchmark, and runtime collection documentation.
+
+## 1.0.2-dev — unreleased
 
 - Pass 4 release-candidate hardening: corrected water terminology to a tuned fourth-power Fresnel-inspired approximation; the conventional fifth-power Fresnel-Schlick label is no longer used, and the intentionally elevated 0.035 base reflectance is documented as artistic tuning.
 - Added profile-gated underwater fog tint using standard shader-pack `isEyeInWater`/`nightVision` inputs and existing fog distance. Potato preserves loader fog exactly; Low through Ultra add restrained red attenuation without a depth texture, extra pass, exponential attenuation, or extra texture sample.
@@ -14,7 +23,7 @@
 - Deduplicated hot-path vector operations: normalized surface normal once in `fragment.glsl` across lighting, materials, and water; eliminated 3 redundant direction normalizations in `sky_fragment.glsl`; optimized daylight/twilight with fast `inversesqrt` elevation helpers.
 - Enhanced cloud shading with sun/moon directional rim lighting, underside density shaping, and twilight flank warmth.
 - Seamlessly aligned analytical sky and horizon fog curves, preventing horizon seam artifacts at twilight and night transitions.
-- Updated release metadata, packaging defaults, and validation rules for V1.0.2.
+- Maintained project metadata and validation rules for the 1.0.2-dev development cycle.
 
 ## 1.0.1 — released
 

@@ -4,7 +4,7 @@ Zepholume is an original, direct-path Minecraft Java shader pack for clean survi
 
 ## Status and supported evidence
 
-**Current public release: V1.0.2.** This release targets Minecraft Java **1.20.1**. The local isolated candidates are Fabric/Iris 1.7.6 + Sodium 0.5.13 and Forge/Oculus 1.8.0 + Embeddium 0.3.31, using Java 17. Neither loader has been launched with this release build; Iris/Oculus compilation, rendering, screenshots, FPS, and cross-vendor behaviour therefore remain unverified.
+**Current public release: V1.0.2.** The active development line is **V1.0.3-dev**. The local isolated legacy candidates are Fabric/Iris 1.7.6 + Sodium 0.5.13 and Forge/Oculus 1.8.0 + Embeddium 0.3.31, using Java 17. Neither loader has been launched with V1.0.3-dev; Iris/Oculus compilation, shader activation, rendering, screenshots, FPS, and cross-vendor behaviour therefore remain unverified.
 
 Minecraft 26.1.2 installations exist locally but no Zepholume evidence is associated with them. OptiFine is not supported or tested.
 
@@ -23,12 +23,12 @@ Balanced is the default. Selecting a profile applies its full baseline; the grou
 ## Install
 
 1. Use an isolated disposable 1.20.1 Iris or Oculus instance.
-2. Copy `Zepholume-Shaders-1.0.2.zip` into `shaderpacks`.
+2. For development testing, copy `Zepholume-Shaders-1.0.3-dev.zip` into `shaderpacks`.
 3. Select Zepholume and choose Balanced, then use the Profile menu for other baselines.
 4. Retain complete `latest.log` and patched shaders after every loader test.
 
 ## Rendering boundary
 
-The pack has 24 program pairs and writes only `gl_FragData[0]`. Potato, Low, and Balanced remain a direct one-colour-target route; High/Ultra only raise analytical quality within that same architecture. There are no shadows, SSR, SSAO, bloom, volumetrics, ray tracing, temporal history, compute, geometry/tessellation stages, images, or SSBOs. Water’s fourth-power grazing response is a tuned Fresnel-inspired approximation, not conventional fifth-power Fresnel-Schlick or a physically based water model.
+The pack has 24 program pairs and writes only `gl_FragData[0]`. Potato, Low, and Balanced remain a direct one-colour-target route; High/Ultra only raise analytical quality within that same architecture. There are no shadows, SSR, SSAO, bloom, volumetrics, ray tracing, temporal history, compute, geometry/tessellation stages, images, or SSBOs. Water uses a tuned fourth-power grazing response through Balanced; High and Ultra intentionally use a fifth-power Fresnel-Schlick-shaped curve. Neither is a physically based water model.
 
 See [architecture](docs/ARCHITECTURE.md), [profile guide](docs/PROFILE_GUIDE.md), [benchmark protocol](docs/BENCHMARK_PROTOCOL.md), and [visual regression protocol](docs/VISUAL_REGRESSION.md).

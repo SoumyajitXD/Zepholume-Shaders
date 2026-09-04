@@ -44,6 +44,11 @@ void main() {
     float twilight = zephTwilightFromElevation(sunDir.y);
     cloud = mix(cloud, cloud * vec3(1.08, 0.88, 0.74), twilight * (1.0 - zephCloudNormalUp) * (1.0 - weather) * 0.20);
 #endif
+#if ZEPH_EFFECTIVE_CLOUD_TIER >= 3
+    // High and Ultra top-facet solar rim highlighting
+    float sunRim = max(dot(vec3(0.0, 1.0, 0.0), sunDir), 0.0);
+    cloud += vec3(0.10, 0.08, 0.06) * (sunRim * day * zephCloudNormalUp * (1.0 - weather));
+#endif
     cloud = mix(cloud, vec3(dot(cloud, vec3(0.2126, 0.7152, 0.0722))) * vec3(0.66, 0.69, 0.73), weather * 0.44);
 #endif
     cloud = mix(cloud, fogColor, zephCloudFogFactor(zephCloudDistance));

@@ -1,0 +1,16 @@
+{
+  "schemaVersion": 1,
+  "status": "template-not-yet-executed",
+  "runId": "replace-with-unique-id",
+  "packVersion": "1.0.2 or 1.0.3-dev",
+  "packSha256": "record-after-packaging",
+  "profile": "Balanced",
+  "sceneId": "copy-an-id-from-scene-manifest",
+  "sceneManifestSha256": "record-sha256-of-bench/scene-manifest.json",
+  "lockedEnvironmentIdentity": "record-one-stable-id-for-every-comparable-run",
+  "captureTool": { "name": "record-tool", "version": "record-version", "rawFrameTimeCsv": "relative-csv-filename" },
+  "timing": { "warmupSeconds": 30, "measurementSeconds": 60, "startedAtUtc": "record-utc-timestamp" },
+  "world": { "seed": "record", "dimension": "record", "coordinates": "record-x-y-z", "yaw": "record", "pitch": "record", "time": "record", "weather": "record" },
+  "runtime": { "minecraft": "record", "loader": "record", "shaderLoader": "record", "java": "record", "gpu": "record", "driver": "record", "graphicsApi": "OpenGL", "modsSha256": "record-mod-inventory-hash" },
+  "metricsUnavailable": []
+}

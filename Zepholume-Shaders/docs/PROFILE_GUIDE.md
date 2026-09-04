@@ -5,8 +5,8 @@ Balanced is Zepholume's default and is intentionally not a disguised High profil
 | Profile | Feature baseline | Intended use |
 |---|---|---|
 | Potato | Tier 0: direct grade, loader sky/fog only | Integrated/weak GPUs and compatibility triage |
-| Low | Tier 1: face/cloud/water/weather basics | Original lightweight target |
-| Balanced | Tier 2: material response, atmospheric depth, two-wave water | General gameplay default |
+| Low | Tier 1: face/cloud/water/weather basics; no vertex water motion | Original lightweight target |
+| Balanced | Tier 2: material response, atmospheric depth, two-wave water motion | General gameplay default |
 | High | Tier 3: refined face/cloud/water/weather detail | Stronger systems; runtime validation required |
 | Ultra | Tier 4: maximum bounded analytical detail | Visual evaluation; no temporal/framebuffer expansion |
 

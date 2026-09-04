@@ -51,6 +51,24 @@ function Copy-EvidenceTree([string]$Source, [string]$DestinationRoot, [System.Co
     if (-not (Test-Path -LiteralPath $Source)) { return }
     Get-ChildItem -LiteralPath $Source -Recurse -File -Force | ForEach-Object { Copy-EvidenceFile $_.FullName $DestinationRoot $Items }
 }
+function Find-LogValue([string]$Text, [string[]]$Patterns) {
+    foreach ($pattern in $Patterns) {
+        $match = [regex]::Match($Text, $pattern, [Text.RegularExpressions.RegexOptions]::IgnoreCase)
+        if ($match.Success) { return $match.Groups[1].Value.Trim() }
+    }
+    return $null
+}
+function Get-ConfigValue([string[]]$Paths, [string[]]$Keys) {
+    foreach ($path in $Paths) {
+        if (-not (Test-Path -LiteralPath $path -PathType Leaf)) { continue }
+        $text = Get-Content -LiteralPath $path -Raw
+        foreach ($key in $Keys) {
+            $match = [regex]::Match($text, "(?m)^\s*" + [regex]::Escape($key) + "\s*[=:]\s*(.+?)\s*$")
+            if ($match.Success) { return $match.Groups[1].Value.Trim() }
+        }
+    }
+    return $null
+}
 
 switch ($Action) {
     'Verify' {
@@ -72,20 +90,51 @@ switch ($Action) {
         Write-Host "Java: $($environment.java.executable)"
     }
     'Collect' {
-        $stamp = Get-Date -Format 'yyyyMMdd-HHmmss'
+        # A nonce prevents two collections started in the same second from
+        # silently merging or overwriting one another.
+        $stamp = (Get-Date -Format 'yyyyMMdd-HHmmss') + '-' + [guid]::NewGuid().ToString('N').Substring(0, 8)
         $evidenceRoot = Join-Path $runtimeRoot ('evidence/' + $key + '/' + $stamp)
         New-Item -ItemType Directory -Force -Path $evidenceRoot | Out-Null
         $items = [System.Collections.Generic.List[object]]::new()
         foreach ($relative in @('logs/latest.log','logs/debug.log','options.txt','optionsshaders.txt','config/iris.properties','config/oculus.properties')) { Copy-EvidenceFile (Join-Path $gameDir $relative) $evidenceRoot $items }
         foreach ($relative in @('crash-reports','patched_shaders','screenshots')) { Copy-EvidenceTree (Join-Path $gameDir $relative) $evidenceRoot $items }
         Get-ChildItem -LiteralPath $gameDir -File -Filter 'hs_err_pid*.log' -ErrorAction SilentlyContinue | ForEach-Object { Copy-EvidenceFile $_.FullName $evidenceRoot $items }
-        $collection = [ordered]@{ target=$Target; collectedAt=(Get-Date).ToUniversalTime().ToString('o'); gameDirectory=$gameDir; sourceManifest='runtime/manifests/runtime-environments.json'; files=@($items) }
+        $latestLogPath = Join-Path $gameDir 'logs/latest.log'
+        $latestLog = if (Test-Path -LiteralPath $latestLogPath) { Get-Content -LiteralPath $latestLogPath -Raw } else { '' }
+        $optionPaths = @((Join-Path $gameDir 'optionsshaders.txt'), (Join-Path $gameDir 'config/iris.properties'), (Join-Path $gameDir 'config/oculus.properties'))
+        $packagePath = Join-Path $gameDir ('shaderpacks/' + $environment.zepholumePackage.filename)
+        $metadata = [ordered]@{
+            minecraftVersion = $environment.minecraftVersion
+            targetLoader = $environment.targetLoader
+            launcherVersionId = $environment.launcherVersionId
+            expectedJava = $environment.java.detectedVersion
+            expectedShaderLoaderMods = @($environment.mods | ForEach-Object { [ordered]@{ filename=$_.filename; sha256=$_.sha256 } })
+            expectedZepholumePackage = if (Test-Path -LiteralPath $packagePath) { [ordered]@{ filename=$environment.zepholumePackage.filename; sha256=(Get-Hash $packagePath) } } else { $null }
+            observedOpenGlVendor = Find-LogValue $latestLog @('OpenGL Vendor:\s*(.+)', 'GL vendor:\s*(.+)')
+            observedOpenGlRenderer = Find-LogValue $latestLog @('OpenGL Renderer:\s*(.+)', 'GL renderer:\s*(.+)')
+            observedOpenGlVersion = Find-LogValue $latestLog @('OpenGL Version:\s*(.+)', 'GL version:\s*(.+)')
+            observedJavaVersion = Find-LogValue $latestLog @('Java is\s+([^,\r\n]+)', 'Java version\s*[:=]\s*(.+)')
+            observedMinecraftVersion = Find-LogValue $latestLog @('Minecraft Version:\s*(.+)', 'Minecraft\s+(?:version\s+)?([0-9][^\s,]+)')
+            observedShaderLoader = Find-LogValue $latestLog @('(Iris[^\r\n]*version[^\r\n]*)', '(Oculus[^\r\n]*version[^\r\n]*)')
+            selectedShaderPack = Get-ConfigValue $optionPaths @('shaderPack', 'shaderpack', 'shaderPackName')
+            selectedZepholumeProfile = Get-ConfigValue $optionPaths @('profile', 'ZEPH_PROFILE_TIER')
+            logShaderErrors = @([regex]::Matches($latestLog, '(?im)^.*(?:shader|iris|oculus).*(?:error|exception|failed).*$') | ForEach-Object Value)
+            screenshotsCollected = @($items | Where-Object { $_.path -like 'screenshots/*' }).Count
+            patchedShadersCollected = @($items | Where-Object { $_.path -like 'patched_shaders/*' }).Count
+            crashReportsCollected = @($items | Where-Object { $_.path -like 'crash-reports/*' }).Count
+        }
+        $collection = [ordered]@{ target=$Target; collectedAt=(Get-Date).ToUniversalTime().ToString('o'); gameDirectoryRelative=$environment.directoryName; sourceManifest='runtime/manifests/runtime-environments.json'; metadata=$metadata; files=@($items) }
         $collection | ConvertTo-Json -Depth 5 | Set-Content -LiteralPath (Join-Path $evidenceRoot 'collection-manifest.json') -Encoding utf8NoBOM
         Write-Host "Evidence collected: $evidenceRoot"
     }
     'Reset' {
         foreach ($relative in @('logs','crash-reports','patched_shaders','screenshots')) {
             $path = Join-Path $gameDir $relative
+            $resolvedParent = [IO.Path]::GetFullPath($gameDir)
+            $resolvedTarget = [IO.Path]::GetFullPath($path)
+            if (-not $resolvedTarget.StartsWith(($resolvedParent + [IO.Path]::DirectorySeparatorChar), [StringComparison]::OrdinalIgnoreCase)) {
+                throw "Refusing reset target outside isolated game directory: $resolvedTarget"
+            }
             if (Test-Path -LiteralPath $path) { Remove-Item -LiteralPath $path -Recurse -Force }
             New-Item -ItemType Directory -Force -Path $path | Out-Null
         }

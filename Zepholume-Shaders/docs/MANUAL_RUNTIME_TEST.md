@@ -30,7 +30,7 @@ Do not delete or replace the existing `Fabric1.20.1` installation. The local ver
 3. Confirm the title screen reports Minecraft 1.20.1 with Fabric/Iris.
 4. Open Video Settings, then Shader Packs.
 5. Enable Iris shader debug mode with `F3 + V`; restart if Iris asks.
-6. Select `Zepholume-Shaders-1.0.2.zip`.
+6. Select `Zepholume-Shaders-1.0.3-dev.zip`.
 7. Record whether shader compilation succeeds.
 8. Create a new disposable Creative test world. Do not open an existing world.
 9. Test daytime terrain, cutout leaves, glass, water from above and below, player hand, held item, entity, block entity, particles, rain, night, Nether, and End.
@@ -59,18 +59,18 @@ The detected local Forge loader is Forge 47.4.22 for Minecraft 1.20.1, represent
 3. Confirm the title screen reports Minecraft 1.20.1 with Forge/Oculus.
 4. Open Video Settings, then Shader Packs.
 5. Enable Oculus shader debug mode with `F3 + V`; restart if Oculus asks.
-6. Select `Zepholume-Shaders-1.0.2.zip` and record whether compilation succeeds.
+6. Select `Zepholume-Shaders-1.0.3-dev.zip` and record whether compilation succeeds.
 7. Create a new disposable Creative test world. Do not open an existing world.
 8. Test daytime terrain, cutout leaves, glass, water from above and below, player hand, held item, entity, block entity, particles, rain, night, Nether, and End.
 9. Switch through Potato, Low, Balanced, High, and Ultra; verify reloads and profile switching.
 10. For the sky/cloud correction, test dawn, noon, sunset, midnight, rain and thunder; look up, at the horizon, toward/away from the sun, and above/below clouds. Repeat Fast/Fancy/Off cloud settings where the loader exposes them.
-10. Take Minecraft screenshots of obvious defects, close normally, and run `./scripts/runtime-test.ps1 -Target Oculus -Action Collect`.
+11. Take Minecraft screenshots of obvious defects, close normally, and run `./scripts/runtime-test.ps1 -Target Oculus -Action Collect`.
 
 Never enable Zepholume in `Still Watching Next`.
 
 ## Evidence and reset
 
-`Collect` copies only test-relevant logs, crash reports, patched shaders, recognised Iris/Oculus shader settings, relevant options, screenshots, JVM crash logs, and a collection manifest into `runtime/evidence/<loader>/<timestamp>/`. It excludes accounts, launcher authentication files, server lists, chat logs, worlds, and unrelated data.
+`Collect` copies only test-relevant logs, crash reports, patched shaders, recognised Iris/Oculus shader settings, relevant options, screenshots, JVM crash logs, and a collection manifest into `runtime/evidence/<loader>/<timestamp>/`. The evidence is local and ignored by Git: logs and screenshots may contain personal in-game or system details, so review/redact it before sharing. It excludes account databases, launcher authentication files, server lists, worlds, and unrelated data.
 
 To clear generated runtime artifacts from one isolated directory, use exactly one target:
 
