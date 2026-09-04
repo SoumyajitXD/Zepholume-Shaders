@@ -8,25 +8,26 @@ Use **Balanced** first. It is the intended general-gameplay baseline, not a disg
 
 The selected profile caps which capability tiers are allowed to compile. Lower overrides can reduce work, but they cannot silently enable features above the chosen baseline.
 
-| Profile | Intended use | V1.0.2 baseline |
+| Profile | Intended use | V1.0.3 baseline |
 | --- | --- | --- |
 | **Potato** | Weak/integrated GPUs and compatibility triage | Direct scene grade and loader sky/fog only; analytical face/material/cloud/water/weather/underwater-colour work compiled out |
 | **Low** | Lower-end hardware | Directional face/cloud response, bounded analytical water/weather, and subtle underwater fog tint |
-| **Balanced** | General gameplay | Default; adds stronger material response, atmospheric depth, continuous time transitions, and animated low-amplitude water |
-| **High** | Systems with more headroom | Raises bounded face/cloud/water/weather detail within the same architecture |
-| **Ultra** | Maximum current Zepholume quality | Highest bounded analytical tiers without shadows, temporal effects, or framebuffer expansion |
+| **Balanced** | General gameplay | Default; adds stronger material response, atmospheric depth, two-wave water movement, and skylight occlusion for downward-facing/overhung facets |
+| **High** | Systems with more headroom | Adds refined face/cloud/water/weather detail, dual-hemisphere ambient fill, fifth-power water response, and top-facet cloud solar rim |
+| **Ultra** | Maximum current Zepholume quality | Maximum bounded analytical detail within the same renderer; still no shadows, temporal effects, or framebuffer expansion |
 
 `Ultra Lite` remains a **deprecated compatibility alias for Low** so older selections remain meaningful.
 
-## V1.0.2 profile behaviour
+## V1.0.3 profile behaviour
 
-V1.0.2 strengthens the distinction between the tiers:
+V1.0.3 keeps the existing profile boundaries and adds refinement where the higher tiers have budget for it:
 
-- **Potato** preserves the loader fog colour underwater and compiles out analytical water and other optional direct-path systems.
-- **Low** enables the lowest bounded face/cloud/water/weather tiers and a restrained underwater fog tint.
-- **Balanced** adds the intended core material/atmospheric treatment and low-amplitude two-wave water movement.
-- **High** and **Ultra** raise analytical quality inside the same one-colour-target renderer; they do not activate a hidden heavyweight pipeline.
-- Dimension and profile gates are validated so work intended to be absent is less likely to survive preprocessing by accident.
+- **Potato** preserves loader sky/fog behaviour and continues to compile out optional analytical systems.
+- **Low** keeps the lightweight face/cloud/water/weather baseline and restrained underwater fog tint.
+- **Balanced** remains the everyday default and now includes skylight occlusion for downward-facing facets and partial overhangs.
+- **High** and **Ultra** add dual-hemisphere ambient irradiance, a refined fifth-power Fresnel-Schlick-shaped water response, and top-facet solar rim highlighting on clouds.
+- Lower water tiers retain the V1.0.2 fourth-power artistic response rather than inheriting the High/Ultra water model by accident.
+- Dimension and profile gates remain authoritative so work intended to be absent is less likely to survive preprocessing by mistake.
 
 The goal is simple: moving down a tier should remove or reduce actual shader work, not merely change a few constants and call it optimisation.
 
@@ -64,7 +65,7 @@ Use Balanced for normal play. This is the default profile and the best starting 
 
 ### High
 
-Use High when Balanced has comfortable GPU headroom and you want stronger bounded analytical detail.
+Use High when Balanced has comfortable GPU headroom and you want the stronger V1.0.3 ambient, water, and cloud refinements.
 
 ### Ultra
 
@@ -84,4 +85,4 @@ If you are losing FPS or frame-time consistency:
 
 When comparing profiles, keep the world, position, camera direction, weather, time, render distance, resolution, and FPS/VSync settings fixed. Otherwise the comparison is mostly decorative statistics.
 
-Zepholume does not publish profile-specific FPS percentages without controlled runtime measurements. The final V1.0.2 package has not yet completed a real Iris/Oculus benchmark pass, so no profile performance delta should be invented from static source metrics.
+Zepholume does not publish profile-specific FPS percentages without controlled runtime measurements. V1.0.3 has not yet completed a controlled real-loader A/B benchmark pass, so no profile performance delta should be invented from static source metrics or mathematical regression tests.

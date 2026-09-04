@@ -8,40 +8,38 @@ Zepholume Shaders is a performance-conscious shader pack for **Minecraft Java Ed
 
 ## Current release
 
-**Zepholume Shaders V1.0.2**  
-Release archive: `Zepholume-Shaders-1.0.2.zip`
+**Zepholume Shaders V1.0.3**  
+Release archive: [`Zepholume-Shaders-1.0.3.zip`](Releases/Zepholume-Shaders-1.0.3.zip)
 
-V1.0.2 targets **Minecraft Java 1.20.1** and is designed for the Iris/Fabric/Sodium and Oculus/Forge/Embeddium shader ecosystems.
+V1.0.3 keeps Minecraft **1.20.1** as the staged runtime-validation baseline and also carries static compatibility lanes for Minecraft **26.2**. Those lanes do not all have the same evidence level.
 
-Prepared validation environments currently use:
+Prepared/stated environments currently include:
 
-- **Iris 1.7.6 + Sodium 0.5.13** on Minecraft 1.20.1
-- **Oculus 1.8.0 + Embeddium 0.3.31 + Forge 47.4.22** on Minecraft 1.20.1
-- **Java 17**
+- **Minecraft 1.20.1 + Iris 1.7.6 + Sodium 0.5.13 + Java 17** — staged locally; static validation passes
+- **Minecraft 1.20.1 + Forge 47.4.22 + Oculus 1.8.0 + Embeddium 0.3.31 + Java 17** — staged locally; static validation passes
+- **Minecraft 26.2 + Iris 1.11.2 on Fabric or NeoForge** — static target only; runtime not yet qualified
+- **Minecraft 26.2 + Forge 65.1.0 + Oculus Community Port 0.3.0-beta.1** — experimental and currently blocked for Zepholume's ordinary `gbuffers_*` world programs by the port's declared partial program support
 
-> Runtime verification for the final V1.0.2 package is still pending. Static GLSL compilation and isolated environment/package checks do **not** prove Iris/Oculus-patched compilation, real-GPU rendering, screenshots, FPS, or cross-vendor behaviour.
+> Static GLSL validation, staged files, and mathematical regression tests do **not** prove loader-patched compilation, shader activation, real-GPU rendering, visual parity, FPS, or cross-vendor behaviour. Runtime qualification remains a separate requirement.
 
 OptiFine is not a supported target for Zepholume.
 
-## What's new in V1.0.2
+## What's new in V1.0.3
 
-V1.0.2 focuses on making the existing direct-path renderer behave more intelligently rather than adding heavyweight new pipelines.
+V1.0.3 is a correctness, visual-refinement, and hardening release. It improves the existing direct-path renderer rather than bolting on a heavyweight post-processing stack.
 
 Highlights include:
 
-- skylight-grounded sun/moon directional lighting to reduce cave and interior celestial leakage
-- relative block-light warmth based on block light versus skylight, reducing daytime orange tinting
-- tuned fourth-power Fresnel-inspired water response with dual-lobe celestial specular, horizon extinction, and storm softening
-- profile-gated underwater fog tint from Low through Ultra while Potato preserves loader fog colour
-- sun/moon directional cloud rim lighting, underside shaping, and restrained twilight warmth
-- analytical sky/horizon and fog alignment to reduce twilight/night seam artifacts
-- Nether and End lighting isolation that compiles out irrelevant Overworld celestial work
-- hot-path cleanup: one shared surface-normal normalization, fewer sky direction normalizations, and faster elevation helpers
-- stronger generated-source and structural regression checks for profile compile-outs and renderer-boundary violations
+- removed the active water fragment path's redundant working-space encode/decode round trip
+- restored exact Hermite `smoothstep` behaviour for skylight gating and block-light warmth while retaining named compile-time reciprocal range constants
+- added skylight occlusion for downward-facing facets and partial overhangs on Balanced, High, and Ultra
+- added dual-hemisphere ambient irradiance on High and Ultra, combining cool sky-dome fill with restrained warm ground bounce
+- refined High and Ultra water to a fifth-power Fresnel-Schlick-shaped response while lower water tiers retain the V1.0.2 fourth-power artistic curve
+- added top-facet solar rim highlighting to clouds on High and Ultra
+- removed unreachable fog-scattering and foliage-response branches instead of carrying dead profile code
+- expanded deterministic mathematical regression tests and evidence-scoped compatibility/benchmark documentation
 
-Water's reflectance model is deliberately a **tuned fourth-power Fresnel-inspired approximation**, not conventional fifth-power Fresnel-Schlick and not a physically based water simulation.
-
-No FPS uplift is claimed without controlled runtime benchmarking. Static shader complexity is useful engineering evidence; it is not a benchmark wearing a fake moustache.
+No FPS uplift is claimed without controlled runtime benchmarking. Static shader complexity, source cleanup, and mathematical equivalence are useful engineering evidence; they are not gameplay benchmarks wearing fake moustaches.
 
 ## What Zepholume focuses on
 
@@ -61,29 +59,31 @@ Zepholume does **not** chase a feature checklist at any cost. The rendering desi
 | --- | --- | --- |
 | **Potato** | Weak/integrated GPUs and compatibility triage | Direct grade and loader sky/fog; analytical face/material/cloud/water/weather/underwater-colour work compiled out |
 | **Low** | Lower-end hardware | Directional face/cloud response, bounded analytical water/weather, subtle underwater fog tint |
-| **Balanced** | General gameplay | Default; adds stronger material response, atmospheric depth, continuous time transitions, and animated low-amplitude water |
-| **High** | Systems with more headroom | Higher bounded face/cloud/water/weather detail within the same architecture |
-| **Ultra** | Maximum current Zepholume quality | Highest bounded analytical tiers; still no shadow/post/temporal renderer expansion |
+| **Balanced** | General gameplay | Default; adds stronger material response, atmospheric depth, two-wave water movement, and V1.0.3 skylight occlusion for downward/overhung facets |
+| **High** | Systems with more headroom | Adds higher bounded detail, dual-hemisphere ambient fill, refined fifth-power water response, and cloud solar-rim treatment |
+| **Ultra** | Maximum current Zepholume quality | Maximum bounded analytical tiers within the same direct-path architecture; still no shadow/post/temporal renderer expansion |
 
 `Balanced` is the default and recommended starting point. `Ultra Lite` remains a deprecated compatibility alias for Low. See [Profiles](docs/PROFILES.md).
 
 ## Installation
 
-1. Use a **Minecraft 1.20.1** instance with a compatible Iris or Oculus shader setup.
-2. Download `Zepholume-Shaders-1.0.2.zip`.
+1. For the strongest current evidence baseline, use a **Minecraft 1.20.1** instance with the staged Iris or Oculus stack documented above.
+2. Download [`Zepholume-Shaders-1.0.3.zip`](Releases/Zepholume-Shaders-1.0.3.zip).
 3. Put the ZIP directly in that instance's `shaderpacks` folder.
 4. Open Minecraft's shader-pack menu and select **Zepholume Shaders**.
 5. Start with the **Balanced** profile, then tune down or up for your hardware.
 
 Do not extract the release ZIP. For compatibility testing, prefer a disposable or isolated instance over an irreplaceable modpack save.
 
+Minecraft 26.2 lanes are currently **static/experimental evidence**, not equivalent to the staged 1.20.1 baseline. See the compatibility documentation before treating them as supported runtime configurations.
+
 Full instructions: [Installation Guide](docs/INSTALLATION.md)
 
 ## Compatibility and validation status
 
-V1.0.2 currently has strong **static/source validation** but incomplete **runtime validation**.
+V1.0.3 has strong **static/source and numerical regression validation** but incomplete **runtime qualification**.
 
-The maintained source validation covers the declared profile/dimension matrix and standalone compilation of **210 unique expanded GLSL stages**. That can catch source, preprocessor, interface, and architecture regressions; it cannot establish loader-patched compilation, driver behaviour, visual correctness, or measured performance.
+The maintained source pipeline validates profile/dimension behaviour, standalone GLSL compilation, architectural boundaries, and release-specific mathematical invariants. That can catch source, preprocessor, interface, arithmetic, and architecture regressions; it cannot establish loader-patched compilation, driver behaviour, visual correctness, or measured performance.
 
 See [Compatibility](docs/COMPATIBILITY.md) for the public compatibility boundary.
 
@@ -104,7 +104,7 @@ Zepholume-Shaders/
 ├─ README.md                 Project overview
 ├─ docs/                     Public project documentation
 ├─ Screenshots/              Comparison screenshots
-├─ Releases/                 Release area
+├─ Releases/                 Release archives
 ├─ Zepholume-Shaders/        Shader source and development tooling
 ├─ curseforge-description.html
 ├─ LICENSE
