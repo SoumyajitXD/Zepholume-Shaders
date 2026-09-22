@@ -105,6 +105,7 @@ foreach ($required in @('ZEPH_SKYLIGHT_INV_RANGE', 'tSky * tSky * (3.0 - 2.0 * t
 if ($water -notmatch 'vec3\s+zephWaterSurfaceLinear\s*\(' -or $water -match 'zephWaterEncode\s*\(') {
     throw 'Water working-space regression: the active surface must return linear colour without an encode step.'
 }
-if ($water -match 'if\s*\(\s*daylight\s*[<>]') { throw 'Water daylight branch gate returned; it changed the continuous V1.0.2 lobe contribution without measured justification.' }
+if ($water -notmatch 'float\s+sunWeight\s*=\s*daylight\s*\*\s*sunHorizonFade\s*;' -or $water -notmatch 'float\s+moonWeight\s*=\s*\(\s*1\.0\s*-\s*daylight\s*\)\s*\*\s*moonHorizonFade\s*;') { throw 'Water regression: celestial lobe weights must remain explicit uniform-only products.' }
+if ($water -notmatch 'if\s*\(\s*sunWeight\s*>\s*0\.0\s*\)' -or $water -notmatch 'if\s*\(\s*daylight\s*<\s*1\.0\s*\)' -or $water -notmatch 'if\s*\(\s*moonWeight\s*>\s*0\.0\s*\)') { throw 'Water regression: exact-zero celestial lobe gates are missing.' }
 if ($fog -match 'ZEPH_EFFECTIVE_ATMOSPHERE_QUALITY\s*>=\s*2' -or $materials -match 'ZEPH_EFFECTIVE_MATERIAL_QUALITY\s*>=\s*3') { throw 'An unreachable profile threshold returned; either expose and test it or remove it.' }
 Write-Host ('Math regression tests passed. Maximum smoothstep absolute errors: ' + (($maxErrors.GetEnumerator() | ForEach-Object { "$($_.Key)=$([string]::Format('{0:E3}', $_.Value))" }) -join '; ') + '; water float32 old/new=' + [string]::Format('{0:E3}', $waterRoundTripError))

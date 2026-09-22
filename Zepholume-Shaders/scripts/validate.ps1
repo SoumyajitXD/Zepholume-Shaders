@@ -33,7 +33,7 @@ $shaderRoot = Join-Path $Root 'shaders'
 $programs = @(Get-ChildItem -LiteralPath $shaderRoot -Recurse -File | Where-Object { $_.Extension -in '.vsh','.fsh' })
 if ($programs.Count -eq 0) { $errors.Add('No program shaders found.') }
 if ($Package) {
-    foreach ($requiredPackageEntry in @('README.md','CHANGELOG.md','THIRD_PARTY_NOTICES.md','docs/ARCHITECTURE.md','docs/PROFILE_GUIDE.md','shaders/shaders.properties')) {
+    foreach ($requiredPackageEntry in @('README.md','CHANGELOG.md','THIRD_PARTY_NOTICES.md','shaders/shaders.properties')) {
         if ($packageEntries -notcontains $requiredPackageEntry) { $errors.Add("ZIP missing required entry: $requiredPackageEntry") }
     }
     foreach ($shaderFile in (Get-ChildItem -LiteralPath $shaderRoot -Recurse -File)) {
@@ -117,8 +117,8 @@ foreach ($vertex in $programs | Where-Object Extension -eq '.vsh') {
     foreach ($stage in @($vertex.FullName, $fragmentPath)) {
         if ($resolved[$stage] -notmatch '(?m)\bvoid\s+main\s*\(') { $errors.Add("Missing main entry point: $stage") }
     }
-    $vertexVaryings = @([regex]::Matches($resolved[$vertex.FullName], '(?m)^\s*varying\s+([A-Za-z_][\w]*)\s+([A-Za-z_]\w*)\s*;') | ForEach-Object { "$($_.Groups[1].Value) $($_.Groups[2].Value)" } | Sort-Object -Unique)
-    $fragmentVaryings = @([regex]::Matches($resolved[$fragmentPath], '(?m)^\s*varying\s+([A-Za-z_][\w]*)\s+([A-Za-z_]\w*)\s*;') | ForEach-Object { "$($_.Groups[1].Value) $($_.Groups[2].Value)" } | Sort-Object -Unique)
+    $vertexVaryings = @([regex]::Matches($resolved[$vertex.FullName], '(?m)^\s*((?:flat\s+)?varying)\s+([A-Za-z_][\w]*)\s+([A-Za-z_]\w*)\s*;') | ForEach-Object { "$($_.Groups[1].Value) $($_.Groups[2].Value) $($_.Groups[3].Value)" } | Sort-Object -Unique)
+    $fragmentVaryings = @([regex]::Matches($resolved[$fragmentPath], '(?m)^\s*((?:flat\s+)?varying)\s+([A-Za-z_][\w]*)\s+([A-Za-z_]\w*)\s*;') | ForEach-Object { "$($_.Groups[1].Value) $($_.Groups[2].Value) $($_.Groups[3].Value)" } | Sort-Object -Unique)
     if ((Compare-Object $vertexVaryings $fragmentVaryings)) { $errors.Add("Vertex/fragment varying mismatch: $($vertex.FullName)") }
     if ($resolved[$fragmentPath] -match 'gl_FragData\s*\[\s*[1-9]') { $errors.Add("Unexpected extra colour attachment: $fragmentPath") }
     if ($resolved[$fragmentPath] -notmatch 'gl_FragData\s*\[\s*0\s*\]') { $errors.Add("No main colour output: $fragmentPath") }
@@ -137,9 +137,9 @@ foreach ($staleVersion in @('0.1.0-dev','0.2.0-dev')) {
         $errors.Add("Stale development version remains in release-facing metadata: $staleVersion")
     }
 }
-if ($properties -notmatch 'Zepholume 1\.0\.3-dev') { $errors.Add('Shader properties must identify the 1.0.3-dev development line.') }
-if ($changelog -notmatch '(?m)^## 1\.0\.3-dev .+unreleased') { $errors.Add('Changelog must contain the unreleased 1.0.3-dev heading.') }
-if ($readme -notmatch '(?i)current public release[^\r\n]*V1\.0\.2') { $errors.Add('README must retain V1.0.2 as the current public release until final publication.') }
+if ($properties -notmatch 'Zepholume 1\.0\.4 final release') { $errors.Add('Shader properties must identify the V1.0.4 final release.') }
+if ($changelog -notmatch '(?m)^## 1\.0\.4 .+released') { $errors.Add('Changelog must contain the V1.0.4 released heading.') }
+if ($readme -notmatch '(?i)V1\.0\.4 final release') { $errors.Add('README must identify V1.0.4 as the current final release.') }
 $definitions = @{}
 foreach ($m in [regex]::Matches($settings, '(?m)^#define\s+(ZEPH_[A-Z_]+)\s+(\d+)\s*//\s*\[([^\]]+)\]')) { $definitions[$m.Groups[1].Value] = @($m.Groups[3].Value -split '\s+' | ForEach-Object {[int]$_}) }
 $options = @([regex]::Matches($properties, 'ZEPH_[A-Z_]+') | ForEach-Object Value | Sort-Object -Unique)

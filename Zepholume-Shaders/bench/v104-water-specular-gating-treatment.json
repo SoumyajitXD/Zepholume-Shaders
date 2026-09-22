@@ -1,0 +1,19 @@
+{
+  "schemaVersion": 1,
+  "role": "TREATMENT",
+  "packVersion": "1.0.4-water-specular-gating-treatment",
+  "package": {
+    "path": "dist/Zepholume-Shaders-1.0.4-water-specular-gating-treatment.zip",
+    "sha256": null,
+    "sha256File": "dist/Zepholume-Shaders-1.0.4-water-specular-gating-treatment.zip.sha256"
+  },
+  "control": {
+    "path": "dist/Zepholume-Shaders-1.0.3-dev.zip",
+    "sha256": "C8C654607AF3A7A6E42966EDB75DA7ED17AA99A2CF8FBD94BF81A5899D7448A4"
+  },
+  "candidate": {
+    "description": "Skip only exact-zero, draw-uniform water celestial lobes before their half-vector, dot and power-chain work.",
+    "sourceFiles": ["shaders/lib/water.glsl", "scripts/tests/water-specular-gating-equivalence.ps1"]
+  },
+  "qualification": "Host float32 equivalence and static checks only. Runtime performance, loader-patched compilation and rendered visual equivalence remain unverified."
+}

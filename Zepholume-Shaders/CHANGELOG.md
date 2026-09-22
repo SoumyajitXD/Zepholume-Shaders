@@ -1,5 +1,12 @@
 # Changelog
 
+## 1.0.4 — released
+
+- Avoids unnecessary water celestial-specular calculations when their contribution is exactly zero, without adding a shader interface or vendor-specific path.
+- Keeps the direct GLSL 330 compatibility architecture and strengthens reproducible packaging and static validation coverage.
+- Defers fog endpoint hoisting: it remains an archived experimental treatment pending runtime evidence.
+- No measured FPS, frame-pacing, or runtime compatibility claim is made.
+
 ## 1.0.3-dev — unreleased
 
 - Removed the active water fragment path's redundant working-space encode/decode round trip. The water surface now feeds the existing linear scene grade directly; no texture read, pass, buffer, or visual algorithm was added.

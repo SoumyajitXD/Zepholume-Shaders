@@ -83,23 +83,35 @@ vec3 zephWaterSurfaceLinear(vec3 displayColour, vec3 normal, vec3 viewDirection,
     vec3 surface = mix(transmission, reflectedSky, reflectance * 0.65);
     return max(surface, vec3(0.0));
 #else
-    // Analytical celestial specular highlight.  Keep both lobes evaluated so
-    // the V1.0.2 continuous day/night transfer remains exactly intact; branch
-    // lowering and savings are implementation-dependent without GPU ISA data.
+    // Analytical celestial specular highlight.  The lobe weights below depend
+    // only on per-draw uniforms.  At exact day/night and horizon-zero states,
+    // skip the lobe-only half-vector, dot and power chain; its prior result
+    // was multiplied by exactly zero.  Keep twilight continuous by testing
+    // only the already-clamped, exact-zero uniform weights.
     vec3 sunDir = zephSafeNormalize(sunPosition);
     float daylight = zephDaylightFromElevation(sunDir.y);
-    vec3 sunHalf = zephSafeNormalize(viewDir + sunDir);
-    float sunNdotH = max(dot(normal, sunHalf), 0.0);
     float sunHorizonFade = zephSaturate(sunDir.y * 6.0 + 0.1);
-    float sunSpecFactor = zephSpecularLobe(sunNdotH) * daylight * sunHorizonFade;
-    vec3 sunSpecular = vec3(1.15, 1.08, 0.92) * (sunSpecFactor * 0.60);
+    float sunWeight = daylight * sunHorizonFade;
+    vec3 sunSpecular = vec3(0.0);
+    if (sunWeight > 0.0) {
+        vec3 sunHalf = zephSafeNormalize(viewDir + sunDir);
+        float sunNdotH = max(dot(normal, sunHalf), 0.0);
+        float sunSpecFactor = zephSpecularLobe(sunNdotH) * daylight * sunHorizonFade;
+        sunSpecular = vec3(1.15, 1.08, 0.92) * (sunSpecFactor * 0.60);
+    }
 
-    vec3 moonDir = zephSafeNormalize(moonPosition);
-    vec3 moonHalf = zephSafeNormalize(viewDir + moonDir);
-    float moonNdotH = max(dot(normal, moonHalf), 0.0);
-    float moonHorizonFade = zephSaturate(moonDir.y * 6.0 + 0.1);
-    float moonSpecFactor = zephSpecularLobe(moonNdotH) * (1.0 - daylight) * moonHorizonFade;
-    vec3 moonSpecular = vec3(0.55, 0.68, 0.88) * (moonSpecFactor * 0.25);
+    vec3 moonSpecular = vec3(0.0);
+    if (daylight < 1.0) {
+        vec3 moonDir = zephSafeNormalize(moonPosition);
+        float moonHorizonFade = zephSaturate(moonDir.y * 6.0 + 0.1);
+        float moonWeight = (1.0 - daylight) * moonHorizonFade;
+        if (moonWeight > 0.0) {
+            vec3 moonHalf = zephSafeNormalize(viewDir + moonDir);
+            float moonNdotH = max(dot(normal, moonHalf), 0.0);
+            float moonSpecFactor = zephSpecularLobe(moonNdotH) * (1.0 - daylight) * moonHorizonFade;
+            moonSpecular = vec3(0.55, 0.68, 0.88) * (moonSpecFactor * 0.25);
+        }
+    }
     vec3 celestialSpecular = sunSpecular + moonSpecular;
 
     celestialSpecular *= (1.0 - storm * 0.85);

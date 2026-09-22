@@ -1,0 +1,23 @@
+{
+  "schemaVersion": 1,
+  "role": "TREATMENT",
+  "packVersion": "1.0.4-fog-hoist-treatment",
+  "package": {
+    "path": "dist/Zepholume-Shaders-1.0.4-fog-hoist-treatment.zip",
+    "sha256": null,
+    "sha256File": "dist/Zepholume-Shaders-1.0.4-fog-hoist-treatment.zip.sha256"
+  },
+  "control": {
+    "path": "dist/Zepholume-Shaders-1.0.3-dev.zip",
+    "sha256": "C8C654607AF3A7A6E42966EDB75DA7ED17AA99A2CF8FBD94BF81A5899D7448A4"
+  },
+  "candidate": {
+    "description": "Flat vertex-to-fragment hoist of the draw-uniform fog endpoint; fog factor remains fragment-local.",
+    "sourceFiles": [
+      "shaders/lib/fog.glsl",
+      "shaders/lib/vertex.glsl",
+      "shaders/lib/fragment.glsl"
+    ]
+  },
+  "qualification": "Static and host float32 checks only. Runtime performance, loader-patched compilation, rendering and visual equivalence remain unverified."
+}

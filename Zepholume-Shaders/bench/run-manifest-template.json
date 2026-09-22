@@ -1,16 +1,57 @@
 {
-  "schemaVersion": 1,
+  "schemaVersion": 2,
   "status": "template-not-yet-executed",
   "runId": "replace-with-unique-id",
-  "packVersion": "1.0.2 or 1.0.3-dev",
+  "packVersion": "1.0.3-dev or 1.0.4-dev",
   "packSha256": "record-after-packaging",
   "profile": "Balanced",
   "sceneId": "copy-an-id-from-scene-manifest",
   "sceneManifestSha256": "record-sha256-of-bench/scene-manifest.json",
   "lockedEnvironmentIdentity": "record-one-stable-id-for-every-comparable-run",
-  "captureTool": { "name": "record-tool", "version": "record-version", "rawFrameTimeCsv": "relative-csv-filename" },
-  "timing": { "warmupSeconds": 30, "measurementSeconds": 60, "startedAtUtc": "record-utc-timestamp" },
-  "world": { "seed": "record", "dimension": "record", "coordinates": "record-x-y-z", "yaw": "record", "pitch": "record", "time": "record", "weather": "record" },
-  "runtime": { "minecraft": "record", "loader": "record", "shaderLoader": "record", "java": "record", "gpu": "record", "driver": "record", "graphicsApi": "OpenGL", "modsSha256": "record-mod-inventory-hash" },
-  "metricsUnavailable": []
+  "captureTool": {
+    "name": "record-tool",
+    "version": "record-version",
+    "rawFrameTimeCsv": "relative-csv-filename",
+    "rawFrameTimeSha256": "record-raw-csv-sha256"
+  },
+  "timing": {
+    "warmupSeconds": 30,
+    "measurementSeconds": 60,
+    "startedAtUtc": "record-utc-timestamp"
+  },
+  "world": {
+    "seed": "record",
+    "dimension": "record",
+    "coordinates": "record-x-y-z",
+    "yaw": "record",
+    "pitch": "record",
+    "time": "record",
+    "weather": "record",
+    "worldSnapshotSha256": "record-disposable-world-snapshot-sha256",
+    "cameraPathSha256": "record-camera-path-or-stationary-camera-spec-sha256"
+  },
+  "runtime": {
+    "minecraft": "record",
+    "loader": "record",
+    "shaderLoader": "record",
+    "java": "record",
+    "gpu": "record",
+    "driver": "record",
+    "graphicsApi": "OpenGL",
+    "modsSha256": "record-mod-inventory-hash",
+    "jvmArgumentsSha256": "record-jvm-arguments-sha256"
+  },
+  "metricsUnavailable": [],
+  "role": "CONTROL or TREATMENT",
+  "settings": {
+    "resolution": "1920x1080",
+    "renderScale": "100%",
+    "renderDistance": 16,
+    "simulationDistance": 12,
+    "fov": 70,
+    "vsync": false,
+    "fpsCap": "unlimited",
+    "resourcePackSha256": "record-resource-pack-or-default-inventory-sha256",
+    "shaderOptionsSha256": "record-option-export-sha256"
+  }
 }

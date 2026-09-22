@@ -4,7 +4,7 @@ Zepholume is an original, direct-path Minecraft Java shader pack for clean survi
 
 ## Status and supported evidence
 
-**Current public release: V1.0.2.** The active development line is **V1.0.3-dev**. The local isolated legacy candidates are Fabric/Iris 1.7.6 + Sodium 0.5.13 and Forge/Oculus 1.8.0 + Embeddium 0.3.31, using Java 17. Neither loader has been launched with V1.0.3-dev; Iris/Oculus compilation, shader activation, rendering, screenshots, FPS, and cross-vendor behaviour therefore remain unverified.
+**V1.0.4 final release.** It retains the V1.0.3 development baseline and avoids unnecessary water celestial-specular calculations when their contribution is exactly zero. This is not an FPS claim: Iris/Oculus compilation, shader activation, rendering, screenshots, performance, and cross-vendor behaviour remain unverified. The isolated test lanes are Fabric/Iris 1.7.6 + Sodium 0.5.13 and Forge/Oculus 1.8.0 + Embeddium 0.3.31, using Java 17.
 
 Minecraft 26.1.2 installations exist locally but no Zepholume evidence is associated with them. OptiFine is not supported or tested.
 
@@ -14,7 +14,7 @@ Balanced is the default. Selecting a profile applies its full baseline; the grou
 
 | Profile | Direct-path features |
 |---|---|
-| Potato | Direct grade and loader sky/fog; no analytical water, cloud, face, or underwater-colour work |
+| Potato | Direct grade and loader sky; above-water atmospheric fog colour remains, underwater fog colour preserves the loader value; no analytical water, cloud, or face work |
 | Low | Directional face/cloud response, bounded fourth-power water reflectance, weather, and subtle underwater fog tint |
 | Balanced | Adds material orientation response, animated low-amplitude water, underwater depth tint, and continuous time transitions |
 | High | Higher face/cloud/water/weather tiers; still one colour target and no shadows/temporal effects |
@@ -23,7 +23,7 @@ Balanced is the default. Selecting a profile applies its full baseline; the grou
 ## Install
 
 1. Use an isolated disposable 1.20.1 Iris or Oculus instance.
-2. For development testing, copy `Zepholume-Shaders-1.0.3-dev.zip` into `shaderpacks`.
+2. Copy `Zepholume-Shaders-1.0.4.zip` into `shaderpacks`.
 3. Select Zepholume and choose Balanced, then use the Profile menu for other baselines.
 4. Retain complete `latest.log` and patched shaders after every loader test.
 
