@@ -143,7 +143,16 @@ try {
     Write-Host "Benchmark regression tests passed: $checks checks; synthetic data only."
 } finally {
     $resolved = [IO.Path]::GetFullPath($work)
-    $tempRoot = [IO.Path]::GetFullPath([IO.Path]::GetTempPath()).TrimEnd('\') + '\'
-    if (-not $resolved.StartsWith($tempRoot,[StringComparison]::OrdinalIgnoreCase) -or [IO.Path]::GetFileName($resolved) -notlike 'zepholume-benchmark-tests-*') { throw 'Unsafe fixture cleanup target.' }
+    $tempRoot = [IO.Path]::GetFullPath([IO.Path]::GetTempPath())
+    $relative = [IO.Path]::GetRelativePath($tempRoot, $resolved)
+    $parentPrefix = '..' + [IO.Path]::DirectorySeparatorChar
+    if (
+        [IO.Path]::IsPathRooted($relative) -or
+        $relative -eq '..' -or
+        $relative.StartsWith($parentPrefix, [StringComparison]::Ordinal) -or
+        [IO.Path]::GetFileName($resolved) -notlike 'zepholume-benchmark-tests-*'
+    ) {
+        throw 'Unsafe fixture cleanup target.'
+    }
     Remove-Item -LiteralPath $resolved -Recurse -Force
 }
