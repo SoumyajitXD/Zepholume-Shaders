@@ -2,9 +2,9 @@
 
 Zepholume Shaders targets **Minecraft Java Edition** and requires a compatible shader loader.
 
-## V1.0.3 compatibility boundary
+## V1.0.4 compatibility boundary
 
-V1.0.3 has several test lanes, but they do **not** all have equal evidence.
+V1.0.4 has several test lanes, but they do **not** all have equal evidence.
 
 | Loader path | Prepared/target environment | Current evidence |
 | --- | --- | --- |
@@ -19,7 +19,7 @@ Zepholume does not include a shader loader. Install the appropriate loader separ
 
 ## What is actually verified
 
-The V1.0.3 source pipeline validates declared profile/dimension behaviour, standalone GLSL compilation, direct-path architectural constraints, and deterministic mathematical regressions for release-sensitive shader arithmetic.
+The V1.0.4 source pipeline validates declared profile/dimension behaviour, standalone GLSL compilation, direct-path architectural constraints, and deterministic mathematical regressions for release-sensitive shader arithmetic.
 
 That is useful evidence for source correctness, preprocessing, interfaces, profile isolation, and numerical behaviour. It does **not** prove:
 
@@ -69,13 +69,13 @@ When diagnosing a problem, first reproduce it with the smallest practical setup 
 
 - Minecraft 1.20.1
 - Fabric + Iris + Sodium, or Forge + Oculus + Embeddium
-- Zepholume Shaders V1.0.3
+- Zepholume Shaders V1.0.4
 
 Then reintroduce rendering/resource-pack mods until the conflict appears.
 
 ## Version policy
 
-For **V1.0.3**, Minecraft **1.20.1** is the strongest staged evidence baseline.
+For **V1.0.4**, Minecraft **1.20.1** is the strongest staged evidence baseline.
 
 Minecraft **26.2** has explicit static/experimental target lanes, but those are not equivalent to completed runtime support. Do not infer that every Minecraft version between 1.20.1 and 26.2 is validated merely because the endpoints appear in project metadata.
 

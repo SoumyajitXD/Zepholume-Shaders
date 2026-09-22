@@ -6,7 +6,7 @@ This guide covers the fastest way to isolate common Zepholume problems without t
 
 Check that:
 
-- `Zepholume-Shaders-1.0.3.zip` is inside the correct instance's `shaderpacks` folder
+- `Zepholume-Shaders-1.0.4.zip` is inside the correct instance's `shaderpacks` folder
 - the release archive has not been placed inside another ZIP
 - you are launching the same Minecraft instance whose folder you edited
 - the intended shader loader is actually installed and loading
@@ -16,7 +16,7 @@ Check that:
 1. Confirm the exact Minecraft version and compare it with the documented compatibility lane.
 2. Confirm the exact Iris/Oculus version.
 3. Confirm required loader dependencies are present.
-4. Confirm you are testing `Zepholume-Shaders-1.0.3.zip` rather than an older archive.
+4. Confirm you are testing `Zepholume-Shaders-1.0.4.zip` rather than an older archive.
 5. Try the same release in a minimal clean instance.
 6. Read the complete `latest.log` and search for shader compilation/preprocessor errors.
 7. If the loader exposes patched shader output, preserve it for diagnosis.
@@ -53,7 +53,7 @@ Then reproduce in a minimal instance. If the problem disappears there, reintrodu
 
 ## Cave/interior lighting looks wrong
 
-V1.0.3 keeps skylight-grounded celestial lighting, restores exact Hermite skylight/block-light transition behaviour, and adds extra skylight occlusion for downward-facing facets and partial overhangs on Balanced, High, and Ultra.
+V1.0.4 keeps skylight-grounded celestial lighting, restores exact Hermite skylight/block-light transition behaviour, and adds extra skylight occlusion for downward-facing facets and partial overhangs on Balanced, High, and Ultra.
 
 If a cave or enclosed room still looks strongly sunlit, moonlit, uniformly orange, or strangely flat:
 
@@ -67,7 +67,7 @@ High and Ultra also add bounded dual-hemisphere ambient irradiance. If the issue
 
 ## Water or underwater rendering looks wrong
 
-V1.0.3 keeps water on the direct path and removes a redundant working-space encode/decode round trip.
+V1.0.4 keeps water on the direct path, retains the earlier working-space encode/decode cleanup, and adds exact-zero gating for inactive celestial-specular lobes.
 
 Water behaviour is profile-dependent:
 
@@ -89,7 +89,7 @@ That profile split matters. A High-only reflection issue is a much better report
 
 ## Clouds look wrong
 
-High and Ultra add top-facet solar rim highlighting in V1.0.3. If a cloud artefact appears only on those profiles, capture the time of day, weather, camera direction, and whether the issue disappears on Balanced.
+High and Ultra retain top-facet solar rim highlighting in V1.0.4. If a cloud artefact appears only on those profiles, capture the time of day, weather, camera direction, and whether the issue disappears on Balanced.
 
 ## Low FPS
 
@@ -109,7 +109,7 @@ Also inspect:
 
 A profile comparison is only meaningful when the scene and settings stay fixed.
 
-V1.0.3 does not currently have a completed controlled real-loader A/B benchmark, so do not compare your result against invented official FPS numbers—there are none.
+V1.0.4 does not currently have a completed controlled real-loader A/B benchmark, so do not compare your result against invented official FPS numbers—there are none.
 
 ## Stutter or bad frame pacing
 
@@ -165,6 +165,6 @@ Screenshot/video attached: yes/no
 
 ## Support boundary
 
-For **Zepholume V1.0.3**, Minecraft **1.20.1** is the strongest staged evidence baseline. Minecraft **26.2** has explicit static/experimental lanes but is not yet equivalent to completed runtime support, and intermediate Minecraft versions are not automatically validated by implication.
+For **Zepholume V1.0.4**, Minecraft **1.20.1** is the strongest staged evidence baseline. Minecraft **26.2** has explicit static/experimental lanes but is not yet equivalent to completed runtime support, and intermediate Minecraft versions are not automatically validated by implication.
 
 OptiFine is not a supported Zepholume target. Broad GPU, driver, loader, or performance claims require completed real runtime evidence rather than static validation alone.

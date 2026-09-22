@@ -8,7 +8,7 @@ Use **Balanced** first. It is the intended general-gameplay baseline, not a disg
 
 The selected profile caps which capability tiers are allowed to compile. Lower overrides can reduce work, but they cannot silently enable features above the chosen baseline.
 
-| Profile | Intended use | V1.0.3 baseline |
+| Profile | Intended use | V1.0.4 baseline |
 | --- | --- | --- |
 | **Potato** | Weak/integrated GPUs and compatibility triage | Direct scene grade and loader sky/fog only; analytical face/material/cloud/water/weather/underwater-colour work compiled out |
 | **Low** | Lower-end hardware | Directional face/cloud response, bounded analytical water/weather, and subtle underwater fog tint |
@@ -18,15 +18,16 @@ The selected profile caps which capability tiers are allowed to compile. Lower o
 
 `Ultra Lite` remains a **deprecated compatibility alias for Low** so older selections remain meaningful.
 
-## V1.0.3 profile behaviour
+## V1.0.4 profile behaviour
 
-V1.0.3 keeps the existing profile boundaries and adds refinement where the higher tiers have budget for it:
+V1.0.4 preserves the existing profile boundaries. Its production optimisation does not create a new quality tier; it only skips inactive water celestial-specular lobe work when the existing contribution is exactly zero.
 
 - **Potato** preserves loader sky/fog behaviour and continues to compile out optional analytical systems.
 - **Low** keeps the lightweight face/cloud/water/weather baseline and restrained underwater fog tint.
-- **Balanced** remains the everyday default and now includes skylight occlusion for downward-facing facets and partial overhangs.
-- **High** and **Ultra** add dual-hemisphere ambient irradiance, a refined fifth-power Fresnel-Schlick-shaped water response, and top-facet solar rim highlighting on clouds.
+- **Balanced** remains the everyday default with skylight occlusion for downward-facing facets and partial overhangs.
+- **High** and **Ultra** retain dual-hemisphere ambient irradiance, the refined fifth-power Fresnel-Schlick-shaped water response, and top-facet solar rim highlighting on clouds.
 - Lower water tiers retain the V1.0.2 fourth-power artistic response rather than inheriting the High/Ultra water model by accident.
+- The V1.0.4 exact-zero water gate preserves the existing non-zero lobe arithmetic and does not change profile capability boundaries.
 - Dimension and profile gates remain authoritative so work intended to be absent is less likely to survive preprocessing by mistake.
 
 The goal is simple: moving down a tier should remove or reduce actual shader work, not merely change a few constants and call it optimisation.
@@ -65,7 +66,7 @@ Use Balanced for normal play. This is the default profile and the best starting 
 
 ### High
 
-Use High when Balanced has comfortable GPU headroom and you want the stronger V1.0.3 ambient, water, and cloud refinements.
+Use High when Balanced has comfortable GPU headroom and you want the stronger V1.0.4 ambient, water, and cloud refinements.
 
 ### Ultra
 
@@ -85,4 +86,4 @@ If you are losing FPS or frame-time consistency:
 
 When comparing profiles, keep the world, position, camera direction, weather, time, render distance, resolution, and FPS/VSync settings fixed. Otherwise the comparison is mostly decorative statistics.
 
-Zepholume does not publish profile-specific FPS percentages without controlled runtime measurements. V1.0.3 has not yet completed a controlled real-loader A/B benchmark pass, so no profile performance delta should be invented from static source metrics or mathematical regression tests.
+Zepholume does not publish profile-specific FPS percentages without controlled runtime measurements. V1.0.4 has not yet completed a controlled real-loader A/B benchmark pass, so no profile performance delta should be invented from static source metrics or mathematical regression tests.

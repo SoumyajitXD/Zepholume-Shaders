@@ -8,10 +8,10 @@ Zepholume Shaders is a performance-conscious shader pack for **Minecraft Java Ed
 
 ## Current release
 
-**Zepholume Shaders V1.0.3**  
-Release archive: [`Zepholume-Shaders-1.0.3.zip`](Releases/Zepholume-Shaders-1.0.3.zip)
+**Zepholume Shaders V1.0.4**  
+Release archive: [`Zepholume-Shaders-1.0.4.zip`](Releases/Zepholume-Shaders-1.0.4.zip)
 
-V1.0.3 keeps Minecraft **1.20.1** as the staged runtime-validation baseline and also carries static compatibility lanes for Minecraft **26.2**. Those lanes do not all have the same evidence level.
+V1.0.4 keeps Minecraft **1.20.1** as the staged runtime-validation baseline and also carries static compatibility lanes for Minecraft **26.2**. Those lanes do not all have the same evidence level.
 
 Prepared/stated environments currently include:
 
@@ -24,22 +24,20 @@ Prepared/stated environments currently include:
 
 OptiFine is not a supported target for Zepholume.
 
-## What's new in V1.0.3
+## What's new in V1.0.4
 
-V1.0.3 is a correctness, visual-refinement, and hardening release. It improves the existing direct-path renderer rather than bolting on a heavyweight post-processing stack.
+V1.0.4 is a focused optimisation and maintenance release. It keeps Zepholume's existing direct-path renderer and ships one deliberately narrow production optimisation instead of turning an unmeasured experiment into marketing.
 
 Highlights include:
 
-- removed the active water fragment path's redundant working-space encode/decode round trip
-- restored exact Hermite `smoothstep` behaviour for skylight gating and block-light warmth while retaining named compile-time reciprocal range constants
-- added skylight occlusion for downward-facing facets and partial overhangs on Balanced, High, and Ultra
-- added dual-hemisphere ambient irradiance on High and Ultra, combining cool sky-dome fill with restrained warm ground bounce
-- refined High and Ultra water to a fifth-power Fresnel-Schlick-shaped response while lower water tiers retain the V1.0.2 fourth-power artistic curve
-- added top-facet solar rim highlighting to clouds on High and Ultra
-- removed unreachable fog-scattering and foliage-response branches instead of carrying dead profile code
-- expanded deterministic mathematical regression tests and evidence-scoped compatibility/benchmark documentation
+- exact-zero gating for inactive water celestial-specular lobes, avoiding lobe-only work when the existing sun or moon contribution is mathematically zero
+- preservation of the existing non-zero twilight/celestial arithmetic order rather than replacing the water model with a cheaper approximation
+- no new shader interface, varying, uniform, colour target, vendor extension, or GPU-specific rendering path
+- continued GLSL 330 compatibility and one-colour-target architecture
+- deterministic, allow-listed release packaging and strengthened static/package validation
+- the experimental fog endpoint hoist remains deferred and is **not** part of the V1.0.4 production shaders
 
-No FPS uplift is claimed without controlled runtime benchmarking. Static shader complexity, source cleanup, and mathematical equivalence are useful engineering evidence; they are not gameplay benchmarks wearing fake moustaches.
+No FPS uplift is claimed without controlled runtime benchmarking. The retained gate removes unnecessary work in qualifying states, but source-level savings and mathematical equivalence are not gameplay benchmarks wearing fake moustaches.
 
 ## What Zepholume focuses on
 
@@ -59,7 +57,7 @@ Zepholume does **not** chase a feature checklist at any cost. The rendering desi
 | --- | --- | --- |
 | **Potato** | Weak/integrated GPUs and compatibility triage | Direct grade and loader sky/fog; analytical face/material/cloud/water/weather/underwater-colour work compiled out |
 | **Low** | Lower-end hardware | Directional face/cloud response, bounded analytical water/weather, subtle underwater fog tint |
-| **Balanced** | General gameplay | Default; adds stronger material response, atmospheric depth, two-wave water movement, and V1.0.3 skylight occlusion for downward/overhung facets |
+| **Balanced** | General gameplay | Default; adds stronger material response, atmospheric depth, two-wave water movement, and skylight occlusion for downward/overhung facets |
 | **High** | Systems with more headroom | Adds higher bounded detail, dual-hemisphere ambient fill, refined fifth-power water response, and cloud solar-rim treatment |
 | **Ultra** | Maximum current Zepholume quality | Maximum bounded analytical tiers within the same direct-path architecture; still no shadow/post/temporal renderer expansion |
 
@@ -68,7 +66,7 @@ Zepholume does **not** chase a feature checklist at any cost. The rendering desi
 ## Installation
 
 1. For the strongest current evidence baseline, use a **Minecraft 1.20.1** instance with the staged Iris or Oculus stack documented above.
-2. Download [`Zepholume-Shaders-1.0.3.zip`](Releases/Zepholume-Shaders-1.0.3.zip).
+2. Download [`Zepholume-Shaders-1.0.4.zip`](Releases/Zepholume-Shaders-1.0.4.zip).
 3. Put the ZIP directly in that instance's `shaderpacks` folder.
 4. Open Minecraft's shader-pack menu and select **Zepholume Shaders**.
 5. Start with the **Balanced** profile, then tune down or up for your hardware.
@@ -81,7 +79,7 @@ Full instructions: [Installation Guide](docs/INSTALLATION.md)
 
 ## Compatibility and validation status
 
-V1.0.3 has strong **static/source and numerical regression validation** but incomplete **runtime qualification**.
+V1.0.4 has strong **static/source and numerical regression validation** but incomplete **runtime qualification**.
 
 The maintained source pipeline validates profile/dimension behaviour, standalone GLSL compilation, architectural boundaries, and release-specific mathematical invariants. That can catch source, preprocessor, interface, arithmetic, and architecture regressions; it cannot establish loader-patched compilation, driver behaviour, visual correctness, or measured performance.
 
