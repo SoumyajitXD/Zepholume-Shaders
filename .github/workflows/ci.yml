@@ -6,6 +6,8 @@ on:
   pull_request:
     branches: [main]
   workflow_dispatch:
+  schedule:
+    - cron: "23 4 * * 1"
 
 permissions:
   contents: read
@@ -14,9 +16,9 @@ concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 
-defaults:
-  run:
-    shell: bash
+env:
+  POWERSHELL_TELEMETRY_OPTOUT: "1"
+  DOTNET_NOLOGO: "1"
 
 jobs:
   workflow-policy:
@@ -31,7 +33,8 @@ jobs:
           persist-credentials: false
           show-progress: false
 
-      - name: Enforce read-only pinned Actions policy
+      - name: Enforce workflow security policy
+        shell: bash
         run: |
           set -euo pipefail
           python3 - <<'PY'
@@ -40,28 +43,42 @@ jobs:
           import sys
           from pathlib import Path
 
-          workflow = Path(".github/workflows/ci.yml")
-          text = workflow.read_text(encoding="utf-8")
-          errors = 0
+          workflows = sorted(Path(".github/workflows").glob("*.y*ml"))
+          if not workflows:
+              print("::error::.github/workflows contains no workflow files")
+              raise SystemExit(1)
 
-          forbidden_trigger = "pull_request" + "_target:"
-          if forbidden_trigger in text:
-              print(f"::error file={workflow}::Untrusted pull requests must never run in a privileged target context")
-              errors += 1
-          if re.search(r"^\s+(?:contents|pull-requests|actions|id-token):\s+write\s*$", text, re.MULTILINE):
-              print(f"::error file={workflow}::CI must remain read-only")
-              errors += 1
-          for match in re.finditer(r"^\s*uses:\s*([^\s#]+)", text, re.MULTILINE):
-              action = match.group(1)
-              if not action.startswith("./") and not re.fullmatch(r"[^/]+/[^@]+@[0-9a-f]{40}", action):
-                  line = text.count("\n", 0, match.start()) + 1
-                  print(f"::error file={workflow},line={line}::Action is not pinned to an immutable commit: {action}")
+          errors = 0
+          for workflow in workflows:
+              text = workflow.read_text(encoding="utf-8")
+
+              if "pull_request_target:" in text:
+                  print(f"::error file={workflow}::pull_request_target is forbidden for untrusted changes")
                   errors += 1
 
-          sys.exit(1 if errors else 0)
+              if re.search(r"(?m)^\s*permissions:\s*write-all\s*$", text):
+                  print(f"::error file={workflow}::write-all permissions are forbidden")
+                  errors += 1
+
+              for match in re.finditer(r"(?m)^\s+[A-Za-z0-9_-]+:\s+write\s*$", text):
+                  line = text.count("\n", 0, match.start()) + 1
+                  print(f"::error file={workflow},line={line}::CI permissions must remain read-only")
+                  errors += 1
+
+              for match in re.finditer(r"(?m)^\s*uses:\s*([^\s#]+)", text):
+                  action = match.group(1)
+                  if action.startswith("./"):
+                      continue
+                  if not re.fullmatch(r"[^/]+/[^@]+@[0-9a-f]{40}", action):
+                      line = text.count("\n", 0, match.start()) + 1
+                      print(f"::error file={workflow},line={line}::Action is not pinned to a 40-character commit SHA: {action}")
+                      errors += 1
+
+          raise SystemExit(1 if errors else 0)
           PY
 
       - name: Install actionlint
+        shell: bash
         run: |
           set -euo pipefail
           mkdir -p "$RUNNER_TEMP/bin"
@@ -77,13 +94,91 @@ jobs:
           done
           echo "$RUNNER_TEMP/bin" >> "$GITHUB_PATH"
 
-      - name: Lint workflow
+      - name: Lint all workflows
+        shell: bash
         run: |
           set -euo pipefail
-          actionlint .github/workflows/ci.yml
+          actionlint .github/workflows/*.yml .github/workflows/*.yaml 2>/dev/null ||             actionlint .github/workflows/*.yml
 
-  shader-validation:
-    name: Shader validation
+  regression-tests:
+    name: Full regression tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          fetch-depth: 1
+          persist-credentials: false
+          show-progress: false
+
+      - name: Validator and mathematical regression suite
+        shell: pwsh
+        working-directory: Zepholume-Shaders
+        run: |
+          $ErrorActionPreference = 'Stop'
+          ./scripts/tests/validate-tests.ps1
+          if ($LASTEXITCODE -ne 0) { throw "Validator regression suite failed with exit code $LASTEXITCODE" }
+
+      - name: Benchmark tooling regression suite
+        shell: pwsh
+        working-directory: Zepholume-Shaders
+        run: |
+          $ErrorActionPreference = 'Stop'
+          ./scripts/tests/benchmark-tests.ps1
+          if ($LASTEXITCODE -ne 0) { throw "Benchmark regression suite failed with exit code $LASTEXITCODE" }
+
+      - name: Ensure tests did not modify tracked files
+        shell: bash
+        run: |
+          set -euo pipefail
+          if ! git diff --quiet --exit-code; then
+            git diff --check
+            git diff
+            echo "::error::Regression tests modified tracked repository files"
+            exit 1
+          fi
+
+  windows-smoke:
+    name: Windows PowerShell smoke
+    runs-on: windows-latest
+    timeout-minutes: 20
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          fetch-depth: 1
+          persist-credentials: false
+          show-progress: false
+
+      - name: Validate source
+        shell: pwsh
+        working-directory: Zepholume-Shaders
+        run: |
+          $ErrorActionPreference = 'Stop'
+          ./scripts/validate.ps1
+          if ($LASTEXITCODE -ne 0) { throw "Source validation failed with exit code $LASTEXITCODE" }
+
+      - name: Run mathematical tests
+        shell: pwsh
+        working-directory: Zepholume-Shaders
+        run: |
+          $ErrorActionPreference = 'Stop'
+          ./scripts/tests/math-regression.ps1
+          if ($LASTEXITCODE -ne 0) { throw "Math regression failed with exit code $LASTEXITCODE" }
+          ./scripts/tests/water-specular-gating-equivalence.ps1
+          if ($LASTEXITCODE -ne 0) { throw "Water gating equivalence failed with exit code $LASTEXITCODE" }
+
+      - name: Run benchmark tooling tests
+        shell: pwsh
+        working-directory: Zepholume-Shaders
+        run: |
+          $ErrorActionPreference = 'Stop'
+          ./scripts/tests/benchmark-tests.ps1
+          if ($LASTEXITCODE -ne 0) { throw "Benchmark regression suite failed with exit code $LASTEXITCODE" }
+
+  portability:
+    name: Static portability matrix
     runs-on: ubuntu-latest
     timeout-minutes: 20
     steps:
@@ -94,36 +189,23 @@ jobs:
           persist-credentials: false
           show-progress: false
 
-      - name: Run validator regression tests
+      - name: Evaluate portability matrix
+        shell: pwsh
         working-directory: Zepholume-Shaders
         run: |
-          set -euo pipefail
-          pwsh -NoLogo -NoProfile -File scripts/tests/validate-tests.ps1
+          $ErrorActionPreference = 'Stop'
+          $output = Join-Path $env:RUNNER_TEMP 'zepholume-portability'
+          ./scripts/portability-matrix.ps1 -OutputRoot $output
+          if ($LASTEXITCODE -ne 0) { throw "Portability matrix failed with exit code $LASTEXITCODE" }
 
-      - name: Validate shader source and metadata
-        working-directory: Zepholume-Shaders
-        run: |
-          set -euo pipefail
-          pwsh -NoLogo -NoProfile -File scripts/validate.ps1
+          $manifest = Join-Path $output 'manifest.json'
+          if (-not (Test-Path -LiteralPath $manifest)) { throw "Portability matrix did not produce manifest.json" }
+          $rows = @(Get-Content -LiteralPath $manifest -Raw | ConvertFrom-Json)
+          if ($rows.Count -lt 1) { throw "Portability matrix is empty" }
 
-      - name: Validate portability matrix
-        working-directory: Zepholume-Shaders
-        run: |
-          set -euo pipefail
-          pwsh -NoLogo -NoProfile -File scripts/portability-matrix.ps1 \
-            -OutputRoot "$RUNNER_TEMP/zepholume-portability"
-
-          python3 - <<'PY'
-          import json
-          import os
-          from pathlib import Path
-
-          manifest = Path(os.environ["RUNNER_TEMP"]) / "zepholume-portability" / "manifest.json"
-          rows = json.loads(manifest.read_text(encoding="utf-8-sig"))
-          if not rows:
-              raise SystemExit("Portability matrix is empty")
-          print(f"Validated {len(rows)} mocked portability cases.")
-          PY
+          Add-Content -LiteralPath $env:GITHUB_STEP_SUMMARY -Value "### Static portability matrix"
+          Add-Content -LiteralPath $env:GITHUB_STEP_SUMMARY -Value "- Mocked cases validated: **$($rows.Count)**"
+          Add-Content -LiteralPath $env:GITHUB_STEP_SUMMARY -Value "- This is static/preprocessor evidence, not real GPU runtime qualification."
 
   glsl-compiler:
     name: GLSL compiler validation
@@ -138,35 +220,55 @@ jobs:
           show-progress: false
 
       - name: Install Khronos glslangValidator
+        id: glslang
+        shell: bash
         run: |
           set -euo pipefail
-          if ! command -v glslangValidator >/dev/null 2>&1; then
-            sudo apt-get update -qq
-            sudo apt-get install -y --no-install-recommends glslang-tools
-          fi
-          glslangValidator --version
-
-      - name: Generate compiled variants
-        working-directory: Zepholume-Shaders
-        run: |
-          set -euo pipefail
-          pwsh -NoLogo -NoProfile -File scripts/generate-compiled-variants.ps1 \
-            -OutputRoot "$RUNNER_TEMP/zepholume-variants"
-
-      - name: Compile all unique variants
-        working-directory: Zepholume-Shaders
-        run: |
-          set -euo pipefail
+          sudo apt-get update -qq
+          sudo apt-get install -y --no-install-recommends glslang-tools
           validator="$(command -v glslangValidator)"
-          pwsh -NoLogo -NoProfile -File scripts/validate-glsl.ps1 \
-            -VariantRoot "$RUNNER_TEMP/zepholume-variants" \
-            -ReportRoot "$RUNNER_TEMP/zepholume-glslang" \
-            -Validator "$validator"
+          test -x "$validator"
+          "$validator" --version
+          echo "path=$validator" >> "$GITHUB_OUTPUT"
 
-          cat "$RUNNER_TEMP/zepholume-glslang/glslang-report.md" >> "$GITHUB_STEP_SUMMARY"
+      - name: Generate evaluated shader variants
+        shell: pwsh
+        working-directory: Zepholume-Shaders
+        env:
+          GLSLANG_VALIDATOR: ${{ steps.glslang.outputs.path }}
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $variants = Join-Path $env:RUNNER_TEMP 'zepholume-variants'
+          ./scripts/generate-compiled-variants.ps1 -OutputRoot $variants -Validator $env:GLSLANG_VALIDATOR
+          if ($LASTEXITCODE -ne 0) { throw "Variant generation failed with exit code $LASTEXITCODE" }
+
+      - name: Compile every unique evaluated variant
+        shell: pwsh
+        working-directory: Zepholume-Shaders
+        env:
+          GLSLANG_VALIDATOR: ${{ steps.glslang.outputs.path }}
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $variants = Join-Path $env:RUNNER_TEMP 'zepholume-variants'
+          $reports = Join-Path $env:RUNNER_TEMP 'zepholume-glslang'
+          ./scripts/validate-glsl.ps1 -VariantRoot $variants -ReportRoot $reports -Validator $env:GLSLANG_VALIDATOR
+          if ($LASTEXITCODE -ne 0) { throw "GLSL validation failed with exit code $LASTEXITCODE" }
+
+          $markdown = Join-Path $reports 'glslang-report.md'
+          if (-not (Test-Path -LiteralPath $markdown)) { throw "GLSL validation report was not produced" }
+          Get-Content -LiteralPath $markdown | Add-Content -LiteralPath $env:GITHUB_STEP_SUMMARY
+
+      - name: Upload GLSL validation report
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: glslang-validation-${{ github.run_id }}
+          path: ${{ runner.temp }}/zepholume-glslang
+          if-no-files-found: warn
+          retention-days: 7
 
   package-validation:
-    name: Package validation
+    name: Deterministic package validation
     runs-on: ubuntu-latest
     timeout-minutes: 20
     steps:
@@ -177,48 +279,52 @@ jobs:
           persist-credentials: false
           show-progress: false
 
-      - name: Build and revalidate distribution ZIP
+      - name: Build package twice and compare
         id: package
+        shell: pwsh
         working-directory: Zepholume-Shaders
         run: |
-          set -euo pipefail
-          pwsh -NoLogo -NoProfile -File scripts/package.ps1
+          $ErrorActionPreference = 'Stop'
+          $dist = Join-Path (Get-Location) 'dist'
+          Remove-Item -LiteralPath $dist -Recurse -Force -ErrorAction SilentlyContinue
 
-          mapfile -t zips < <(find dist -maxdepth 1 -type f -name '*.zip' -print | sort)
-          if [[ "${#zips[@]}" -ne 1 ]]; then
-            echo "::error file=Zepholume-Shaders/dist::Expected exactly one package ZIP, found ${#zips[@]}"
-            exit 1
-          fi
+          ./scripts/package.ps1 -OutputName 'ci-build-a.zip'
+          if ($LASTEXITCODE -ne 0) { throw "First package build failed with exit code $LASTEXITCODE" }
+          $first = Join-Path $dist 'ci-build-a.zip'
+          $firstHash = (Get-FileHash -LiteralPath $first -Algorithm SHA256).Hash
 
-          zip="${zips[0]}"
-          sha_file="${zip}.sha256"
-          test -s "$zip"
-          test -s "$sha_file"
+          ./scripts/package.ps1 -OutputName 'ci-build-b.zip'
+          if ($LASTEXITCODE -ne 0) { throw "Second package build failed with exit code $LASTEXITCODE" }
+          $second = Join-Path $dist 'ci-build-b.zip'
+          $secondHash = (Get-FileHash -LiteralPath $second -Algorithm SHA256).Hash
 
-          package_name="$(basename "$zip")"
-          package_size="$(stat -c '%s' "$zip")"
-          package_hash="$(sha256sum "$zip" | awk '{print toupper($1)}')"
+          if ($firstHash -cne $secondHash) {
+              throw "Package is not reproducible within the same runner: $firstHash != $secondHash"
+          }
 
-          {
-            echo "### $package_name"
-            echo "- Size: \`$package_size\` bytes"
-            echo "- SHA-256: \`$package_hash\`"
-          } >> "$GITHUB_STEP_SUMMARY"
+          $shaLine = (Get-Content -LiteralPath "$first.sha256" -Raw).Trim()
+          $expected = "$firstHash  ci-build-a.zip"
+          if ($shaLine -cne $expected) {
+              throw "Checksum sidecar mismatch. Expected '$expected', found '$shaLine'"
+          }
 
-          {
-            echo "zip=$zip"
-            echo "sha=$sha_file"
-            echo "name=$package_name"
-          } >> "$GITHUB_OUTPUT"
+          $size = (Get-Item -LiteralPath $first).Length
+          Add-Content -LiteralPath $env:GITHUB_STEP_SUMMARY -Value "### Deterministic package"
+          Add-Content -LiteralPath $env:GITHUB_STEP_SUMMARY -Value "- SHA-256: `$firstHash`"
+          Add-Content -LiteralPath $env:GITHUB_STEP_SUMMARY -Value "- Size: **$size bytes**"
+          Add-Content -LiteralPath $env:GITHUB_STEP_SUMMARY -Value "- Two clean builds produced identical ZIP bytes."
+
+          "zip=Zepholume-Shaders/dist/ci-build-a.zip" | Out-File -FilePath $env:GITHUB_OUTPUT -Append -Encoding utf8
+          "sha=Zepholume-Shaders/dist/ci-build-a.zip.sha256" | Out-File -FilePath $env:GITHUB_OUTPUT -Append -Encoding utf8
 
       - name: Upload validated package
-        if: github.event_name != 'pull_request'
+        if: github.event_name == 'push' || github.event_name == 'workflow_dispatch'
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
         with:
-          name: ${{ steps.package.outputs.name }}
+          name: zepholume-ci-package-${{ github.sha }}
           path: |
-            Zepholume-Shaders/${{ steps.package.outputs.zip }}
-            Zepholume-Shaders/${{ steps.package.outputs.sha }}
+            ${{ steps.package.outputs.zip }}
+            ${{ steps.package.outputs.sha }}
           if-no-files-found: error
           retention-days: 7
 
@@ -229,17 +335,21 @@ jobs:
     if: always()
     needs:
       - workflow-policy
-      - shader-validation
+      - regression-tests
+      - windows-smoke
+      - portability
       - glsl-compiler
       - package-validation
     steps:
       - name: Enforce required job results
+        shell: bash
         run: |
           set -euo pipefail
-
           declare -A results=(
             [workflow-policy]="${{ needs.workflow-policy.result }}"
-            [shader-validation]="${{ needs.shader-validation.result }}"
+            [regression-tests]="${{ needs.regression-tests.result }}"
+            [windows-smoke]="${{ needs.windows-smoke.result }}"
+            [portability]="${{ needs.portability.result }}"
             [glsl-compiler]="${{ needs.glsl-compiler.result }}"
             [package-validation]="${{ needs.package-validation.result }}"
           )
@@ -247,7 +357,7 @@ jobs:
           failed=0
           for job in "${!results[@]}"; do
             result="${results[$job]}"
-            echo "$job: $result"
+            printf '%s: %s\n' "$job" "$result"
             if [[ "$result" != "success" ]]; then
               echo "::error::$job finished with result '$result'"
               failed=1
