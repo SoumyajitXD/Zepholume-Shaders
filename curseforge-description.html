@@ -5,8 +5,8 @@
 <div style="font-size: 40px; line-height: 1.05; font-weight: 800; color: #fff;">ZEPHOLUME SHADERS</div>
 <div style="font-size: 20px; line-height: 1.4; color: #ddd5d1;">Atmospheric lighting. Polished visuals. Practical performance.</div>
 <p style="color: #a9a09b; font-size: 16px;">A performance-conscious Minecraft Java shader pack built to give survival worlds richer lighting, stronger depth and a more cohesive atmosphere without casually setting the GPU budget on fire.</p>
-<div style="font-size: 12px; font-weight: bold; color: #b3bcff;">CURRENT PROJECT RELEASE &bull; V1.0.3</div>
-<div style="color: #756c68; font-size: 12px;">Release file: Zepholume-Shaders-1.0.3.zip &bull; CurseForge file availability can lag behind the maintained repository. Check the Files tab for the version actually published there.</div>
+<div style="font-size: 12px; font-weight: bold; color: #b3bcff;">CURRENT PROJECT RELEASE &bull; V1.0.4</div>
+<div style="color: #756c68; font-size: 12px;">Release file: Zepholume-Shaders-1.0.4.zip &bull; CurseForge file availability can lag behind the maintained repository. Check the Files tab for the version actually published there.</div>
 <div><a style="display: inline-block; background-color: #9ba7ff; color: #0c0705; font-weight: bold; text-decoration: none;" href="https://www.curseforge.com/minecraft/shaders/zepholume-shaders/files" rel="nofollow">CurseForge Files</a> <a style="display: inline-block; border: 1px solid #4c474f; color: #d0d5ff; font-weight: bold; text-decoration: none;" href="https://github.com/SoumyajitXD/Zepholume-Shaders" rel="nofollow">GitHub &amp; Source</a></div>
 </div>
 <div style="text-align: center;"><img style="display: block; width: 100%;" src="https://raw.githubusercontent.com/SoumyajitXD/Zepholume-Shaders/main/Screenshots/01-vanilla-vs-zepholume.png" alt="Vanilla Minecraft compared with Zepholume Shaders &mdash; comparison 01">
@@ -26,26 +26,25 @@
 </div>
 <div style="background-color: #302520;">&nbsp;</div>
 <div>
-<div style="font-size: 12px; font-weight: bold; text-transform: uppercase; color: #c39c79;">V1.0.3</div>
-<div style="font-size: 31px; line-height: 1.2; font-weight: 800; color: #fff;">More consistent light. Cleaner maths. Stronger foundations.</div>
-<p style="color: #9d9490;">V1.0.3 is a correctness, refinement and hardening release. Rather than bolting on another expensive rendering system, this update concentrates on making Zepholume's existing lighting and water paths behave more consistently while strengthening the validation used to keep subtle regressions out of releases.</p>
+<div style="font-size: 12px; font-weight: bold; text-transform: uppercase; color: #c39c79;">V1.0.4</div>
+<div style="font-size: 31px; line-height: 1.2; font-weight: 800; color: #fff;">Less wasted water work. Same restrained renderer.</div>
+<p style="color: #9d9490;">V1.0.4 is a focused optimisation and maintenance release. It does not add another rendering system, rewrite the visual identity or invent an FPS percentage from thin air. The production change targets unnecessary celestial-specular work in the existing water shader while preserving Zepholume's direct-path architecture.</p>
 <ul style="padding-left: 23px; color: #aaa19c;">
-<li><strong style="color: #e8e3df;">Skylight transitions were corrected and hardened.</strong> The affected transition now uses the intended 0.04&ndash;0.65 range with mathematically equivalent Hermite-style interpolation that is explicitly regression-tested.</li>
-<li><strong style="color: #e8e3df;">Block-light transitions received the same treatment.</strong> Warm artificial lighting now follows the corrected 0.10&ndash;0.90 transition range with stronger numerical regression coverage.</li>
-<li><strong style="color: #e8e3df;">Interior and cave lighting remains better grounded.</strong> Celestial response continues to depend on skylight rather than pretending every underground block has direct access to the sky.</li>
-<li><strong style="color: #e8e3df;">Block-light warmth stays contextual.</strong> Artificial warmth is driven by block-light dominance relative to skylight instead of indiscriminately tinting strongly sky-lit surfaces orange.</li>
-<li><strong style="color: #e8e3df;">Water maths was cleaned up.</strong> An unnecessary encode/decode route was removed from the water path, eliminating needless precision churn while preserving the lightweight analytical design.</li>
-<li><strong style="color: #e8e3df;">Water keeps its bounded grazing response.</strong> Zepholume retains its tuned Fresnel-inspired treatment and analytical celestial specular response without adding SSR, depth reconstruction or another framebuffer chain.</li>
-<li><strong style="color: #e8e3df;">Shader maths received additional scrutiny.</strong> V1.0.3 focuses on equivalent, predictable expressions rather than clever-looking transformations that are difficult to verify.</li>
-<li><strong style="color: #e8e3df;">Regression tests now inspect the actual shader source.</strong> Lighting tests derive constants from the GLSL implementation instead of quietly validating a separate mathematical model that could drift away from production code.</li>
-<li><strong style="color: #e8e3df;">Boundary behaviour is tested explicitly.</strong> Numerical checks cover values below, at, inside, around the midpoint and above the affected transition regions.</li>
-<li><strong style="color: #e8e3df;">Portability and release validation were strengthened.</strong> The existing profile, dimension and GLSL validation pipeline continues to guard against structural, compilation and shader-architecture regressions.</li>
+<li><strong style="color: #e8e3df;">Water celestial-specular work now has exact-zero gating.</strong> When an existing sun or moon contribution is mathematically zero, Zepholume can skip the lobe-only calculations that would otherwise produce a value multiplied by zero anyway.</li>
+<li><strong style="color: #e8e3df;">Full daylight can avoid unnecessary moon-specular work.</strong> When the existing uniform contribution makes the moon lobe exactly inactive, its direction-normalisation and related lobe calculations do not need to run.</li>
+<li><strong style="color: #e8e3df;">Equivalent non-zero lighting paths are preserved.</strong> Twilight and other states where a celestial contribution is active keep the existing calculation order instead of replacing the water model with a cheaper approximation.</li>
+<li><strong style="color: #e8e3df;">The gate is based on draw-uniform state, not a noisy per-pixel surface branch.</strong> It does not introduce a fragment-varying normal-dot decision merely to manufacture an optimisation.</li>
+<li><strong style="color: #e8e3df;">No new shader interface was required.</strong> The production change adds no new varying, uniform, colour target, vendor extension or GPU-specific rendering path.</li>
+<li><strong style="color: #e8e3df;">The direct GLSL 330 compatibility architecture remains intact.</strong> V1.0.4 still uses the same deliberately bounded forward rendering design.</li>
+<li><strong style="color: #e8e3df;">The fog endpoint-hoisting experiment was not promoted.</strong> It remains preserved as a separate deferred experiment because static equivalence alone was not enough evidence to justify shipping it as a performance optimisation.</li>
+<li><strong style="color: #e8e3df;">Packaging and validation were hardened.</strong> The final release is produced from a controlled source allow-list with deterministic packaging behaviour rather than scooping development debris into the public ZIP.</li>
+<li><strong style="color: #e8e3df;">No measured FPS claim is attached to V1.0.4.</strong> The retained change removes provably unnecessary work in exact-zero states, but real frame-time impact still requires controlled runtime measurement.</li>
 </ul>
 <div style="background-color: #15100e;">
-<div style="color: #e8e4e1; font-weight: bold;">Tiny errors, measured instead of hand-waved</div>
-<div style="color: #928984;">The V1.0.3 mathematical regression suite observed maximum errors of roughly 2.3&times;10<sup>-9</sup> for the tested skylight path and 1.1&times;10<sup>-16</sup> for the tested block-light path. The removed water float32 encode/decode route showed a round-trip error of roughly 1.19&times;10<sup>-7</sup>.</div>
+<div style="color: #e8e4e1; font-weight: bold;">Optimisation without performance fan-fiction</div>
+<div style="color: #928984;">V1.0.4 has mathematical and static evidence that the gated zero-contribution calculations cannot affect their final zero-valued result. That establishes correctness for the tested predicate cases. It does not establish a universal FPS increase, because a shader compiler, driver and GPU remain inconveniently more complicated than a source-code diff.</div>
 </div>
-<p style="color: #7f7672; font-size: 13px;">Those numbers are numerical-regression evidence, not an FPS benchmark and not proof that every GPU driver renders identically. A calculator is useful; it still has not secretly become a graphics card.</p>
+<p style="color: #7f7672; font-size: 13px;">The fog-hoist treatment was deliberately left out of production. Keeping an optimisation because it looks clever would be benchmark cosplay; V1.0.4 ships the smaller, lower-risk change instead.</p>
 </div>
 <div style="background-color: #302520;">&nbsp;</div>
 <div>
@@ -61,11 +60,11 @@
 <div style="font-size: 20px; font-weight: bold; color: #f1edea;">Fog &amp; dimensional atmosphere</div>
 <p style="color: #9d9490;">Fog is treated as part of the scene. The Overworld gains atmospheric depth, underwater views gain restrained tinting on supported profiles, and the Nether and End use independent ambient treatment rather than carrying unnecessary Overworld celestial maths.</p>
 <div style="font-size: 20px; font-weight: bold; color: #f1edea;">Block lighting</div>
-<p style="color: #9d9490;">Interior warmth is driven by the relationship between block light and skylight. V1.0.3 further hardens the transition maths so artificial lighting can feel richer indoors without forcing an orange cast over strongly sky-lit surfaces.</p>
+<p style="color: #9d9490;">Interior warmth is driven by the relationship between block light and skylight. Artificial lighting gains richer warmth where block light actually dominates instead of indiscriminately painting strongly sky-lit surfaces orange.</p>
 <div style="font-size: 20px; font-weight: bold; color: #f1edea;">Weather</div>
 <p style="color: #9d9490;">Rain and storms soften directional lighting and adjust atmospheric colour without requiring a separate heavyweight weather renderer.</p>
 <div style="font-size: 20px; font-weight: bold; color: #f1edea;">Water</div>
-<p style="color: #9d9490;">Water combines a bounded sky/transmission response with tuned grazing reflectance. Balanced and higher profiles add low-amplitude frame-time-driven vertex movement, while higher tiers refine analytical water quality without introducing screen-space reflections, depth reconstruction or additional framebuffer passes. V1.0.3 also removes unnecessary encode/decode work from the water path.</p>
+<p style="color: #9d9490;">Water combines bounded sky/transmission response with tuned grazing reflectance. Low and Balanced retain the lighter fourth-power artistic response; High and Ultra use a refined fifth-power Fresnel-Schlick-shaped curve. Balanced and higher profiles add bounded vertex-driven water movement. V1.0.4 additionally skips celestial-specular lobe work when the existing contribution is exactly zero, without introducing SSR, depth reconstruction or another framebuffer pass.</p>
 <div style="font-size: 20px; font-weight: bold; color: #f1edea;">Colour &amp; scene depth</div>
 <p style="color: #9d9490;">Exposure, contrast, saturation, temperature, material orientation and highlight compression are used conservatively to give Minecraft stronger depth without burying its recognisable art direction under aggressive grading.</p>
 </div>
@@ -77,23 +76,23 @@
 <p style="color: #9d9490;">The selected profile establishes a hard feature baseline. Lower overrides can reduce work, but they cannot quietly enable effects above the chosen tier. In other words, Potato is actually Potato&mdash;not Ultra wearing a fake moustache.</p>
 <div style="padding-left: 15px;">
 <div style="font-size: 20px; color: #fff; font-weight: bold;">Potato</div>
-<div style="color: #8e8581;">The compatibility and minimum-work tier. Potato keeps direct scene grading and loader sky/fog while compiling out analytical face, material, cloud, water, weather and underwater-colour work.</div>
+<div style="color: #8e8581;">The compatibility and minimum-work tier. Potato keeps the direct scene grade and loader sky/fog behaviour while compiling out analytical face, material, cloud, water, weather and analytical-sky work. Underwater fog colour remains loader-provided instead of enabling Zepholume's additional tint.</div>
 </div>
 <div style="padding-left: 15px;">
 <div style="font-size: 20px; color: #fff; font-weight: bold;">Low</div>
-<div style="color: #968d88;">The lightweight target. Low enables restrained directional face/cloud response, basic analytical water and weather treatment, plus subtle underwater fog tinting while keeping the renderer tightly bounded.</div>
+<div style="color: #968d88;">The lightweight target. Low enables restrained directional face/cloud response, basic analytical water, weather treatment and subtle underwater fog tinting while keeping water vertex movement disabled.</div>
 </div>
 <div style="background-color: #15100e;">
 <div style="font-size: 20px; color: #fff; font-weight: bold;">Balanced <span style="font-size: 11px; color: #adb6ff; text-transform: uppercase;">Default &amp; recommended starting point</span></div>
-<div style="color: #aaa09b;">The intended everyday Zepholume experience. Balanced adds stronger material response, atmospheric depth, continuous time transitions and animated low-amplitude two-wave water without changing the underlying direct-path architecture.</div>
+<div style="color: #aaa09b;">The intended everyday Zepholume experience. Balanced adds material response, atmospheric depth, continuous time transitions and animated low-amplitude two-wave water without changing the underlying direct-path architecture.</div>
 </div>
 <div style="padding-left: 15px;">
 <div style="font-size: 20px; color: #fff; font-weight: bold;">High</div>
-<div style="color: #968d88;">Raises bounded face, cloud, water and weather detail for systems with more headroom. It remains inside the same one-colour-target architecture rather than opening a hidden post-processing pipeline.</div>
+<div style="color: #968d88;">Raises bounded face, cloud, water and weather detail for systems with more headroom. Water also moves to the refined fifth-power grazing-response curve while staying inside the same one-colour-target renderer.</div>
 </div>
 <div style="padding-left: 15px;">
 <div style="font-size: 20px; color: #fff; font-weight: bold;">Ultra</div>
-<div style="color: #968d88;">The highest analytical Zepholume tier. Ultra maximises the current direct-path effects without adding shadows, SSR, temporal history, volumetrics, bloom or extra colour buffers.</div>
+<div style="color: #968d88;">The highest analytical Zepholume tier. Ultra maximises the current bounded direct-path effects without adding shadows, SSR, temporal history, volumetrics, bloom or extra colour buffers.</div>
 </div>
 <p style="color: #7f7672; font-size: 13px;">Ultra Lite remains available as a deprecated compatibility alias for Low. And if Balanced looks excellent while running better, use Balanced. Selecting Ultra is still not a moral achievement.</p>
 <p><a style="color: #aab3ff; font-weight: bold; text-decoration: underline;" href="https://github.com/SoumyajitXD/Zepholume-Shaders/blob/main/Zepholume-Shaders/docs/PROFILE_GUIDE.md" rel="nofollow">Read the full Quality Profile guide</a></p>
@@ -126,7 +125,7 @@
 <div style="font-size: 19px; font-weight: bold; color: #fff;">Direct-path by design</div>
 <div style="color: #928984;">The pack contains 24 GLSL vertex/fragment program pairs and writes to one colour target. High and Ultra increase analytical detail inside that architecture rather than adding framebuffer choreography behind the user's back.</div>
 </div>
-<p style="color: #7f7672; font-size: 13px;">V1.0.3 does not claim a specific FPS uplift. Static shader complexity, source size, mathematical regression tests and successful standalone compilation are useful engineering evidence; none of them magically become a controlled gameplay benchmark when nobody is looking.</p>
+<p style="color: #7f7672; font-size: 13px;">V1.0.4 intentionally makes no specific FPS or frame-time uplift claim. Exact-zero gating removes unnecessary source-level work in qualifying water states, but static source analysis and mathematical equivalence do not magically become controlled GPU benchmarks when nobody is looking.</p>
 </div>
 <div>
 <div style="font-size: 24px; font-weight: 800; color: #fff;">What Zepholume deliberately does not do</div>
@@ -153,39 +152,43 @@
 <div>
 <div style="font-size: 12px; font-weight: bold; text-transform: uppercase; color: #9ba7ff;">Validation</div>
 <div style="font-size: 31px; line-height: 1.2; font-weight: 800; color: #fff;">Test what can be tested. Label the rest honestly.</div>
-<p style="color: #9d9490;">V1.0.3 expands Zepholume's static and numerical validation rather than treating &ldquo;it compiled once&rdquo; as a release methodology. The project evaluates generated shader variants, validates the declared profile/dimension matrix, compiles expanded GLSL with standalone <code style="color: #bcc4ff; background-color: #181311;">glslangValidator</code> and now includes source-derived mathematical regression coverage for critical lighting transitions.</p>
+<p style="color: #9d9490;">V1.0.4 retains Zepholume's structural, mathematical, portability and standalone GLSL validation rather than treating &ldquo;it compiled once&rdquo; as a release methodology. The final production change also has dedicated source-locked coverage for its exact-zero water-specular predicates.</p>
 <ul style="padding-left: 23px; color: #aaa19c;">
-<li>48 shader stages are structurally checked;</li>
-<li>210 unique expanded GLSL stages are covered by standalone compilation;</li>
-<li>five profiles plus the deprecated Ultra Lite alias are included in generated validation;</li>
-<li>Overworld, Nether and End wrappers are covered;</li>
-<li>two loader macro models are exercised;</li>
-<li>regressions can reject accidental composite, deferred or shadow program families;</li>
-<li>Potato compile-outs and Nether/End celestial isolation receive explicit evaluated-source checks;</li>
-<li>lighting regression tests parse the actual GLSL constants instead of duplicating them independently;</li>
-<li>skylight and block-light transition boundaries, interiors and midpoint behaviour receive explicit numerical checks;</li>
-<li>removed water precision work is covered by regression evidence.</li>
+<li>48 authored shader stages are structurally checked;</li>
+<li>generated profile, dimension and loader-macro variants are evaluated before standalone GLSL compilation;</li>
+<li>five profiles plus the deprecated Ultra Lite alias remain covered by generated validation;</li>
+<li>Overworld, Nether and End wrappers are checked;</li>
+<li>two loader macro models are exercised by static generation;</li>
+<li>regressions reject accidental composite, deferred and shadow program families;</li>
+<li>Potato analytical-work compile-outs and dimensional celestial isolation receive evaluated-source checks;</li>
+<li>lighting regression tests continue to inspect the actual GLSL constants;</li>
+<li>V1.0.4 adds dedicated float32 predicate coverage for the retained water celestial-specular gate;</li>
+<li>the tested gate cases preserve an exact zero result whenever the skipped lobe contribution is exactly zero;</li>
+<li>the maintained portability matrix exercises hundreds of mocked source/configuration cases, but remains a static model rather than a fleet of real GPUs;</li>
+<li>release packaging is constrained to intentional public files rather than development artifacts and machine-local debris.</li>
 </ul>
-<div style="background-color: #15100e;"><strong style="color: #e7c59f;">Important:</strong> <span style="color: #a99f99;"> standalone GLSL compilation, mathematical regression tests and mocked portability checks do not prove that an Iris/Oculus-patched shader rendered correctly on a particular real GPU or achieved any particular FPS.</span></div>
+<div style="background-color: #15100e;"><strong style="color: #e7c59f;">Important:</strong> <span style="color: #a99f99;"> standalone GLSL compilation, mathematical tests and mocked portability checks do not prove that an Iris/Oculus-patched shader rendered correctly on a particular GPU, achieved any specific FPS, or behaves identically across vendors and drivers.</span></div>
 </div>
 <div style="background-color: #302520;">&nbsp;</div>
 <div>
 <div style="font-size: 12px; font-weight: bold; text-transform: uppercase; color: #9ba7ff;">Compatibility &amp; Runtime Status</div>
-<div style="font-size: 31px; line-height: 1.2; font-weight: 800; color: #fff;">Know exactly what has&mdash;and has not&mdash;been verified.</div>
-<p style="color: #9d9490;">Zepholume V1.0.3 is developed for the modern Iris and Oculus shader ecosystems. The project's prepared validation baseline uses <strong style="color: #fff;">Minecraft Java Edition 1.20.1</strong> with Iris/Fabric/Sodium and Oculus/Forge/Embeddium environments. Zepholume does not contain its own shader loader.</p>
+<div style="font-size: 31px; line-height: 1.2; font-weight: 800; color: #fff;">Separate static evidence from actual runtime evidence.</div>
+<p style="color: #9d9490;">Zepholume V1.0.4 is maintained around the Iris/Oculus-style shader ecosystem, but the project deliberately distinguishes staged or static validation from actual game launch, shader activation, rendered-world qualification and visual QA.</p>
 <ul style="padding-left: 23px; color: #aaa19c;">
-<li><strong style="color: #fff;">Primary validation target:</strong> Minecraft Java Edition 1.20.1.</li>
-<li><strong style="color: #fff;">Iris environment:</strong> Iris 1.7.6 + Sodium 0.5.13 on Minecraft 1.20.1.</li>
-<li><strong style="color: #fff;">Oculus environment:</strong> Oculus 1.8.0 + Embeddium 0.3.31 + Forge 47.4.22 on Minecraft 1.20.1.</li>
-<li><strong style="color: #fff;">Java:</strong> Java 17 in the prepared 1.20.1 validation environments.</li>
-<li><strong style="color: #fff;">OptiFine:</strong> not supported or tested for this release.</li>
+<li><strong style="color: #fff;">Minecraft 1.20.1 &bull; Fabric:</strong> Iris 1.7.6 + Sodium 0.5.13 are staged locally. Static validation passes; game launch, shader activation, world rendering and visual QA are not yet claimed.</li>
+<li><strong style="color: #fff;">Minecraft 1.20.1 &bull; Forge:</strong> Oculus 1.8.0 + Embeddium 0.3.31 are staged locally. Static validation passes; game launch, shader activation, world rendering and visual QA are not yet claimed.</li>
+<li><strong style="color: #fff;">Minecraft 26.2 &bull; Fabric:</strong> Iris 1.11.2 is a maintained static-validation target. Runtime qualification has not been completed.</li>
+<li><strong style="color: #fff;">Minecraft 26.2 &bull; NeoForge:</strong> Iris 1.11.2 is a maintained static-validation target. Runtime qualification has not been completed.</li>
+<li><strong style="color: #fff;">Minecraft 26.2 &bull; Forge:</strong> the Oculus Community Port 0.3.0-beta.1 path is experimental and its declared partial program support does not currently cover Zepholume's ordinary world <code style="color: #bcc4ff; background-color: #181311;">gbuffers_*</code> route sufficiently for a normal compatibility claim.</li>
+<li><strong style="color: #fff;">Java:</strong> Java 17 is used by the staged Minecraft 1.20.1 validation environments.</li>
+<li><strong style="color: #fff;">OptiFine:</strong> not supported or tested for V1.0.4.</li>
 </ul>
 <div style="background-color: #15100e;">
-<div style="font-size: 18px; font-weight: bold; color: #e7c59f;">V1.0.3 still has runtime qualification limits.</div>
-<div style="color: #a99f99;">Source validation, mathematical regression tests, GLSL compilation, portability checks and release hardening provide useful evidence, but controlled real-world visual QA and A/B gameplay benchmarking remain separate requirements. Do not read static validation as proof of a particular FPS uplift or perfect rendering on every GPU/driver combination.</div>
+<div style="font-size: 18px; font-weight: bold; color: #e7c59f;">V1.0.4 still has runtime qualification limits.</div>
+<div style="color: #a99f99;">Static validation, mathematical regression tests, standalone GLSL compilation, portability modelling and release hardening establish source/package readiness. They do not substitute for loader-patched compilation, actual world rendering, visual comparison or controlled V1.0.3-versus-V1.0.4 frame-time capture.</div>
 </div>
-<p style="color: #9d9490;">That distinction matters. Zepholume is intentionally conservative about compatibility and performance claims rather than calling a source compiler a graphics card and hoping nobody notices.</p>
-<p style="color: #8e8581;">Project-wide CurseForge version metadata can cover more versions than the evidence for one particular release. For V1.0.3, rely on the release file information and maintained compatibility documentation when determining what has actually been validated.</p>
+<p style="color: #9d9490;">That distinction matters. Zepholume would rather label evidence correctly than promote &ldquo;the script was green&rdquo; into &ldquo;every GPU on Earth loves it.&rdquo;</p>
+<p style="color: #8e8581;">CurseForge project-wide game-version metadata can be broader than the evidence attached to one exact Zepholume release. Use the maintained compatibility documentation when deciding what has actually been qualified.</p>
 <p><a style="color: #aab3ff; font-weight: bold; text-decoration: underline;" href="https://github.com/SoumyajitXD/Zepholume-Shaders/blob/main/Zepholume-Shaders/docs/COMPATIBILITY_MATRIX.md" rel="nofollow">Compatibility report</a> <span style="color: #554d49;"> &bull; </span> <a style="color: #aab3ff; font-weight: bold; text-decoration: underline;" href="https://github.com/SoumyajitXD/Zepholume-Shaders/blob/main/Zepholume-Shaders/docs/KNOWN_ISSUES.md" rel="nofollow">Known issues</a></p>
 </div>
 <div style="background-color: #302520;">&nbsp;</div>
@@ -193,8 +196,8 @@
 <div style="font-size: 12px; font-weight: bold; text-transform: uppercase; color: #9ba7ff;">Installation</div>
 <div style="font-size: 31px; line-height: 1.2; font-weight: 800; color: #fff;">From ZIP to shader menu.</div>
 <ol style="padding-left: 24px; color: #aaa19c;">
-<li>Use a supported Minecraft instance with a compatible Iris or Oculus shader setup.</li>
-<li>Download <code style="color: #bcc4ff; background-color: #181311;">Zepholume-Shaders-1.0.3.zip</code>.</li>
+<li>Use a compatible Minecraft instance with an appropriate Iris or Oculus-style shader setup.</li>
+<li>Download <code style="color: #bcc4ff; background-color: #181311;">Zepholume-Shaders-1.0.4.zip</code>.</li>
 <li>Place the ZIP directly inside that Minecraft instance's <code style="color: #bcc4ff; background-color: #181311;">shaderpacks</code> directory.</li>
 <li>Launch Minecraft and open the shader-pack menu.</li>
 <li>Select <strong style="color: #fff;">Zepholume Shaders</strong>.</li>
@@ -210,17 +213,18 @@
 <p style="color: #9d9490;">For low FPS or frame-time trouble, move down one Zepholume profile first and compare the same scene using the same graphics settings. Also check resolution, render distance, simulation distance, resource packs and other rendering-heavy mods.</p>
 <p style="color: #9d9490;">For shader loading, compilation or visual corruption:</p>
 <ul style="padding-left: 23px; color: #aaa19c;">
-<li>verify that you are actually testing <strong style="color: #fff;">Zepholume-Shaders-1.0.3.zip</strong>;</li>
+<li>verify that you are actually testing <strong style="color: #fff;">Zepholume-Shaders-1.0.4.zip</strong>;</li>
 <li>verify your exact Minecraft and Iris/Oculus versions;</li>
-<li>check Sodium/Embeddium and Fabric/Forge versions where applicable;</li>
+<li>check Sodium/Embeddium and Fabric/Forge/NeoForge versions where applicable;</li>
 <li>confirm the ZIP is inside the correct instance's <code style="color: #bcc4ff;">shaderpacks</code> directory;</li>
 <li>check the GPU driver if the problem appeared after a driver update;</li>
 <li>reproduce the problem in the smallest practical instance without unrelated rendering mods or resource packs;</li>
-<li>test shader reloads and dimension transitions when reporting intermittent problems.</li>
+<li>test shader reloads and dimension transitions when reporting intermittent problems;</li>
+<li>when testing a newer Minecraft version, distinguish a source/static-validation target from a version that has actually completed runtime qualification.</li>
 </ul>
 <div>
 <div style="font-size: 19px; color: #fff; font-weight: bold;">Useful bug-report evidence</div>
-<p style="color: #958c87;">Minecraft version &bull; Iris/Oculus version &bull; Fabric/Forge version &bull; Sodium/Embeddium version &bull; Zepholume version and profile &bull; GPU &bull; driver version &bull; Java version &bull; complete latest.log &bull; relevant rendering/resource-pack mods &bull; screenshot or short video for visual problems &bull; whether the issue reproduces in a minimal instance.</p>
+<p style="color: #958c87;">Minecraft version &bull; Iris/Oculus version &bull; Fabric/Forge/NeoForge version &bull; Sodium/Embeddium version &bull; Zepholume version and profile &bull; GPU &bull; driver version &bull; graphics API &bull; Java version &bull; complete latest.log &bull; relevant rendering/resource-pack mods &bull; screenshot or short video for visual problems &bull; whether the issue reproduces in a minimal instance.</p>
 </div>
 <p><a style="color: #aab3ff; font-weight: bold; text-decoration: underline;" href="https://github.com/SoumyajitXD/Zepholume-Shaders/blob/main/Zepholume-Shaders/docs/KNOWN_ISSUES.md" rel="nofollow">Known issues</a> <span style="color: #554d49;"> &bull; </span> <a style="color: #aab3ff; font-weight: bold; text-decoration: underline;" href="https://github.com/SoumyajitXD/Zepholume-Shaders/issues" rel="nofollow">Report an issue</a></p>
 </div>
@@ -228,7 +232,7 @@
 <div style="text-align: center;">
 <div style="font-size: 12px; font-weight: bold; text-transform: uppercase; color: #9ba7ff;">Open Development</div>
 <div style="font-size: 30px; line-height: 1.2; font-weight: 800; color: #fff;">Inspect the source. Inspect the evidence. Report the weird stuff.</div>
-<p style="color: #958c87;">Zepholume is developed in public. The repository contains the maintained shader source, changelog, validation tooling, architecture documentation, profile definitions, performance budgets, compatibility evidence and manual runtime-test protocols.</p>
+<p style="color: #958c87;">Zepholume is developed in public. The repository contains the maintained shader source, changelog, validation tooling, architecture documentation, profile definitions, performance-development evidence, compatibility documentation and manual runtime-test protocols.</p>
 <p style="line-height: 2;"><a style="color: #aab3ff; font-weight: bold; text-decoration: underline;" href="https://github.com/SoumyajitXD/Zepholume-Shaders" rel="nofollow">GitHub Repository</a> <span style="color: #554d49;"> &bull; </span> <a style="color: #aab3ff; font-weight: bold; text-decoration: underline;" href="https://github.com/SoumyajitXD/Zepholume-Shaders/blob/main/Zepholume-Shaders/CHANGELOG.md" rel="nofollow">Changelog</a> <span style="color: #554d49;"> &bull; </span> <a style="color: #aab3ff; font-weight: bold; text-decoration: underline;" href="https://github.com/SoumyajitXD/Zepholume-Shaders/blob/main/Zepholume-Shaders/docs/ARCHITECTURE.md" rel="nofollow">Architecture</a> <span style="color: #554d49;"> &bull; </span> <a style="color: #aab3ff; font-weight: bold; text-decoration: underline;" href="https://github.com/SoumyajitXD/Zepholume-Shaders/blob/main/Zepholume-Shaders/docs/PROFILE_GUIDE.md" rel="nofollow">Profiles</a> <span style="color: #554d49;"> &bull; </span> <a style="color: #aab3ff; font-weight: bold; text-decoration: underline;" href="https://github.com/SoumyajitXD/Zepholume-Shaders/blob/main/Zepholume-Shaders/docs/COMPATIBILITY_MATRIX.md" rel="nofollow">Compatibility</a> <span style="color: #554d49;"> &bull; </span> <a style="color: #aab3ff; font-weight: bold; text-decoration: underline;" href="https://github.com/SoumyajitXD/Zepholume-Shaders/issues" rel="nofollow">Issues</a></p>
 <p style="color: #776e69; font-size: 12px;">Screenshots represent Zepholume at the time they were captured. Visual tuning, optimisation and compatibility work can continue between releases.</p>
 </div>
