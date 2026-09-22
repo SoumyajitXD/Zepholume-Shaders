@@ -149,7 +149,8 @@ foreach ($option in $options) {
     if ($lang -notmatch "(?m)^comment\.$option=") { $errors.Add("Missing language tooltip: $option") }
 }
 foreach ($profile in [regex]::Matches($properties, '(?m)^profile\.([^\s=]+)\s*=\s*(.+)$')) {
-    foreach ($assignment in $profile.Groups[2].Value -split '\s+') {
+    $assignments = @($profile.Groups[2].Value.Trim() -split '\s+' | Where-Object { $_ })
+    foreach ($assignment in $assignments) {
         if ($assignment -notmatch '^(ZEPH_[A-Z_]+):(\d+)$') { $errors.Add("Invalid profile assignment in $($profile.Groups[1].Value): $assignment"); continue }
         $name,$value = $Matches[1],[int]$Matches[2]
         if (-not $definitions.ContainsKey($name)) { $errors.Add("Profile references unknown option: $name"); continue }
@@ -174,7 +175,25 @@ foreach ($profileName in $requiredProfiles) {
     $propertyMatch = [regex]::Match($properties, "(?m)^profile\.$profileName\s*=\s*(.+)$")
     if (-not $propertyMatch.Success) { continue }
     $actual = @{}
-    foreach ($assignment in $propertyMatch.Groups[1].Value -split '\s+') { if ($assignment -match '^(ZEPH_[A-Z_]+):(\d+)$') { $actual[$Matches[1]] = [int]$Matches[2] } }
+    foreach ($assignment in @($propertyMatch.Groups[1].Value.Trim() -split '\s+' | Where-Object { $_ })) { if ($assignment -match '^(ZEPH_[A-Z_]+):(\d+)
+    if (($actual.Count -ne $matrix[$profileName].Count) -or (Compare-Object ($actual.GetEnumerator() | ForEach-Object { "$($_.Key):$($_.Value)" } | Sort-Object) ($matrix[$profileName].GetEnumerator() | ForEach-Object { "$($_.Key):$($_.Value)" } | Sort-Object))) { $errors.Add("Profile does not match authoritative matrix: $profileName") }
+}
+$aliasMatch = [regex]::Match($properties, '(?m)^profile\.Ultra_Lite\s*=\s*(.+)$')
+$lowMatch = [regex]::Match($properties, '(?m)^profile\.Low\s*=\s*(.+)$')
+if (-not $aliasMatch.Success -or -not $lowMatch.Success) { $errors.Add('Missing deprecated Ultra Lite compatibility alias or Low profile.') }
+elseif ($aliasMatch.Groups[1].Value.Trim() -ne $lowMatch.Groups[1].Value.Trim()) { $errors.Add('Deprecated Ultra Lite compatibility alias must map to the Low baseline.') }
+$balanced = $matrix['Balanced']
+foreach ($option in $definitions.Keys) {
+    $defaultMatch = [regex]::Match($settings, "(?m)^#define\s+$option\s+(\d+)\s*//")
+    if (-not $defaultMatch.Success) { $errors.Add("Missing numeric source default for profile option: $option"); continue }
+    if ($balanced[$option] -ne [int]$defaultMatch.Groups[1].Value) { $errors.Add("Source default must match Balanced profile: $option") }
+}
+if ($properties -match '(?m)^(?:RENDERTARGETS|DRAWBUFFERS)\s*=.*[1-9]') { $errors.Add('Properties request an extra colour attachment.') }
+$invalid = Get-ChildItem -LiteralPath $Root -Recurse -File | Where-Object { $_.Name -match '\.(tmp|bak|log)$' -and $_.FullName -notmatch '[\\/](?:dist|artifacts|runtime|tools)[\\/]' }
+foreach ($file in $invalid) { $errors.Add("Temporary file would be packaged: $($file.FullName)") }
+if ($errors.Count -gt 0) { $errors | ForEach-Object { Write-Error $_ }; exit 1 }
+Write-Host "Structural validation passed: $($programs.Count) program files checked; includes, entry points, pair interfaces, profiles, and colour-target policy checked."
+) { $actual[$Matches[1]] = [int]$Matches[2] } }
     if (($actual.Count -ne $matrix[$profileName].Count) -or (Compare-Object ($actual.GetEnumerator() | ForEach-Object { "$($_.Key):$($_.Value)" } | Sort-Object) ($matrix[$profileName].GetEnumerator() | ForEach-Object { "$($_.Key):$($_.Value)" } | Sort-Object))) { $errors.Add("Profile does not match authoritative matrix: $profileName") }
 }
 $aliasMatch = [regex]::Match($properties, '(?m)^profile\.Ultra_Lite\s*=\s*(.+)$')
