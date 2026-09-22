@@ -63,7 +63,7 @@ try {
     Invoke-Invalid 'missing-include-guard' { param($root) $p=Join-Path $root 'shaders/lib/color.glsl'; (Get-Content -LiteralPath $p -Raw).Replace('#ifndef ZEPHO_COLOR_GLSL', '// guard removed') | Set-Content -LiteralPath $p -Encoding utf8NoBOM }
     Invoke-Invalid 'fog-uniform-after-helper' { param($root) $p=Join-Path $root 'shaders/lib/fragment.glsl'; $s=Get-Content -LiteralPath $p -Raw; $s=$s.Replace('#include "/lib/fog.glsl"', ''); $s=$s.Replace('uniform vec3 fogColor;', "#include `"/lib/fog.glsl`"`nuniform vec3 fogColor;"); Set-Content -LiteralPath $p -Value $s -Encoding utf8NoBOM }
     Invoke-Invalid 'missing-shader-pair' { param($root) Remove-Item -LiteralPath (Join-Path $root 'shaders/gbuffers_basic.fsh') -Force }
-    Invoke-Invalid 'stale-release-metadata' { param($root) $p=Join-Path $root 'README.md'; (Get-Content -LiteralPath $p -Raw).Replace('V1.0.2', '0.2.0-dev') | Set-Content -LiteralPath $p -Encoding utf8NoBOM }
+    Invoke-Invalid 'stale-release-metadata' { param($root) $p=Join-Path $root 'README.md'; (Get-Content -LiteralPath $p -Raw).Replace('V1.0.4 final release', 'V0.0.0 stale release') | Set-Content -LiteralPath $p -Encoding utf8NoBOM }
     $badZip = Join-Path $work 'backslash-paths.zip'
     Add-Type -AssemblyName System.IO.Compression.FileSystem
     $zip = [IO.Compression.ZipFile]::Open($badZip, [IO.Compression.ZipArchiveMode]::Create)
