@@ -8,36 +8,23 @@ Zepholume Shaders is a performance-conscious shader pack for **Minecraft Java Ed
 
 ## Current release
 
-**Zepholume Shaders V1.0.4**  
-Release archive: [`Zepholume-Shaders-1.0.4.zip`](Releases/Zepholume-Shaders-1.0.4.zip)
+**V1.0.5 shader source published — runtime qualification: READY: NO.**
 
-V1.0.4 keeps Minecraft **1.20.1** as the staged runtime-validation baseline and also carries static compatibility lanes for Minecraft **26.2**. Those lanes do not all have the same evidence level.
+The [V1.0.5 Phase 10 source tree](Zepholume-Shaders/) was pushed to `main` from `Zepholume-Shaders-1.0.5-dev-phase10.zip` (SHA-256 `4B3803CF87AF43952CF91D145BB634C3346DEF6FC8C7008C37368058DC75DC91`). The final-named `Zepholume-Shaders-1.0.5.zip` was **absent from this repository's `Releases/` folder** at the source-push audit. Check [CurseForge Files](https://www.curseforge.com/minecraft/shaders/zepholume-shaders/files) for actual downloadable versions; the [V1.0.4 ZIP](Releases/Zepholume-Shaders-1.0.4.zip) remains available here.
 
-Prepared/stated environments currently include:
+**Evidence boundary:** Minecraft 1.20.1 Fabric/Iris 1.7.6 + Sodium 0.5.13 and Forge/Oculus 1.8.0 + Embeddium 0.3.31 (Java 17) have staged test lanes, **not** completed launch/render QA. Minecraft 26.2 Iris Fabric/NeoForge is a static target; the experimental Forge/Oculus Community Port lane has incomplete world-program coverage. Other versions are not automatically supported. OptiFine remains untested/unsupported.
 
-- **Minecraft 1.20.1 + Iris 1.7.6 + Sodium 0.5.13 + Java 17** — staged locally; static validation passes
-- **Minecraft 1.20.1 + Forge 47.4.22 + Oculus 1.8.0 + Embeddium 0.3.31 + Java 17** — staged locally; static validation passes
-- **Minecraft 26.2 + Iris 1.11.2 on Fabric or NeoForge** — static target only; runtime not yet qualified
-- **Minecraft 26.2 + Forge 65.1.0 + Oculus Community Port 0.3.0-beta.1** — experimental and currently blocked for Zepholume's ordinary `gbuffers_*` world programs by the port's declared partial program support
+## What's new in V1.0.5
 
-> Static GLSL validation, staged files, and mathematical regression tests do **not** prove loader-patched compilation, shader activation, real-GPU rendering, visual parity, FPS, or cross-vendor behaviour. Runtime qualification remains a separate requirement.
+- Restores the loader-provided per-surface lightmap multiplication on lit scene paths to address the source-level cause of full-bright caves and interiors.
+- Adjusts skylight attenuation and low-light/contrast behaviour, targeting the black crush and day/night imbalance identified in earlier screenshots.
+- Restores dimension wrapper sets and loader texture-matrix transforms, limits analytical water effects to classified Minecraft water, and preserves loader fog handling for lava/powder-snow media.
+- Keeps five selectable profiles (Potato, Low, Balanced, High, Ultra), with Balanced as default; High/Ultra no longer force extra contrast or saturation.
+- Repairs Iris-compatible shader-option tooltip keys and retains the direct GLSL 330, single-colour-target design.
 
-OptiFine is not a supported target for Zepholume.
+Phase 10 local validation reported **272/272 GLSL stages, 420/420 links, and 630/630 mocked portability cases**. The first hosted V1.0.5 GitHub Actions run passed Linux regression, GLSL, portability, and package jobs but **failed Windows source validation** (`Invalid profile assignment in Potato`). The workflow now attempts to correct Windows checkout line endings; that fix needs a new hosted run before claiming green CI.
 
-## What's new in V1.0.4
-
-V1.0.4 is a focused optimisation and maintenance release. It keeps Zepholume's existing direct-path renderer and ships one deliberately narrow production optimisation instead of turning an unmeasured experiment into marketing.
-
-Highlights include:
-
-- exact-zero gating for inactive water celestial-specular lobes, avoiding lobe-only work when the existing sun or moon contribution is mathematically zero
-- preservation of the existing non-zero twilight/celestial arithmetic order rather than replacing the water model with a cheaper approximation
-- no new shader interface, varying, uniform, colour target, vendor extension, or GPU-specific rendering path
-- continued GLSL 330 compatibility and one-colour-target architecture
-- deterministic, allow-listed release packaging and strengthened static/package validation
-- the experimental fog endpoint hoist remains deferred and is **not** part of the V1.0.4 production shaders
-
-No FPS uplift is claimed without controlled runtime benchmarking. The retained gate removes unnecessary work in qualifying states, but source-level savings and mathematical equivalence are not gameplay benchmarks wearing fake moustaches.
+**Important:** loader-patched compilation, in-world visual correctness, visible profile selection, measured FPS, and full cross-version compatibility are **not yet verified**. Source publication is not runtime release qualification.
 
 ## What Zepholume focuses on
 
@@ -66,7 +53,7 @@ Zepholume does **not** chase a feature checklist at any cost. The rendering desi
 ## Installation
 
 1. For the strongest current evidence baseline, use a **Minecraft 1.20.1** instance with the staged Iris or Oculus stack documented above.
-2. Download [`Zepholume-Shaders-1.0.4.zip`](Releases/Zepholume-Shaders-1.0.4.zip).
+2. Download `Zepholume-Shaders-1.0.5.zip` from [CurseForge Files](https://www.curseforge.com/minecraft/shaders/zepholume-shaders/files) **only when it is actually listed**. The repository currently holds the V1.0.5 source, not a final V1.0.5 ZIP; [V1.0.4](Releases/Zepholume-Shaders-1.0.4.zip) remains available.
 3. Put the ZIP directly in that instance's `shaderpacks` folder.
 4. Open Minecraft's shader-pack menu and select **Zepholume Shaders**.
 5. Start with the **Balanced** profile, then tune down or up for your hardware.
@@ -79,7 +66,7 @@ Full instructions: [Installation Guide](docs/INSTALLATION.md)
 
 ## Compatibility and validation status
 
-V1.0.4 has strong **static/source and numerical regression validation** but incomplete **runtime qualification**.
+V1.0.5 has strong **static/source and numerical regression validation** but incomplete **runtime qualification**; the initial hosted Windows CI source-validation job failed.
 
 The maintained source pipeline validates profile/dimension behaviour, standalone GLSL compilation, architectural boundaries, and release-specific mathematical invariants. That can catch source, preprocessor, interface, arithmetic, and architecture regressions; it cannot establish loader-patched compilation, driver behaviour, visual correctness, or measured performance.
 

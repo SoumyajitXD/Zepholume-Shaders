@@ -2,7 +2,7 @@
 
 Zepholume Shaders is a Minecraft Java Edition shader pack and requires a compatible shader loader.
 
-## V1.0.4 requirements
+## V1.0.5 requirements
 
 The strongest current staged baseline remains **Minecraft Java 1.20.1**.
 
@@ -16,12 +16,14 @@ Minecraft **26.2** also has static target lanes for Iris on Fabric/NeoForge, but
 
 Static validation or staged files do not equal a completed launch-and-render test. Treat configurations outside the documented evidence boundary as unverified unless separately qualified.
 
+**Archive availability:** The Phase 10 V1.0.5 source was pushed to GitHub, but `Zepholume-Shaders-1.0.5.zip` was not in the repository's `Releases/` folder. Confirm that the [CurseForge Files page](https://www.curseforge.com/minecraft/shaders/zepholume-shaders/files) actually lists the final ZIP before attempting installation. Renaming a development ZIP does not establish runtime qualification.
+
 ## Install with Iris on the staged 1.20.1 baseline
 
 1. Create or use a **Minecraft 1.20.1** Fabric instance.
 2. Install Iris and its required Sodium stack.
 3. Launch the instance once so Minecraft creates the required directories.
-4. Download `Zepholume-Shaders-1.0.4.zip`.
+4. Download `Zepholume-Shaders-1.0.5.zip` if the final archive is listed on the project Files page; otherwise use the last available release.
 5. Copy the ZIP into that instance's `shaderpacks` directory.
 6. Launch Minecraft.
 7. Open the shader-pack menu.
@@ -33,7 +35,7 @@ Static validation or staged files do not equal a completed launch-and-render tes
 1. Create or use a **Minecraft 1.20.1** Forge instance.
 2. Install Oculus, Embeddium, and any dependencies required by the selected builds.
 3. Launch the instance once.
-4. Download `Zepholume-Shaders-1.0.4.zip`.
+4. Download `Zepholume-Shaders-1.0.5.zip` if the final archive is listed on the project Files page; otherwise use the last available release.
 5. Copy the ZIP into that instance's `shaderpacks` directory.
 6. Launch Minecraft and open the shader-pack menu.
 7. Select **Zepholume Shaders**.
@@ -41,7 +43,7 @@ Static validation or staged files do not equal a completed launch-and-render tes
 
 ## Do not extract the release ZIP
 
-Place `Zepholume-Shaders-1.0.4.zip` directly in `shaderpacks` unless a future release explicitly says otherwise.
+Place `Zepholume-Shaders-1.0.5.zip` directly in `shaderpacks` unless a future release explicitly says otherwise.
 
 ## Finding the shaderpacks folder
 

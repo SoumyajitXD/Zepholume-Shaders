@@ -24,7 +24,7 @@ The project intentionally avoids heavyweight renderer subsystems such as:
 
 This boundary is a product decision, not an unfinished shopping list.
 
-V1.0.4 keeps that boundary intact. Its production delta is deliberately narrow: exact-zero gating around inactive water celestial-specular lobe work, while the established lighting, ambient, cloud, water, and validation model remains intact.
+V1.0.5 keeps that boundary intact. Its production changes correct lightmap consumption, skylight and low-light behaviour, water-only material routing, dimension wrappers, texture transforms, loader fog media, and shader-option metadata. The exact-zero celestial-specular gate introduced in V1.0.4 remains retained.
 
 ## Shared shader design
 
@@ -41,21 +41,21 @@ Zepholume uses shared GLSL libraries so common behaviour is defined once instead
 
 Profile selection is authoritative: the selected Potato/Low/Balanced/High/Ultra baseline caps the capability macros available to later code. Lower user overrides can reduce work but cannot enable capabilities above that baseline.
 
-## V1.0.4 lighting model
+## V1.0.5 lighting model
 
-V1.0.4 strengthens the direct environmental model without adding temporal state or extra passes.
+V1.0.5 strengthens the direct environmental model without adding temporal state or extra passes.
 
 ### Sun, moon, and skylight gating
 
 Overworld directional lighting uses loader-provided sun and moon directions with storm-softened response. Directional contribution remains modulated by skylight so caves and enclosed interiors do not behave as though celestial light passes through solid terrain.
 
-V1.0.4 preserves the exact Hermite `smoothstep` skylight-gate behaviour and named compile-time reciprocal range constants established by the current baseline. The intent remains mathematical correctness and clear validation, not an unsupported FPS claim.
+V1.0.5 preserves the exact Hermite `smoothstep` skylight-gate behaviour and named compile-time reciprocal range constants established by the current baseline. The intent remains mathematical correctness and clear validation, not an unsupported FPS claim.
 
 Balanced, High, and Ultra retain skylight occlusion for downward-facing facets and partial overhangs, improving depth where orientation and exposure imply less direct sky contribution.
 
 ### Block-light warmth
 
-Warmth is based on **block-light dominance relative to skylight** rather than applying a fixed orange bias whenever block light exists. V1.0.4 preserves the exact Hermite `smoothstep` transition used by that response.
+Warmth is based on **block-light dominance relative to skylight** rather than applying a fixed orange bias whenever block light exists. V1.0.5 preserves the exact Hermite `smoothstep` transition used by that response.
 
 ### Ambient irradiance
 
@@ -69,7 +69,7 @@ Dimension wrappers isolate Nether and End lighting from Overworld celestial calc
 
 The generic scene route remains bounded:
 
-1. sample/preserve Minecraft-provided texture and vertex data
+1. sample/preserve Minecraft-provided texture and vertex data, applying the loader lightmap in lit program routes
 2. decode into the working colour space
 3. apply bounded face/material/weather response
 4. apply controlled exposure, contrast, saturation, temperature, dimension tone, and highlight compression
@@ -85,7 +85,7 @@ The analytical Overworld sky uses low-order elevation and horizon blending, load
 
 Sky/horizon and fog curves remain aligned to reduce visible atmospheric seams through twilight and night transitions.
 
-Clouds retain one texture sample and use profile-gated directional response. High and Ultra retain top-facet solar rim highlighting in V1.0.4 while preserving the bounded direct-path treatment.
+Clouds retain one texture sample and use profile-gated directional response. High and Ultra retain top-facet solar rim highlighting in V1.0.5 while preserving the bounded direct-path treatment.
 
 Unreachable fog-scattering and foliage-response branches were removed rather than carried forward as dead profile code.
 
@@ -93,7 +93,7 @@ Unreachable fog-scattering and foliage-response branches were removed rather tha
 
 Water remains part of the direct path rather than a separate reflection/refraction renderer.
 
-V1.0.4 retains the earlier removal of the redundant working-space encode/decode round trip and adds exact-zero gating around inactive water celestial-specular lobes. When the existing draw-uniform sun or moon contribution is exactly zero, lobe-only work can be skipped while the non-zero path keeps its established arithmetic order.
+V1.0.5 retains the earlier removal of the redundant working-space encode/decode round trip and the V1.0.4 exact-zero gate around inactive water celestial-specular lobes. It also limits analytical water shading to classified Minecraft water rather than other translucent geometry. When the existing draw-uniform sun or moon contribution is exactly zero, lobe-only work can be skipped while the non-zero path keeps its established arithmetic order.
 
 Lower water tiers retain the V1.0.2 **tuned fourth-power Fresnel-inspired approximation**. High and Ultra refine that response to a **fifth-power Fresnel-Schlick-shaped curve**. This is an intentional higher-tier visual change, not a claim that the entire water model is physically based.
 
@@ -107,9 +107,11 @@ This is a colour/fog adjustment, not volumetric lighting or Beer-Lambert simulat
 
 ## Hot-path and source cleanup
 
-V1.0.4 continues the project's bias toward removing unnecessary work instead of adding speculative micro-optimisations:
+V1.0.5 continues the project's bias toward removing unnecessary work instead of adding speculative micro-optimisations:
 
-- inactive water celestial-specular lobes are exact-zero gated so lobe-only calculations can be skipped when the existing contribution is mathematically zero
+- V1.0.4's inactive-water celestial-specular exact-zero gate remains retained
+- V1.0.5 corrects loader lightmap multiplication on the lit scene route without applying it to unlit paths
+- skylight and contrast processing changes target previously reported black crush and full-bright bugs, pending in-game proof
 - the non-zero water path preserves its established arithmetic order rather than substituting an approximation
 - the active water fragment path retains the earlier removal of its redundant working-space encode/decode round trip
 - exact Hermite transition behaviour remains preserved with named reciprocal constants that are easier to validate
@@ -134,7 +136,7 @@ See [Quality Profiles](PROFILES.md).
 
 Structural validation covers shader stages, recursive includes, guards, pair interfaces, profile matrices, option ranges, and the one-colour-output policy. Generated source is evaluated across declared profiles, dimensions, and loader macro models before standalone `glslangValidator` compilation.
 
-V1.0.4 keeps deterministic mathematical regression coverage for release-sensitive shader arithmetic and adds source-locked float32 predicate coverage for the retained exact-zero water-specular gate. Compatibility and benchmark documentation remain explicitly scoped to the evidence collected.
+V1.0.5 retains mathematical regressions and earlier source-locked water-gate tests. Phase 10 local validation reported 272 standalone GLSL stages, 420 links and 630 mocked portability cases. The first hosted V1.0.5 run passed Linux checks but failed Windows source validation; subsequent CI success must be verified rather than assumed. Compatibility and benchmark documentation remain explicitly scoped to the evidence collected.
 
 Those checks can catch source, preprocessing, and numerical regressions. They cannot prove:
 
@@ -145,7 +147,7 @@ Those checks can catch source, preprocessing, and numerical regressions. They ca
 - gameplay performance
 - cross-vendor parity
 
-V1.0.4 still requires real loader/runtime visual qualification and controlled benchmarking before those claims are justified.
+V1.0.5 still requires real loader/runtime visual qualification and controlled benchmarking before those claims are justified.
 
 ## Performance philosophy
 

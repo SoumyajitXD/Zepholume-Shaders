@@ -148,6 +148,14 @@ jobs:
     runs-on: windows-latest
     timeout-minutes: 20
     steps:
+      # The profile validator's regex can capture trailing CR from CRLF files.
+      # Disable Windows Git's automatic LF-to-CRLF conversion before checkout.
+      - name: Use LF source checkout on Windows
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          git config --global core.autocrlf false
+
       - name: Checkout repository
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
         with:
@@ -160,6 +168,9 @@ jobs:
         working-directory: Zepholume-Shaders
         run: |
           $ErrorActionPreference = 'Stop'
+          # Fail explicitly if the checkout workaround stops working.
+          $properties = [System.IO.File]::ReadAllText((Resolve-Path 'shaders/shaders.properties').Path)
+          if ($properties.Contains("`r")) { throw 'CRLF profile source detected on Windows runner' }
           ./scripts/validate.ps1
 
       - name: Run mathematical tests
