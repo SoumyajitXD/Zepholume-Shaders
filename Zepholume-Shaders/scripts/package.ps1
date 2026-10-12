@@ -1,7 +1,8 @@
 [CmdletBinding()]
 param(
     [ValidatePattern('^[A-Za-z0-9][A-Za-z0-9._-]*\.zip$')]
-    [string]$OutputName = 'Zepholume-Shaders-1.0.4.zip'
+    [string]$OutputName = 'Zepholume-Shaders-1.0.5-dev-phase5.zip',
+    [string]$OutputDirectory
 )
 
 $ErrorActionPreference = 'Stop'
@@ -9,11 +10,12 @@ $root = Split-Path -Parent $PSScriptRoot
 & (Join-Path $PSScriptRoot 'validate.ps1')
 if (-not $?) { throw 'Validation failed; package was not created.' }
 
-$dist = Join-Path $root 'dist'
+$dist = if ($OutputDirectory) { [IO.Path]::GetFullPath($OutputDirectory) } else { Join-Path $root 'dist' }
 New-Item -ItemType Directory -Force -Path $dist | Out-Null
 $zip = Join-Path $dist $OutputName
 $hash = "$zip.sha256"
-foreach ($generated in @($zip, $hash)) { if (Test-Path -LiteralPath $generated) { Remove-Item -LiteralPath $generated -Force } }
+$stagingZip = Join-Path $dist ('.' + [IO.Path]::GetFileNameWithoutExtension($OutputName) + '.staging-' + [guid]::NewGuid().ToString('N') + '.zip')
+$stagingHash = "$stagingZip.sha256"
 
 # Build the public pack from an explicit allow-list. Development reports,
 # benchmarks, artifacts and runtime material are deliberately absent.
@@ -25,7 +27,7 @@ $files = @(
 ) | Sort-Object @{ Expression = { $_.FullName.Substring($root.Length + 1).Replace('\','/') }; Ascending = $true }
 
 Add-Type -AssemblyName System.IO.Compression.FileSystem
-$archive = [IO.Compression.ZipFile]::Open($zip, [IO.Compression.ZipArchiveMode]::Create)
+$archive = [IO.Compression.ZipFile]::Open($stagingZip, [IO.Compression.ZipArchiveMode]::Create)
 try {
     foreach ($file in $files) {
         $entryName = $file.FullName.Substring($root.Length + 1).Replace('\','/')
@@ -39,10 +41,16 @@ try {
     }
 } finally { $archive.Dispose() }
 
-$sum = (Get-FileHash -LiteralPath $zip -Algorithm SHA256).Hash
-Set-Content -LiteralPath $hash -Value "$sum  $OutputName" -Encoding utf8NoBOM
-& (Join-Path $PSScriptRoot 'validate.ps1') -Package $zip
-if (-not $?) { throw 'Created ZIP did not pass package validation.' }
+$sum = (Get-FileHash -LiteralPath $stagingZip -Algorithm SHA256).Hash
+Set-Content -LiteralPath $stagingHash -Value "$sum  $OutputName" -Encoding utf8NoBOM
+try {
+    & (Join-Path $PSScriptRoot 'validate.ps1') -Package $stagingZip
+    if (-not $?) { throw 'Created ZIP did not pass package validation.' }
+    [IO.File]::Move($stagingZip, $zip, $true)
+    [IO.File]::Move($stagingHash, $hash, $true)
+} finally {
+    Remove-Item -LiteralPath $stagingZip,$stagingHash -Force -ErrorAction SilentlyContinue
+}
 Write-Host "Created: $zip"
 Write-Host "SHA-256: $sum"
 Write-Host "ZIP entries: $($files.Count)"

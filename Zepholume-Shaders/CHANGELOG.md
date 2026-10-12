@@ -1,5 +1,25 @@
 # Changelog
 
+## 1.0.5-dev — unreleased
+
+- Phase 9 recovery froze and compared the workspace against the preserved Phase 8 ZIP; no surviving Gemini production shader changes were found. The operator screenshots exposed severe black crush and day/night/cave imbalance. A bounded face response, positive contrast toe, and in-gamut-neutral highlight shoulder repair the source-level attenuation path without disabling the lightmap. Profile selection now contains exactly Potato, Low, Balanced, High, and Ultra; High/Ultra no longer force stronger contrast or saturation. Loader-rendered visual QA remains required.
+- Added Phase 8 patched-shader evidence analysis. It inventories and hashes loader-produced patched output and associates loader diagnostic lines with their patched context; it never promotes empty output or source compilation to a loader pass.
+- Added fresh Phase 8 hash-bound Iris/Oculus comparison-lane wiring and a five-profile visual QA record. Historical lanes and all archived packages remain immutable. Hosted CI naming now targets the Phase 8 candidate, but no hosted run has occurred.
+
+- Added an explicit configurable WSL validator backend, using the official Kali `glslang-tools` package, alongside explicit trusted native and Linux-CI modes. Stage and supported OpenGL vertex/fragment link diagnostics remain separate from Iris/Oculus patched-source evidence.
+- Corrected Nether/End sky variants so they retain the loader-provided sky rather than accidentally carrying Overworld analytic sun/moon code after preprocessing. Updated CI packaging and diagnostics to the Phase 7 candidate name; no hosted run has occurred.
+- Added a controlled Linux GitHub Actions compiler gate using the distribution-maintained `glslang-tools` package. It regenerates and source-hash-binds all profile/dimension/loader-model variants, compiles every unique vertex and fragment stage as OpenGL GLSL, rejects warnings, and records the affected logical variants for diagnostics. This standalone gate does not reproduce Iris/Oculus patching.
+- Added compiler-backed negative GLSL coverage and dedicated missing/corrupted dimension-wrapper and water-material-classification fixtures. Packaging CI now builds the separately named Phase 6 development archive twice and compares hashes.
+- Kept the blocked unsigned Windows compiler out of automatic discovery. A trusted PATH compiler can be selected explicitly with `-Validator`; otherwise the Linux CI gate is the available compilation route.
+- Added a separately named Phase 6 runtime-manifest/lane workflow so the archived Phase 5-era comparison lanes remain immutable. No new lane has been launched or rendered.
+- Corrected the generic scene route to multiply albedo/vertex colour by the loader-provided per-surface lightmap before colour-space decoding. Earlier source carried lightmap coordinates for artistic face and warmth modifiers but never applied the underlying block/sky irradiance, causing the permanent full-bright cave/interior defect.
+- Added structural and numerical source-locked regressions requiring lightmap consumption and checking zero, mixed, and full-light transfer cases. This is static evidence only; loader-rendered visual and performance qualification remains pending.
+- Restored complete legacy `world0`, `world-1`, and `world1` wrapper topologies. Each wrapper is mechanically derived from the single root program set, with dimension macros isolated in the wrapper; shared implementations remain in `shaders/lib`.
+- Limited animated water displacement and analytical water shading to `minecraft:water`. `gbuffers_water` also carries glass, ice, and other translucent terrain, which now follows the ordinary scene route instead of receiving water Fresnel/specular.
+- Applied texture matrix 0 to generic, sky, and cloud texture coordinates; this restores loader-provided texture transforms such as armor-glint scrolling.
+- Preserved loader fog colour and linear fog range for lava and powdered-snow camera media, and normalized interpolated sky directions before angular sunrise/sunset and celestial calculations.
+- Hardened package validation to require the exact allow-listed source bytes and to reject development artifacts. Development packaging now stages and validates a V1.0.5-named archive before promotion.
+
 ## 1.0.4 — released
 
 - Avoids unnecessary water celestial-specular calculations when their contribution is exactly zero, without adding a shader interface or vendor-specific path.

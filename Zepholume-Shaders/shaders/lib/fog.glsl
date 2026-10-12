@@ -3,6 +3,9 @@
 #include "/lib/atmosphere.glsl"
 
 vec3 zephFogColour(vec3 viewDir) {
+    // Iris/OptiFine define 2 as lava and 3 as powdered snow. These media own
+    // their loader-provided fog colour; never recolour them as open air.
+    if (isEyeInWater >= 2) return fogColor;
 #if ZEPH_EFFECTIVE_PROFILE_TIER == 0
     // Potato deliberately retains the loader-provided water/biome fog exactly.
     if (isEyeInWater == 1) return fogColor;
@@ -49,6 +52,11 @@ vec3 zephFogColour() {
 }
 
 float zephFogFactor(float d, float viewDirectionY) {
+    if (isEyeInWater >= 2) {
+        float mediumStart = max(fogStart, 1.0);
+        float mediumEnd = max(fogEnd, mediumStart + 1.0);
+        return zephSaturate((d - mediumStart) / (mediumEnd - mediumStart));
+    }
     float factor = zephAtmosphereFactor(d, viewDirectionY, rainStrength);
 #if ZEPH_EFFECTIVE_PROFILE_TIER >= 1
     if (isEyeInWater == 1) {

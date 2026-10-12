@@ -22,6 +22,7 @@ vec3 zephWeatherSky(vec3 colour, float storm) {
     return mix(colour, mix(vec3(luma), fogColor, 0.34), storm * 0.48);
 }
 
+#if !defined(ZEPH_DIM_NETHER) && !defined(ZEPH_DIM_END)
 vec3 zephAnalyticSky(float up, vec3 direction, vec3 sunDir, float daylight, float storm) {
     vec3 zenithDay = mix(vec3(0.23, 0.43, 0.70), skyColor, 0.38);
     vec3 horizonDay = mix(vec3(0.69, 0.75, 0.80), fogColor, 0.34);
@@ -36,7 +37,9 @@ vec3 zephAnalyticSky(float up, vec3 direction, vec3 sunDir, float daylight, floa
 #endif
     return zephWeatherSky(atmosphere, storm);
 }
+#endif
 
+#if !defined(ZEPH_DIM_NETHER) && !defined(ZEPH_DIM_END)
 vec3 zephCelestialGlow(vec3 direction, vec3 sunDir, vec3 moonDir, float daylight, float storm) {
 #if ZEPH_EFFECTIVE_PROFILE_TIER == 0
     return vec3(0.0);
@@ -53,6 +56,7 @@ vec3 zephCelestialGlow(vec3 direction, vec3 sunDir, vec3 moonDir, float daylight
     return (sun + moon) * (1.0 - storm * 0.75);
 #endif
 }
+#endif
 
 void main() {
 #ifdef ZEPH_SKY_TEXTURED
@@ -63,6 +67,10 @@ void main() {
     float storm = clamp(rainStrength, 0.0, 1.0);
     vec3 sunDir = zephSafeNormalize(sunPosition);
     float daylight = zephDaylightFromElevation(sunDir.y);
+    // Direction varyings are linearly interpolated and are not guaranteed to
+    // remain unit length across a large sky primitive. Normalize once before
+    // angular dawn and celestial-halo calculations.
+    vec3 skyDir = zephSafeNormalize(zephSkyDirection);
     vec3 result;
 
 #ifdef ZEPH_SKY_TEXTURED
@@ -75,11 +83,15 @@ void main() {
     // Potato deliberately preserves the loader/vanilla sky with no analytic
     // gradients or celestial work beyond the required source path.
     result = source.rgb;
-#else
+#elif !defined(ZEPH_DIM_NETHER) && !defined(ZEPH_DIM_END)
     vec3 moonDir = zephSafeNormalize(moonPosition);
-    vec3 analytic = zephAnalyticSky(zephSkyUp, zephSkyDirection, sunDir, daylight, storm);
+    vec3 analytic = zephAnalyticSky(zephSkyUp, skyDir, sunDir, daylight, storm);
     result = mix(source.rgb, analytic, 0.72);
-    result += zephCelestialGlow(zephSkyDirection, sunDir, moonDir, daylight, storm);
+    result += zephCelestialGlow(skyDir, sunDir, moonDir, daylight, storm);
+#else
+    // Nether and End retain the loader-provided sky; their light model is not
+    // the Overworld sun/moon analytic path.
+    result = source.rgb;
 #endif
 #endif
 

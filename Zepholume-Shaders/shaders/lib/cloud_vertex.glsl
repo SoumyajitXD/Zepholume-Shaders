@@ -9,7 +9,7 @@ varying float zephCloudNormalUp;
 
 void main() {
     vec4 viewPosition = gl_ModelViewMatrix * gl_Vertex;
-    zephCloudTexCoord = gl_MultiTexCoord0.st;
+    zephCloudTexCoord = (gl_TextureMatrix[0] * gl_MultiTexCoord0).xy;
     zephCloudVertexColour = gl_Color;
     zephCloudDistance = length(viewPosition.xyz);
     zephCloudNormalUp = clamp(zephSafeNormalize(gl_NormalMatrix * gl_Normal).y * 0.5 + 0.5, 0.0, 1.0);

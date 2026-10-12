@@ -33,6 +33,10 @@ $lighting = Get-Content -LiteralPath (Join-Path $projectRoot 'shaders/lib/lighti
 $water = Get-Content -LiteralPath (Join-Path $projectRoot 'shaders/lib/water.glsl') -Raw
 $fog = Get-Content -LiteralPath (Join-Path $projectRoot 'shaders/lib/fog.glsl') -Raw
 $materials = Get-Content -LiteralPath (Join-Path $projectRoot 'shaders/lib/materials.glsl') -Raw
+$fragment = Get-Content -LiteralPath (Join-Path $projectRoot 'shaders/lib/fragment.glsl') -Raw
+$vertex = Get-Content -LiteralPath (Join-Path $projectRoot 'shaders/lib/vertex.glsl') -Raw
+$skyFragment = Get-Content -LiteralPath (Join-Path $projectRoot 'shaders/lib/sky_fragment.glsl') -Raw
+$blockProperties = Get-Content -LiteralPath (Join-Path $projectRoot 'shaders/block.properties') -Raw
 
 function Read-ShaderFloatConstant([string]$Name) {
     $match = [regex]::Match($lighting, "const\s+float\s+" + [regex]::Escape($Name) + "\s*=\s*([0-9]+(?:\.[0-9]+)?)\s*;")
@@ -86,6 +90,14 @@ foreach ($distance in @(0.0, 15.0, 16.0, 32.0, 64.0, 65.0, 128.0)) {
         Assert-Near "fog range at distance $distance" (Clamp01 $factor) $factor 0.000000000001 | Out-Null
     }}
 }
+# Lava and powdered snow retain the loader's linear range rather than sharing
+# the above-water horizon/rain curve. This is source-derived numerical coverage.
+foreach ($medium in @(2, 3)) {
+    foreach ($distance in @(0.0, 16.0, 32.0, 64.0, 128.0)) {
+        $loaderFactor = Clamp01 (($distance - 16.0) / (64.0 - 16.0))
+        Assert-Near "loader fog medium $medium at distance $distance" $loaderFactor (Clamp01 $loaderFactor) 0.000000000001 | Out-Null
+    }
+}
 $waterRoundTripError = 0.0
 foreach ($value in @(-0.10, 0.0, 0.10, 0.50, 1.0, 1.50)) {
     Assert-Near "water display round trip at $value" (WaterEncode (WaterDecode $value)) ([Math]::Max(0.0, $value)) 0.000000000001 | Out-Null
@@ -108,4 +120,27 @@ if ($water -notmatch 'vec3\s+zephWaterSurfaceLinear\s*\(' -or $water -match 'zep
 if ($water -notmatch 'float\s+sunWeight\s*=\s*daylight\s*\*\s*sunHorizonFade\s*;' -or $water -notmatch 'float\s+moonWeight\s*=\s*\(\s*1\.0\s*-\s*daylight\s*\)\s*\*\s*moonHorizonFade\s*;') { throw 'Water regression: celestial lobe weights must remain explicit uniform-only products.' }
 if ($water -notmatch 'if\s*\(\s*sunWeight\s*>\s*0\.0\s*\)' -or $water -notmatch 'if\s*\(\s*daylight\s*<\s*1\.0\s*\)' -or $water -notmatch 'if\s*\(\s*moonWeight\s*>\s*0\.0\s*\)') { throw 'Water regression: exact-zero celestial lobe gates are missing.' }
 if ($fog -match 'ZEPH_EFFECTIVE_ATMOSPHERE_QUALITY\s*>=\s*2' -or $materials -match 'ZEPH_EFFECTIVE_MATERIAL_QUALITY\s*>=\s*3') { throw 'An unreachable profile threshold returned; either expose and test it or remove it.' }
+if (([regex]::Matches($fog, 'isEyeInWater\s*>=\s*2')).Count -lt 2) { throw 'Fog regression: lava and powdered snow must retain loader fog colour and range.' }
+if ($blockProperties -notmatch '(?m)^block\.10001\s*=\s*minecraft:water\s*$') { throw 'Water routing regression: pack-local ID 10001 must map only to minecraft:water.' }
+if ($vertex -notmatch 'mc_Entity\.x\s*-\s*10001\.0' -or $vertex -notmatch 'if\s*\(\s*zephIsWater\s*>\s*0\.5\s*\)') { throw 'Water routing regression: only classified water may be displaced.' }
+if ($fragment -notmatch 'zephIsWater\s*>\s*0\.5\s*\?\s*zephWaterSurfaceLinear') { throw 'Water routing regression: non-water translucent terrain must bypass water shading.' }
+if ($vertex -notmatch 'gl_TextureMatrix\s*\[\s*0\s*\]\s*\*\s*gl_MultiTexCoord0') { throw 'Texture-coordinate regression: generic textured programs must apply texture matrix 0.' }
+if ($skyFragment -notmatch 'skyDir\s*=\s*zephSafeNormalize\s*\(\s*zephSkyDirection\s*\)') { throw 'Sky regression: interpolated sky directions must be normalized before angular calculations.' }
+
+# P0 lighting invariant.  The production fragment source must consume the
+# loader-provided per-surface lightmap before decoding/scene grading.  The
+# numeric cases below use the same component-wise multiplication that source
+# locks above: zero incident light must not retain albedo, while full light
+# preserves it.  This is a source-derived regression, not a rendered claim.
+if ($fragment -notmatch '(?m)^\s*uniform\s+sampler2D\s+lightmap\s*;') { throw 'Lighting regression: missing lightmap sampler.' }
+if ($fragment -notmatch 'source\.rgb\s*\*=\s*texture2D\s*\(\s*lightmap\s*,\s*zephLightCoord\s*\)\.rgb\s*;') { throw 'Lighting regression: source must apply per-surface lightmap irradiance.' }
+if ($fragment -notmatch '#ifdef\s+ZEPH_LIGHTMAP_LIT_PROGRAM') { throw 'Lighting regression: lightmap sampling must be restricted to lit program routes.' }
+foreach ($case in @(
+    [ordered]@{ Name = 'zero sky and block light'; Albedo = 0.80; Lightmap = 0.0; Expected = 0.0 },
+    [ordered]@{ Name = 'mixed cave light'; Albedo = 0.80; Lightmap = 0.25; Expected = 0.20 },
+    [ordered]@{ Name = 'full light'; Albedo = 0.80; Lightmap = 1.0; Expected = 0.80 }
+)) {
+    $lit = [double][single]([single]$case.Albedo * [single]$case.Lightmap)
+    Assert-Near "lightmap irradiance $($case.Name)" $lit $case.Expected 0.0000001 | Out-Null
+}
 Write-Host ('Math regression tests passed. Maximum smoothstep absolute errors: ' + (($maxErrors.GetEnumerator() | ForEach-Object { "$($_.Key)=$([string]::Format('{0:E3}', $_.Value))" }) -join '; ') + '; water float32 old/new=' + [string]::Format('{0:E3}', $waterRoundTripError))

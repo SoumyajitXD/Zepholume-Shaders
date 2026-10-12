@@ -17,9 +17,11 @@ float zephLuminance(vec3 colour) {
 }
 
 vec3 zephHighlightCompress(vec3 colour) {
-    // A rational shoulder preserves bright texture variation instead of hard
-    // clipping it; its neutral point is deliberately close to vanilla light.
-    return colour / (vec3(1.0) + colour * 0.58);
+    // Keep ordinary lightmapped colour unchanged. Only values above display
+    // white need a shoulder; compressing the entire 0..1 range darkened terrain
+    // while the independently rendered sky stayed bright.
+    vec3 positive = max(colour, vec3(0.0));
+    return positive / (vec3(1.0) + max(positive - vec3(1.0), vec3(0.0)) * 0.58);
 }
 
 vec3 zephApplySaturation(vec3 colour, float amount) {
@@ -27,7 +29,11 @@ vec3 zephApplySaturation(vec3 colour, float amount) {
 }
 
 vec3 zephApplyContrast(vec3 colour, float amount) {
-    return max((colour - vec3(0.18)) * amount + vec3(0.18), vec3(0.0));
+    // A pivoted affine contrast clips every valid low-light value below its
+    // zero crossing. Scale around the same pivot instead, preserving a smooth
+    // positive toe and keeping neutral grey fixed.
+    vec3 positive = max(colour, vec3(0.0));
+    return positive * (vec3(1.0) + (amount - 1.0) * (clamp(positive, vec3(0.0), vec3(1.0)) - vec3(0.18)));
 }
 
 #endif

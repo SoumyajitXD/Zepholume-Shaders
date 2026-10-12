@@ -7,6 +7,11 @@
 uniform sampler2D texture;
 varying vec2 zephTexCoord;
 #endif
+#ifdef ZEPH_LIGHTMAP_LIT_PROGRAM
+// The loader binds Minecraft's per-surface block/sky lighting here.  Keep it
+// separate from the albedo atlas: zephLightCoord is not illumination by itself.
+uniform sampler2D lightmap;
+#endif
 uniform vec3 fogColor;
 uniform float fogStart;
 uniform float fogEnd;
@@ -22,6 +27,9 @@ varying vec4 zephVertexColour;
 varying float zephDistance;
 varying vec3 zephNormalView;
 varying vec3 zephViewDirection;
+#ifdef ZEPH_WATER_PROGRAM
+flat varying float zephIsWater;
+#endif
 
 // These helpers reference the fog uniforms above, which GLSL 330 requires to
 // be declared before the function bodies are parsed.
@@ -44,6 +52,14 @@ void main() {
 #else
     vec4 source = texture2D(texture, zephTexCoord) * zephVertexColour;
 #endif
+#ifdef ZEPH_LIGHTMAP_LIT_PROGRAM
+    // The lightmap is the authoritative per-surface irradiance.  Earlier
+    // versions transported zephLightCoord only for artistic modifiers and
+    // never applied this texture, which made zero-light cave surfaces retain
+    // nearly full albedo.  Apply it before display-to-working-space decoding
+    // so the existing colour pipeline receives the game's lit colour.
+    source.rgb *= texture2D(lightmap, zephLightCoord).rgb;
+#endif
 #if ZEPH_EFFECTIVE_FACE_LIGHTING_QUALITY > 0 || ZEPH_EFFECTIVE_MATERIAL_QUALITY > 0 || (defined(ZEPH_WATER_PROGRAM) && ZEPH_EFFECTIVE_WATER_TIER > 0 && ZEPH_EFFECTIVE_WATER_QUALITY > 0)
     // Do not normalize a normal on profiles/programs that have no consumer.
     // This makes Potato's direct scene path genuinely omit that source-level
@@ -58,7 +74,11 @@ void main() {
     // Keep the water result in working space.  This removes the former
     // encode/decode round trip (a sqrt plus its inverse square) from every
     // active water fragment while preserving the same bounded surface value.
-    vec3 linear = zephWaterSurfaceLinear(source.rgb, normal, zephViewDirection, zephDistance);
+    // The program also carries non-water translucent terrain; keep that on
+    // the ordinary scene route instead of applying water Fresnel/specular.
+    vec3 linear = zephIsWater > 0.5
+        ? zephWaterSurfaceLinear(source.rgb, normal, zephViewDirection, zephDistance)
+        : zephDecodeDisplay(source.rgb);
 #else
     vec3 linear = zephDecodeDisplay(source.rgb);
 #endif

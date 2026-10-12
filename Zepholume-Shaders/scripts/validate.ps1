@@ -17,28 +17,71 @@ if ($Package) {
             $packageEntries = @($archive.Entries | ForEach-Object FullName)
             if ($packageEntries | Where-Object { $_ -match '\\' }) { $errors.Add("ZIP contains backslash path(s): $Package") }
             if (-not ($packageEntries -contains 'shaders/shaders.properties')) { $errors.Add("ZIP does not contain shaders/ at its root: $Package") }
-            if ($packageEntries | Where-Object { $_ -match '^(?:[^/]+/)?\.\.(?:/|$)' }) { $errors.Add("ZIP contains traversal path(s): $Package") }
+            if ($packageEntries | Where-Object { $_ -match '(^|/)\.\.(/|$)|^/|^[A-Za-z]:' }) { $errors.Add("ZIP contains traversal or absolute path(s): $Package") }
             foreach ($duplicate in ($packageEntries | Group-Object | Where-Object Count -gt 1)) { $errors.Add("ZIP contains duplicate entry: $($duplicate.Name)") }
-            if ($packageEntries | Where-Object { $_ -match '(^|/)(?:dist|artifacts|runtime|tools)(/|$)|\.(?:log|tmp|bak)$' }) { $errors.Add("ZIP contains generated/runtime artifact(s): $Package") }
+            if ($packageEntries | Where-Object { $_ -match '(^|/)(?:dist|artifacts|runtime|tools|scripts|bench|docs)(/|$)|\.(?:zip|log|tmp|bak)$' }) { $errors.Add("ZIP contains development/generated/runtime artifact(s): $Package") }
         } finally { $archive.Dispose() }
     }
 }
 $required = @(
     'README.md','CHANGELOG.md','THIRD_PARTY_NOTICES.md',
     'docs/ARCHITECTURE.md','docs/BASELINE_PERFORMANCE.md','docs/COMPATIBILITY_MATRIX.md','docs/GPU_COMPATIBILITY_POLICY.md','docs/KNOWN_ISSUES.md','docs/PERFORMANCE_BUDGET.md','docs/PORTABILITY_AUDIT.md','docs/RESEARCH.md','docs/RUNTIME_RESULTS.md','docs/RUNTIME_TEST_CHANGES.md','docs/SHADER_COST_REPORT.md','docs/SHADER_VARIANT_MATRIX.md','docs/SOURCE_PROVENANCE.md','docs/TESTING.md','docs/UNRESOLVED_LOADER_ISSUES.md',
-    'shaders/shaders.properties','shaders/lang/en_US.lang','shaders/lib/settings.glsl','shaders/lib/profile.glsl','shaders/lib/common.glsl','shaders/lib/color.glsl','shaders/lib/fog.glsl','shaders/lib/water.glsl','shaders/lib/vertex.glsl','shaders/lib/fragment.glsl'
+    'shaders/shaders.properties','shaders/block.properties','shaders/lang/en_US.lang','shaders/lib/settings.glsl','shaders/lib/profile.glsl','shaders/lib/common.glsl','shaders/lib/color.glsl','shaders/lib/fog.glsl','shaders/lib/water.glsl','shaders/lib/vertex.glsl','shaders/lib/fragment.glsl',
+    'scripts/sync-dimension-wrappers.ps1'
 )
 foreach ($relative in $required) { if (-not (Test-Path -LiteralPath (Join-Path $Root $relative))) { $errors.Add("Missing required file: $relative") } }
 $shaderRoot = Join-Path $Root 'shaders'
+$rootPrograms = @(Get-ChildItem -LiteralPath $shaderRoot -File | Where-Object { $_.Extension -in '.vsh','.fsh' } | Sort-Object Name)
 $programs = @(Get-ChildItem -LiteralPath $shaderRoot -Recurse -File | Where-Object { $_.Extension -in '.vsh','.fsh' })
 if ($programs.Count -eq 0) { $errors.Add('No program shaders found.') }
 if ($Package) {
-    foreach ($requiredPackageEntry in @('README.md','CHANGELOG.md','THIRD_PARTY_NOTICES.md','shaders/shaders.properties')) {
-        if ($packageEntries -notcontains $requiredPackageEntry) { $errors.Add("ZIP missing required entry: $requiredPackageEntry") }
-    }
-    foreach ($shaderFile in (Get-ChildItem -LiteralPath $shaderRoot -Recurse -File)) {
-        $relative = $shaderFile.FullName.Substring($shaderRoot.Length + 1).Replace('\','/')
-        if ($packageEntries -notcontains "shaders/$relative") { $errors.Add("ZIP missing shader source: shaders/$relative") }
+    $expectedPackageFiles = @(
+        @(Get-ChildItem -LiteralPath $shaderRoot -File -Recurse) +
+        @(Get-Item -LiteralPath (Join-Path $Root 'README.md')) +
+        @(Get-Item -LiteralPath (Join-Path $Root 'CHANGELOG.md')) +
+        @(Get-Item -LiteralPath (Join-Path $Root 'THIRD_PARTY_NOTICES.md'))
+    )
+    $expectedEntries = @($expectedPackageFiles | ForEach-Object { $_.FullName.Substring($Root.Length + 1).Replace('\','/') })
+    foreach ($missing in Compare-Object $expectedEntries $packageEntries | Where-Object SideIndicator -eq '<=' | ForEach-Object InputObject) { $errors.Add("ZIP missing expected entry: $missing") }
+    foreach ($extra in Compare-Object $expectedEntries $packageEntries | Where-Object SideIndicator -eq '=>' | ForEach-Object InputObject) { $errors.Add("ZIP contains unexpected entry: $extra") }
+    Add-Type -AssemblyName System.IO.Compression.FileSystem
+    $archive = [System.IO.Compression.ZipFile]::OpenRead($Package)
+    try {
+        $entryByName = @{}
+        foreach ($entry in $archive.Entries) { if (-not $entryByName.ContainsKey($entry.FullName)) { $entryByName[$entry.FullName] = $entry } }
+        foreach ($sourceFile in $expectedPackageFiles) {
+            $entryName = $sourceFile.FullName.Substring($Root.Length + 1).Replace('\','/')
+            if (-not $entryByName.ContainsKey($entryName)) { continue }
+            $sourceHash = (Get-FileHash -LiteralPath $sourceFile.FullName -Algorithm SHA256).Hash
+            $entryStream = $entryByName[$entryName].Open()
+            $hasher = [Security.Cryptography.SHA256]::Create()
+            try { $entryHash = [Convert]::ToHexString($hasher.ComputeHash($entryStream)) }
+            finally { $hasher.Dispose(); $entryStream.Dispose() }
+            if ($entryHash -cne $sourceHash) { $errors.Add("ZIP entry differs from current source: $entryName") }
+        }
+    } finally { $archive.Dispose() }
+}
+
+# Legacy worldN mode ignores the root program directory as soon as any worldN
+# folder exists. Require complete, mechanically derived wrapper sets so no
+# dimension silently loses programs or falls back to the wrong implementation.
+$dimensionWrappers = @(
+    [ordered]@{ Folder='world0'; Macro=$null },
+    [ordered]@{ Folder='world-1'; Macro='ZEPH_DIM_NETHER' },
+    [ordered]@{ Folder='world1'; Macro='ZEPH_DIM_END' }
+)
+foreach ($dimension in $dimensionWrappers) {
+    $directory = Join-Path $shaderRoot $dimension.Folder
+    $actualNames = if (Test-Path -LiteralPath $directory) { @(Get-ChildItem -LiteralPath $directory -File | Where-Object { $_.Extension -in '.vsh','.fsh' } | ForEach-Object Name | Sort-Object) } else { @() }
+    $expectedNames = @($rootPrograms.Name | Sort-Object)
+    if (Compare-Object $expectedNames $actualNames) { $errors.Add("Dimension wrapper topology differs from root programs: $($dimension.Folder)") }
+    foreach ($rootProgram in $rootPrograms) {
+        $target = Join-Path $directory $rootProgram.Name
+        if (-not (Test-Path -LiteralPath $target -PathType Leaf)) { continue }
+        $rootSource = [IO.File]::ReadAllText($rootProgram.FullName).Replace("`r`n", "`n")
+        $expectedSource = if ($dimension.Macro) { [regex]::Replace($rootSource, '\A(#version[^\n]*\n)', "`$1#define $($dimension.Macro)`n", 1) } else { $rootSource }
+        $actualSource = [IO.File]::ReadAllText($target).Replace("`r`n", "`n")
+        if ($actualSource -cne $expectedSource) { $errors.Add("Dimension wrapper differs from generated source: $($dimension.Folder)/$($rootProgram.Name)") }
     }
 }
 foreach ($sourceFile in (Get-ChildItem -LiteralPath $shaderRoot -Recurse -File | Where-Object { $_.Extension -in '.vsh','.fsh','.glsl','.properties','.lang' })) {
@@ -83,7 +126,52 @@ if (Test-Path -LiteralPath $fragmentLibrary) {
     if ($fogInclude -lt 0 -or $fogUniform -lt 0 -or $fogInclude -lt $fogUniform) {
         $errors.Add("Fog helper include must follow its fog uniform declarations: $fragmentLibrary")
     }
+    if ($fragmentSource -notmatch '(?m)^\s*uniform\s+sampler2D\s+lightmap\s*;') {
+        $errors.Add("Generic fragment path must declare the loader lightmap sampler: $fragmentLibrary")
+    }
+    if ($fragmentSource -notmatch 'source\.rgb\s*\*=\s*texture2D\s*\(\s*lightmap\s*,\s*zephLightCoord\s*\)\.rgb\s*;') {
+        $errors.Add("Generic fragment path must apply per-surface lightmap irradiance before grading: $fragmentLibrary")
+    }
+    if ($fragmentSource -notmatch '#ifdef\s+ZEPH_LIGHTMAP_LIT_PROGRAM') {
+        $errors.Add("Generic fragment path must gate the loader lightmap sampler to lit programs: $fragmentLibrary")
+    }
+    if ($fragmentSource -notmatch 'zephIsWater\s*>\s*0\.5\s*\?\s*zephWaterSurfaceLinear') {
+        $errors.Add("Translucent terrain must gate water shading by the classified water material: $fragmentLibrary")
+    }
 }
+
+# Minecraft's unlit gbuffers paths (world border, unlit particles, glint,
+# debug/leash, and hand) must not inherit the terrain lightmap multiplication.
+# Keep this source-derived routing table explicit so a new shared-program use
+# cannot silently change which geometry receives per-surface irradiance.
+$expectedLightmapBasenames = @('gbuffers_block.fsh','gbuffers_damagedblock.fsh','gbuffers_entities.fsh','gbuffers_terrain.fsh','gbuffers_textured_lit.fsh','gbuffers_water.fsh','gbuffers_weather.fsh')
+foreach ($fragmentProgram in (Get-ChildItem -LiteralPath $shaderRoot -Recurse -File -Filter '*.fsh')) {
+    $relative = $fragmentProgram.FullName.Substring($shaderRoot.Length + 1).Replace('\','/')
+    $wrapperSource = Get-Content -LiteralPath $fragmentProgram.FullName -Raw
+    $declaresLightmap = $wrapperSource -match '(?m)^\s*#define\s+ZEPH_LIGHTMAP_LIT_PROGRAM\s*$'
+    $shouldDeclareLightmap = $expectedLightmapBasenames -contains $fragmentProgram.Name
+    if ($declaresLightmap -ne $shouldDeclareLightmap) {
+        $expectedDescription = if ($shouldDeclareLightmap) { 'must' } else { 'must not' }
+        $errors.Add("Lightmap routing: $relative $expectedDescription declare ZEPH_LIGHTMAP_LIT_PROGRAM.")
+    }
+    if ($declaresLightmap -and $wrapperSource.IndexOf('#define ZEPH_LIGHTMAP_LIT_PROGRAM', [StringComparison]::Ordinal) -gt $wrapperSource.IndexOf('#include "/lib/fragment.glsl"', [StringComparison]::Ordinal)) {
+        $errors.Add("Lightmap routing marker must precede the shared fragment include: $relative")
+    }
+}
+
+$vertexLibrary = Get-Content -LiteralPath (Join-Path $shaderRoot 'lib/vertex.glsl') -Raw
+$skyVertexLibrary = Get-Content -LiteralPath (Join-Path $shaderRoot 'lib/sky_vertex.glsl') -Raw
+$cloudVertexLibrary = Get-Content -LiteralPath (Join-Path $shaderRoot 'lib/cloud_vertex.glsl') -Raw
+foreach ($entry in @(@{Name='generic';Source=$vertexLibrary},@{Name='sky';Source=$skyVertexLibrary},@{Name='cloud';Source=$cloudVertexLibrary})) {
+    if ($entry.Source -notmatch 'gl_TextureMatrix\s*\[\s*0\s*\]\s*\*\s*gl_MultiTexCoord0') { $errors.Add("$($entry.Name) texture coordinates must apply gl_TextureMatrix[0].") }
+}
+$blockProperties = Get-Content -LiteralPath (Join-Path $shaderRoot 'block.properties') -Raw
+if ($blockProperties -notmatch '(?m)^block\.10001\s*=\s*minecraft:water\s*$') { $errors.Add('block.properties must map pack-local material 10001 only to minecraft:water.') }
+if ($vertexLibrary -notmatch 'mc_Entity\.x\s*-\s*10001\.0' -or $vertexLibrary -notmatch 'if\s*\(\s*zephIsWater\s*>\s*0\.5\s*\)') { $errors.Add('Water vertex displacement must be gated by the classified water material.') }
+$fogLibrary = Get-Content -LiteralPath (Join-Path $shaderRoot 'lib/fog.glsl') -Raw
+if (([regex]::Matches($fogLibrary, 'isEyeInWater\s*>=\s*2')).Count -lt 2) { $errors.Add('Lava and powdered-snow fog colour/factor must preserve the loader route.') }
+$skyFragmentLibrary = Get-Content -LiteralPath (Join-Path $shaderRoot 'lib/sky_fragment.glsl') -Raw
+if ($skyFragmentLibrary -notmatch 'skyDir\s*=\s*zephSafeNormalize\s*\(\s*zephSkyDirection\s*\)') { $errors.Add('Interpolated sky direction must be normalized in the fragment stage.') }
 
 $resolved = @{}
 foreach ($shader in $programs) {
@@ -137,27 +225,33 @@ foreach ($staleVersion in @('0.1.0-dev','0.2.0-dev')) {
         $errors.Add("Stale development version remains in release-facing metadata: $staleVersion")
     }
 }
-if ($properties -notmatch 'Zepholume 1\.0\.4 final release') { $errors.Add('Shader properties must identify the V1.0.4 final release.') }
+if ($properties -notmatch 'Zepholume 1\.0\.5 development candidate') { $errors.Add('Shader properties must identify the V1.0.5 development candidate.') }
 if ($changelog -notmatch '(?m)^## 1\.0\.4 .+released') { $errors.Add('Changelog must contain the V1.0.4 released heading.') }
-if ($readme -notmatch '(?i)V1\.0\.4 final release') { $errors.Add('README must identify V1.0.4 as the current final release.') }
+if ($changelog -notmatch '(?m)^## 1\.0\.5-dev .+unreleased') { $errors.Add('Changelog must contain the V1.0.5 development heading.') }
+if ($readme -notmatch '(?i)V1\.0\.5 development') { $errors.Add('README must identify the active V1.0.5 development cycle.') }
 $definitions = @{}
 foreach ($m in [regex]::Matches($settings, '(?m)^#define\s+(ZEPH_[A-Z_]+)\s+(\d+)\s*//\s*\[([^\]]+)\]')) { $definitions[$m.Groups[1].Value] = @($m.Groups[3].Value -split '\s+' | ForEach-Object {[int]$_}) }
 $options = @([regex]::Matches($properties, 'ZEPH_[A-Z_]+') | ForEach-Object Value | Sort-Object -Unique)
 foreach ($option in $options) {
     if (-not $definitions.ContainsKey($option)) { $errors.Add("Property references undefined or unconstrained option: $option"); continue }
     if ($lang -notmatch "(?m)^option\.$option=") { $errors.Add("Missing language label: $option") }
-    if ($lang -notmatch "(?m)^comment\.$option=") { $errors.Add("Missing language tooltip: $option") }
+    if ($lang -notmatch "(?m)^option\.$option\.comment=\S") { $errors.Add("Missing Iris-compatible language tooltip: $option") }
 }
-foreach ($profile in [regex]::Matches($properties, '(?m)^profile\.([^\s=]+)\s*=\s*(.+)$')) {
-    $assignments = @($profile.Groups[2].Value.Trim() -split '\s+' | Where-Object { $_ })
-    foreach ($assignment in $assignments) {
+$profileMatches = [regex]::Matches($properties, '(?m)^profile\.([^\s=]+)\s*=\s*(.+)$')
+$requiredProfiles = @('Potato','Low','Balanced','High','Ultra')
+$actualProfiles = @($profileMatches | ForEach-Object { $_.Groups[1].Value })
+if (($actualProfiles.Count -ne $requiredProfiles.Count) -or (Compare-Object $actualProfiles $requiredProfiles -CaseSensitive)) {
+    $errors.Add("Expected exactly five profiles (Potato, Low, Balanced, High, Ultra); found: $($actualProfiles -join ', ')")
+}
+if ($properties -notmatch '(?m)^screen\s*=\s*[^\r\n]*<profile>(?:\s|$)') { $errors.Add('Main settings screen must expose <profile>.') }
+foreach ($profile in $profileMatches) {
+    foreach ($assignment in $profile.Groups[2].Value -split '\s+') {
         if ($assignment -notmatch '^(ZEPH_[A-Z_]+):(\d+)$') { $errors.Add("Invalid profile assignment in $($profile.Groups[1].Value): $assignment"); continue }
         $name,$value = $Matches[1],[int]$Matches[2]
         if (-not $definitions.ContainsKey($name)) { $errors.Add("Profile references unknown option: $name"); continue }
         if ($definitions[$name] -notcontains $value) { $errors.Add("Profile value outside declared range: ${name}:$value") }
     }
 }
-$requiredProfiles = @('Potato','Low','Balanced','High','Ultra')
 foreach ($profileName in $requiredProfiles) {
     if ($properties -notmatch "(?m)^profile\.$profileName\s*=") { $errors.Add("Missing required profile: $profileName") }
     if ($lang -notmatch "(?m)^profile\.$profileName=") { $errors.Add("Missing language label for required profile: $profileName") }
@@ -175,16 +269,9 @@ foreach ($profileName in $requiredProfiles) {
     $propertyMatch = [regex]::Match($properties, "(?m)^profile\.$profileName\s*=\s*(.+)$")
     if (-not $propertyMatch.Success) { continue }
     $actual = @{}
-    $propertyAssignments = @($propertyMatch.Groups[1].Value.Trim() -split '\s+' | Where-Object { $_ })
-    foreach ($assignment in $propertyAssignments) {
-        if ($assignment -match '^(ZEPH_[A-Z_]+):(\d+)$') { $actual[$Matches[1]] = [int]$Matches[2] }
-    }
+    foreach ($assignment in $propertyMatch.Groups[1].Value -split '\s+') { if ($assignment -match '^(ZEPH_[A-Z_]+):(\d+)$') { $actual[$Matches[1]] = [int]$Matches[2] } }
     if (($actual.Count -ne $matrix[$profileName].Count) -or (Compare-Object ($actual.GetEnumerator() | ForEach-Object { "$($_.Key):$($_.Value)" } | Sort-Object) ($matrix[$profileName].GetEnumerator() | ForEach-Object { "$($_.Key):$($_.Value)" } | Sort-Object))) { $errors.Add("Profile does not match authoritative matrix: $profileName") }
 }
-$aliasMatch = [regex]::Match($properties, '(?m)^profile\.Ultra_Lite\s*=\s*(.+)$')
-$lowMatch = [regex]::Match($properties, '(?m)^profile\.Low\s*=\s*(.+)$')
-if (-not $aliasMatch.Success -or -not $lowMatch.Success) { $errors.Add('Missing deprecated Ultra Lite compatibility alias or Low profile.') }
-elseif ($aliasMatch.Groups[1].Value.Trim() -ne $lowMatch.Groups[1].Value.Trim()) { $errors.Add('Deprecated Ultra Lite compatibility alias must map to the Low baseline.') }
 $balanced = $matrix['Balanced']
 foreach ($option in $definitions.Keys) {
     $defaultMatch = [regex]::Match($settings, "(?m)^#define\s+$option\s+(\d+)\s*//")

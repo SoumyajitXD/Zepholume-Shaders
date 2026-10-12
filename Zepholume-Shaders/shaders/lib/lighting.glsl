@@ -29,22 +29,15 @@ float zephFaceLight(vec3 normal, vec2 lightCoord, float storm) {
     vec3 moonDir = zephSafeNormalize(moonPosition);
     float daylight = zephDaylightFromElevation(sunDir.y);
 
-    // Day direct celestial lighting
+    // The lightmap and vertex colour already carry the main scene lighting.
+    // Use celestial direction only for bounded face shape, not a second deep
+    // attenuation of valid skylight or block light.
     float sunDirect = max(dot(normal, sunDir), 0.0);
-    float dayFace = sunDirect * 0.65 + 0.35;
+    float dayFace = mix(0.72, 1.0, sunDirect);
 
     // Night directional moonlight with grounded non-facing ambient
     float moonDirect = max(dot(normal, moonDir), 0.0);
     float nightFace = mix(0.72, 0.88, moonDirect * 0.55 + 0.45);
-
-#if ZEPH_EFFECTIVE_FACE_LIGHTING_QUALITY >= 2
-    // Skylight occlusion: down-facing surfaces under open sky receive occluded ambient;
-    // partial overhangs attenuate direct celestial penetration.
-    float skyAccess = normal.y * 0.5 + 0.5;
-    float skyOcclusion = mix(0.72, 1.0, skyAccess);
-    dayFace *= skyOcclusion;
-    nightFace *= skyOcclusion;
-#endif
 
 #if ZEPH_EFFECTIVE_FACE_LIGHTING_QUALITY >= 3
     // High and Ultra apply softened wrap curve for smoother facet transitions

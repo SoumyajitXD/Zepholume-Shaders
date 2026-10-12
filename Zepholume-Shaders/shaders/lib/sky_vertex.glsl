@@ -11,7 +11,7 @@ void main() {
     float safeLength = max(length(viewPosition.xyz), 0.0001);
     zephSkyUp = clamp(0.5 + 0.5 * viewPosition.y / safeLength, 0.0, 1.0);
     zephSkyDirection = viewPosition.xyz / safeLength;
-    zephSkyTexCoord = gl_MultiTexCoord0.st;
+    zephSkyTexCoord = (gl_TextureMatrix[0] * gl_MultiTexCoord0).xy;
     zephSkyVertexColour = gl_Color;
     gl_Position = gl_ProjectionMatrix * viewPosition;
 }
