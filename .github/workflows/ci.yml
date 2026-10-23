@@ -133,12 +133,14 @@ jobs:
           $ErrorActionPreference = 'Stop'
           ./scripts/tests/validate-tests.ps1
 
-      - name: Test GLSL coverage-integrity gate (positive and negative fixtures)
+      - name: Test CI evidence gates with positive and negative fixtures
         shell: bash
         working-directory: Zepholume-Shaders
         run: |
           set -euo pipefail
           python3 scripts/ci/test_verify_variants.py
+          python3 scripts/ci/test_compare_packages.py
+          python3 scripts/ci/test_verify_runtime_evidence.py
 
       - name: Benchmark tooling regression suite
         shell: pwsh
