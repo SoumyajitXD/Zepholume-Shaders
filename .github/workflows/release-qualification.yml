@@ -1,0 +1,57 @@
+name: Zepholume Release Evidence Verification
+
+# Checks operator-provided data integrity only. Never publishes a release.
+on:
+  workflow_dispatch:
+    inputs:
+      candidate_sha:
+        description: "Full source commit SHA for the candidate ZIP"
+        type: string
+        required: true
+      evidence_manifest:
+        description: "Sanitized evidence JSON beneath qualification-evidence/"
+        type: string
+        required: true
+        default: qualification-evidence/candidate.json
+
+permissions:
+  contents: read
+
+jobs:
+  evidence-integrity:
+    name: Release evidence integrity (manual QA still required)
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Checkout candidate evidence
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          fetch-depth: 1
+          persist-credentials: false
+          show-progress: false
+
+      - name: Verify hashes and loader/profile/dimension coverage
+        shell: bash
+        env:
+          CANDIDATE_SHA: ${{ inputs.candidate_sha }}
+          EVIDENCE_MANIFEST: ${{ inputs.evidence_manifest }}
+        run: |
+          set -euo pipefail
+          python3 Zepholume-Shaders/scripts/ci/verify_runtime_evidence.py \
+            "$GITHUB_WORKSPACE" "$EVIDENCE_MANIFEST" "$CANDIDATE_SHA" \
+            "$RUNNER_TEMP/release-evidence-report.json"
+          {
+            echo "### Release evidence integrity: PASS"
+            echo "The evidence files were hash-checked, but CI cannot establish capture authenticity or visual/performance quality."
+            echo "**Runtime and visual review: PENDING.**"
+            echo "**Automatic release approval: NOT GRANTED.**"
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Upload evidence report
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: zepholume-release-evidence-${{ github.run_id }}
+          path: ${{ runner.temp }}/release-evidence-report.json
+          if-no-files-found: warn
+          retention-days: 30
