@@ -80,6 +80,7 @@ See [Compatibility](docs/COMPATIBILITY.md) for the public compatibility boundary
 - [Architecture](docs/ARCHITECTURE.md)
 - [Troubleshooting](docs/TROUBLESHOOTING.md)
 - [Development](docs/DEVELOPMENT.md)
+- [CI and release qualification](docs/CI_AND_RELEASE_QUALIFICATION.md)
 - [Shader source and developer tooling](Zepholume-Shaders/)
 
 ## Repository layout
