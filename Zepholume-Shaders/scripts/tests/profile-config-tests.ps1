@@ -68,6 +68,34 @@ try {
     $rejectedDuplicate = $false
     try { Get-ZephProfiles -ShaderRoot $fixture | Out-Null } catch { $rejectedDuplicate = $_.Exception.Message -match 'Duplicate profile definition' }
     if (-not $rejectedDuplicate) { throw 'Profile parser accepted a duplicate profile definition.' }
+
+    # Profile parsing must be independent of Git checkout line endings and BOM.
+    $canonical = ($properties -replace "`r`n", "`n").TrimEnd("`r", "`n")
+    foreach ($sample in @(
+        @{ Name='LF'; Newline="`n"; Bom=$false },
+        @{ Name='CRLF'; Newline="`r`n"; Bom=$false },
+        @{ Name='CRLF-BOM'; Newline="`r`n"; Bom=$true }
+    )) {
+        $encoding = [Text.UTF8Encoding]::new([bool]$sample.Bom)
+        $sampleText = $canonical.Replace("`n", $sample.Newline) + $sample.Newline
+        [IO.File]::WriteAllText((Join-Path $fixture 'shaders.properties'), $sampleText, $encoding)
+        $found = @(Get-ZephProfiles -ShaderRoot $fixture)
+        if ($found.Count -ne 5 -or (($found.Name -join '|') -cne ($expected -join '|'))) {
+            throw "Profile parsing differs for $($sample.Name)."
+        }
+        foreach ($profile in $found) {
+            foreach ($option in $profilesByName[$profile.Name].Keys) {
+                if ($profile.Values[$option] -ne $profilesByName[$profile.Name][$option]) {
+                    throw "Profile $($profile.Name) differs for $($sample.Name): $option"
+                }
+            }
+        }
+    }
+
+    [IO.File]::WriteAllText((Join-Path $fixture 'shaders.properties'), ($canonical.Replace("`n", "`r`n") + "`r`nprofile.Low = ZEPH_UNKNOWN:1`r`n"), [Text.UTF8Encoding]::new($false))
+    $rejectedInvalid = $false
+    try { Get-ZephProfiles -ShaderRoot $fixture | Out-Null } catch { $rejectedInvalid = $true }
+    if (-not $rejectedInvalid) { throw 'Profile parser accepted an invalid CRLF assignment.' }
 } finally {
     if (Test-Path -LiteralPath $fixture) { Remove-Item -LiteralPath $fixture -Recurse -Force }
 }
