@@ -1,243 +1,171 @@
-<div style="background-color: #0c0705; color: #d2cbc7; font-family: Arial, Helvetica, sans-serif; font-size: 15px; line-height: 1.7;">
-<div>
-<div style="text-align: center;">
-<div style="font-size: 12px; font-weight: bold; text-transform: uppercase; color: #9ba7ff;">Minecraft Java Edition Shader Pack</div>
-<div style="font-size: 40px; line-height: 1.05; font-weight: 800; color: #fff;">ZEPHOLUME SHADERS</div>
-<div style="font-size: 20px; line-height: 1.4; color: #ddd5d1;">Atmospheric lighting. Polished visuals. Practical performance.</div>
-<p style="color: #a9a09b; font-size: 16px;">A performance-conscious Minecraft Java shader pack built to give survival worlds richer lighting, stronger depth and a more cohesive atmosphere without casually setting the GPU budget on fire.</p>
-<div style="font-size: 12px; font-weight: bold; color: #b3bcff;">CURRENT PROJECT RELEASE &bull; V1.0.5</div>
-<div style="color: #756c68; font-size: 12px;">Release file: Zepholume-Shaders-1.0.5.zip &bull; Based on the Phase 10 candidate. CurseForge file availability may lag behind this description; check the Files tab for the version actually available.</div>
-<div><a style="display: inline-block; background-color: #9ba7ff; color: #0c0705; font-weight: bold; text-decoration: none;" href="https://www.curseforge.com/minecraft/shaders/zepholume-shaders/files" rel="nofollow">CurseForge Files</a> <a style="display: inline-block; border: 1px solid #4c474f; color: #d0d5ff; font-weight: bold; text-decoration: none;" href="https://github.com/SoumyajitXD/Zepholume-Shaders" rel="nofollow">GitHub &amp; Source</a></div>
-</div>
-<div style="text-align: center;"><img style="display: block; width: 100%;" src="https://raw.githubusercontent.com/SoumyajitXD/Zepholume-Shaders/main/Screenshots/01-vanilla-vs-zepholume.png" alt="Vanilla Minecraft compared with Zepholume Shaders &mdash; comparison 01">
-<div style="font-size: 11px; text-transform: uppercase; color: #756c68;">Vanilla &harr; Zepholume &bull; Comparison 01</div>
-</div>
-<div style="background-color: #302520;">&nbsp;</div>
-<div>
-<div style="font-size: 12px; font-weight: bold; text-transform: uppercase; color: #9ba7ff;">Why Zepholume?</div>
-<div style="font-size: 32px; line-height: 1.2; font-weight: 800; color: #fff;">Better atmosphere without forgetting the FPS counter.</div>
-<p style="color: #b6ada8;">Zepholume is built around a deliberately simple idea: <strong style="color: #fff;">Minecraft does not need a gigantic cinematic rendering pipeline to look substantially better.</strong></p>
-<p style="color: #9d9490;">The project spends its rendering budget on controlled lighting, environmental colour, sky and horizon treatment, fog, clouds, weather, water and scene depth while keeping the rendering route deliberately bounded.</p>
-<p style="color: #9d9490;">The goal is not to win a checklist competition against heavyweight shaders. The goal is to make normal Minecraft exploration, building and survival feel richer while respecting frame time, portability and maintainability.</p>
-<div style="background-color: #15100e;">
-<div style="color: #e8e4e1; font-size: 17px; font-weight: bold;">Improve the scene, not the renderer's r&eacute;sum&eacute;.</div>
-<div style="color: #928984;">Zepholume prefers techniques with a clear visual payoff over expensive systems added merely because a feature list looks lonely without them.</div>
-</div>
-</div>
-<div style="background-color: #302520;">&nbsp;</div>
-<div>
-<div style="font-size: 12px; font-weight: bold; text-transform: uppercase; color: #c39c79;">V1.0.5 &bull; Lighting &amp; Configuration</div>
-<div style="font-size: 31px; line-height: 1.2; font-weight: 800; color: #fff;">Correct the light. Keep the renderer lean.</div>
-<p style="color: #9d9490;">V1.0.5 builds on the Phase 10 development candidate with source-level lighting corrections, more reliable shader-settings metadata and expanded automated checks. It targets the overly bright or overly harsh scenes reported during development without replacing Zepholume's restrained direct-path renderer.</p>
-<ul style="padding-left: 23px; color: #aaa19c;">
-<li><strong style="color: #e8e3df;">Corrected lightmap sampling.</strong> A source-level fix addresses missing lightmap sampling in affected generic fragment paths, a root cause of scenes behaving as though environmental light levels were ignored.</li>
-<li><strong style="color: #e8e3df;">Adjusted skylight treatment.</strong> Lighting calculations were reviewed to avoid unintended duplicate skylight effects and preserve environmental attenuation.</li>
-<li><strong style="color: #e8e3df;">Refined colour handling.</strong> Low-light values and above-range highlights receive more deliberate treatment to address excessive contrast and loss of darker scene detail.</li>
-<li><strong style="color: #e8e3df;">Fixed Iris option-tooltip keys.</strong> Phase 10 corrects shader-setting tooltip definitions to match the documented Iris format and adds a regression check.</li>
-<li><strong style="color: #e8e3df;">Kept the five intended quality profiles.</strong> Potato, Low, Balanced, High and Ultra remain the design targets; actual Potato-menu visibility still needs hands-on confirmation.</li>
-<li><strong style="color: #e8e3df;">Expanded validation.</strong> Phase 10 reports 272 standalone GLSL stage checks, 420 link checks and 630 mocked portability cases, alongside settings regression checks.</li>
-<li><strong style="color: #e8e3df;">Preserved the lightweight approach.</strong> No new shadow pipeline, SSR, temporal buffers or heavyweight post-processing system is introduced as part of this release.</li>
-</ul>
-<div style="background-color: #15100e;">
-<div style="color: #e8e4e1; font-weight: bold;">Important: source corrections are not a visual sign-off</div>
-<div style="color: #928984;">The Phase 10 tests support shader-source and configuration correctness, but Iris/Oculus in-game visual recovery was not confirmed. Brightness, contrast and Potato preset visibility remain areas for runtime verification. No measured FPS improvement is claimed for V1.0.5.</div>
-</div>
-<p style="color: #7f7672; font-size: 13px;">This public release is based on <code style="color: #bcc4ff; background-color: #181311;">Zepholume-Shaders-1.0.5-dev-phase10.zip</code>, distributed as <code style="color: #bcc4ff; background-color: #181311;">Zepholume-Shaders-1.0.5.zip</code>. The development archive's recorded SHA-256 is 4B3803CF87AF43952CF91D145BB634C3346DEF6FC8C7008C37368058DC75DC91.</p>
-</div>
-<div style="background-color: #302520;">&nbsp;</div>
-<div>
-<div style="font-size: 12px; font-weight: bold; text-transform: uppercase; color: #9ba7ff;">Visual Direction</div>
-<div style="font-size: 31px; line-height: 1.2; font-weight: 800; color: #fff;">Atmosphere that behaves like one system.</div>
-<div>
-<div style="font-size: 20px; font-weight: bold; color: #f1edea;">Day, night &amp; twilight</div>
-<p style="color: #9d9490;">Terrain, sky, clouds and fog share continuous environmental behaviour so sunrise, sunset, daylight and night transition as parts of the same world rather than unrelated colour presets.</p>
-<div style="font-size: 20px; font-weight: bold; color: #f1edea;">Sun, moon &amp; directional light</div>
-<p style="color: #9d9490;">Zepholume uses separate loader-provided sun and moon directions for bounded celestial lighting. Skylight grounding prevents that directional response from behaving as though caves have developed transparent ceilings.</p>
-<div style="font-size: 20px; font-weight: bold; color: #f1edea;">Sky &amp; horizon</div>
-<p style="color: #9d9490;">The analytical sky uses controlled elevation and horizon behaviour, loader-provided scene colour, restrained twilight warmth and celestial glow. Horizon treatment is coordinated with fog to reduce visible atmospheric seams.</p>
-<div style="font-size: 20px; font-weight: bold; color: #f1edea;">Fog &amp; dimensional atmosphere</div>
-<p style="color: #9d9490;">Fog is treated as part of the scene. The Overworld gains atmospheric depth, underwater views gain restrained tinting on supported profiles, and the Nether and End use independent ambient treatment rather than carrying unnecessary Overworld celestial maths.</p>
-<div style="font-size: 20px; font-weight: bold; color: #f1edea;">Block lighting</div>
-<p style="color: #9d9490;">Interior warmth is driven by the relationship between block light and skylight. Artificial lighting gains richer warmth where block light actually dominates instead of indiscriminately painting strongly sky-lit surfaces orange.</p>
-<div style="font-size: 20px; font-weight: bold; color: #f1edea;">Weather</div>
-<p style="color: #9d9490;">Rain and storms soften directional lighting and adjust atmospheric colour without requiring a separate heavyweight weather renderer.</p>
-<div style="font-size: 20px; font-weight: bold; color: #f1edea;">Water</div>
-<p style="color: #9d9490;">Water combines bounded sky/transmission response with tuned grazing reflectance. Low and Balanced retain the lighter fourth-power artistic response; High and Ultra use a refined fifth-power Fresnel-Schlick-shaped curve. Balanced and higher profiles add bounded vertex-driven water movement. The exact-zero celestial-specular gate introduced in V1.0.4 is retained, avoiding inactive sun/moon lobe work without introducing SSR, depth reconstruction or another framebuffer pass.</p>
-<div style="font-size: 20px; font-weight: bold; color: #f1edea;">Colour &amp; scene depth</div>
-<p style="color: #9d9490;">Exposure, contrast, saturation, temperature, material orientation and highlight compression are designed to give Minecraft depth without overly aggressive grading. V1.0.5 adjusts lighting and colour handling in response to reported full-bright scenes and heavy contrast; the final visual outcome still needs in-game review.</p>
-</div>
-</div>
-<div style="background-color: #302520;">&nbsp;</div>
-<div>
-<div style="font-size: 12px; font-weight: bold; text-transform: uppercase; color: #9ba7ff;">Quality Profiles</div>
-<div style="font-size: 31px; line-height: 1.2; font-weight: 800; color: #fff;">Five profiles. Real capability boundaries.</div>
-<p style="color: #9d9490;">The selected profile establishes a feature baseline. Lower overrides can reduce work without intentionally enabling effects above the chosen tier. The five tiers are defined in the pack; Potato preset visibility in the live options menu is still awaiting verification.</p>
-<div style="padding-left: 15px;">
-<div style="font-size: 20px; color: #fff; font-weight: bold;">Potato</div>
-<div style="color: #8e8581;">The compatibility and minimum-work tier. Potato keeps the direct scene grade and loader sky/fog behaviour while compiling out analytical face, material, cloud, water, weather and analytical-sky work. Underwater fog colour remains loader-provided instead of enabling Zepholume's additional tint.</div>
-</div>
-<div style="padding-left: 15px;">
-<div style="font-size: 20px; color: #fff; font-weight: bold;">Low</div>
-<div style="color: #968d88;">The lightweight target. Low enables restrained directional face/cloud response, basic analytical water, weather treatment and subtle underwater fog tinting while keeping water vertex movement disabled.</div>
-</div>
-<div style="background-color: #15100e;">
-<div style="font-size: 20px; color: #fff; font-weight: bold;">Balanced <span style="font-size: 11px; color: #adb6ff; text-transform: uppercase;">Default &amp; recommended starting point</span></div>
-<div style="color: #aaa09b;">The intended everyday Zepholume experience. Balanced adds material response, atmospheric depth, continuous time transitions and animated low-amplitude two-wave water without changing the underlying direct-path architecture.</div>
-</div>
-<div style="padding-left: 15px;">
-<div style="font-size: 20px; color: #fff; font-weight: bold;">High</div>
-<div style="color: #968d88;">Raises bounded face, cloud, water and weather detail for systems with more headroom. Water also moves to the refined fifth-power grazing-response curve while staying inside the same one-colour-target renderer.</div>
-</div>
-<div style="padding-left: 15px;">
-<div style="font-size: 20px; color: #fff; font-weight: bold;">Ultra</div>
-<div style="color: #968d88;">The highest analytical Zepholume tier. Ultra maximises the current bounded direct-path effects without adding shadows, SSR, temporal history, volumetrics, bloom or extra colour buffers.</div>
-</div>
-<p style="color: #7f7672; font-size: 13px;">Ultra Lite remains available as a deprecated compatibility alias for Low. And if Balanced looks excellent while running better, use Balanced. Selecting Ultra is still not a moral achievement.</p>
-<p><a style="color: #aab3ff; font-weight: bold; text-decoration: underline;" href="https://github.com/SoumyajitXD/Zepholume-Shaders/blob/main/Zepholume-Shaders/docs/PROFILE_GUIDE.md" rel="nofollow">Read the full Quality Profile guide</a></p>
-</div>
-<div style="background-color: #302520;">&nbsp;</div>
-<div style="text-align: center;">
-<div style="font-size: 12px; font-weight: bold; text-transform: uppercase; color: #9ba7ff;">Vanilla vs Zepholume</div>
-<div style="font-size: 31px; line-height: 1.2; font-weight: 800; color: #fff;">Same world. Different atmosphere.</div>
-<p style="color: #928984;">These archived comparisons show the project's visual direction at the time they were captured. They are not V1.0.5 before-and-after validation images and should not be treated as proof of the current lighting corrections.</p>
-</div>
-<div style="text-align: center;"><img style="display: block; width: 100%;" src="https://raw.githubusercontent.com/SoumyajitXD/Zepholume-Shaders/main/Screenshots/02-vanilla-vs-zepholume.png" alt="Vanilla Minecraft compared with Zepholume Shaders &mdash; comparison 02">
-<div style="font-size: 12px; color: #756c68;">Comparison 02</div>
-</div>
-<div style="text-align: center;"><img style="display: block; width: 100%;" src="https://raw.githubusercontent.com/SoumyajitXD/Zepholume-Shaders/main/Screenshots/03-vanilla-vs-zepholume.png" alt="Vanilla Minecraft compared with Zepholume Shaders &mdash; comparison 03">
-<div style="font-size: 12px; color: #756c68;">Comparison 03</div>
-</div>
-<div style="text-align: center;"><img style="display: block; width: 100%;" src="https://raw.githubusercontent.com/SoumyajitXD/Zepholume-Shaders/main/Screenshots/04-vanilla-vs-zepholume.png" alt="Vanilla Minecraft compared with Zepholume Shaders &mdash; comparison 04">
-<div style="font-size: 12px; color: #756c68;">Comparison 04</div>
-</div>
-<div style="text-align: center;"><img style="display: block; width: 100%;" src="https://raw.githubusercontent.com/SoumyajitXD/Zepholume-Shaders/main/Screenshots/05-vanilla-vs-zepholume.png" alt="Vanilla Minecraft compared with Zepholume Shaders &mdash; comparison 05">
-<div style="font-size: 12px; color: #756c68;">Comparison 05</div>
-</div>
-<div style="background-color: #302520;">&nbsp;</div>
-<div>
-<div style="font-size: 12px; font-weight: bold; text-transform: uppercase; color: #9ba7ff;">Performance Philosophy</div>
-<div style="font-size: 31px; line-height: 1.2; font-weight: 800; color: #fff;">Performance is part of the visual experience.</div>
-<p style="color: #b3aaa5;">A beautiful still image means very little if playing the game feels awful.</p>
-<p style="color: #9d9490;">Zepholume therefore treats shader cost, frame-time behaviour, stability, portability and maintainability as design constraints from the beginning. Lower profiles compile out optional work while higher tiers increase bounded analytical quality instead of activating an entirely different renderer.</p>
-<div style="background-color: #15100e;">
-<div style="font-size: 19px; font-weight: bold; color: #fff;">Direct-path by design</div>
-<div style="color: #928984;">The pack contains 24 GLSL vertex/fragment program pairs and writes to one colour target. High and Ultra increase analytical detail inside that architecture rather than adding framebuffer choreography behind the user's back.</div>
-</div>
-<p style="color: #7f7672; font-size: 13px;">V1.0.5 makes no specific FPS or frame-time uplift claim. Its direct-path architecture and retained water zero-gating aim to avoid unnecessary work, but only controlled in-game GPU measurements can establish real performance differences.</p>
-</div>
-<div>
-<div style="font-size: 24px; font-weight: 800; color: #fff;">What Zepholume deliberately does not do</div>
-<p style="color: #9d9490;">The current architecture intentionally avoids heavyweight systems whose cost or complexity does not fit the project's goals:</p>
-<ul style="padding-left: 23px; color: #aaa19c;">
-<li>no shadow-map pipeline;</li>
-<li>no screen-space reflections;</li>
-<li>no SSAO pipeline;</li>
-<li>no bloom pipeline;</li>
-<li>no temporal-history or TAA system;</li>
-<li>no volumetric-lighting pipeline;</li>
-<li>no ray tracing;</li>
-<li>no compute-shader passes;</li>
-<li>no geometry or tessellation shader stages;</li>
-<li>no SSBO/image pipeline;</li>
-<li>no collection of unnecessary full-resolution intermediate colour buffers;</li>
-<li>no heavyweight post-processing chain.</li>
-</ul>
-<p style="color: #8e8581;">These are intentional architectural boundaries. Zepholume aims for strong visual return from a restrained renderer instead of treating GPU time like an unlimited credit card.</p>
-<p style="color: #7f7672; font-size: 13px;">Architectural efficiency is not the same thing as measured FPS. Real performance still depends on GPU, resolution, render distance, driver, loader, mods, resource packs and the scene being rendered.</p>
-<p><a style="color: #aab3ff; font-weight: bold; text-decoration: underline;" href="https://github.com/SoumyajitXD/Zepholume-Shaders/blob/main/Zepholume-Shaders/docs/ARCHITECTURE.md" rel="nofollow">Read the Architecture documentation</a></p>
-</div>
-<div style="background-color: #302520;">&nbsp;</div>
-<div>
-<div style="font-size: 12px; font-weight: bold; text-transform: uppercase; color: #9ba7ff;">Validation</div>
-<div style="font-size: 31px; line-height: 1.2; font-weight: 800; color: #fff;">Test what can be tested. Label the rest honestly.</div>
-<p style="color: #9d9490;">The Phase 10 candidate expands Zepholume's automated source, configuration and portability checks. These results help catch compilation and configuration regressions before a shader pack reaches users; they are not a replacement for an actual Minecraft render test.</p>
-<ul style="padding-left: 23px; color: #aaa19c;">
-<li><strong style="color: #e8e3df;">272 GLSL stage checks</strong> passed in the standalone automated validation workflow.</li>
-<li><strong style="color: #e8e3df;">420 link checks</strong> passed for evaluated program combinations.</li>
-<li><strong style="color: #e8e3df;">630 mocked portability cases</strong> passed across the maintained static configurations.</li>
-<li>Phase 10 adds regression checking for documented Iris tooltip-key formatting.</li>
-<li>Quality-profile and dimension paths are exercised using generated source/configuration variants.</li>
-<li>Structural safeguards continue to check the restrained shader program architecture.</li>
-<li>The development release archive was reported with 135 entries; the published file is a renamed Phase 10 release candidate.</li>
-</ul>
-<div style="background-color: #15100e;"><strong style="color: #e7c59f;">Important:</strong> <span style="color: #a99f99;"> Standalone GLSL compilation, static loader modelling and mocked portability cases do not establish successful Iris/Oculus shader activation, correct in-game contrast/brightness, live Potato preset visibility, real-vendor compatibility or an FPS gain.</span></div>
-</div>
-<div style="background-color: #302520;">&nbsp;</div>
-<div>
-<div style="font-size: 12px; font-weight: bold; text-transform: uppercase; color: #9ba7ff;">Compatibility &amp; Runtime Status</div>
-<div style="font-size: 31px; line-height: 1.2; font-weight: 800; color: #fff;">Separate static evidence from actual runtime evidence.</div>
-<p style="color: #9d9490;">V1.0.5 targets the Iris/Oculus-style shader ecosystem. The project has separate static validation targets and staged runtime test lanes; none should be mistaken for full in-game qualification of this release.</p>
-<ul style="padding-left: 23px; color: #aaa19c;">
-<li><strong style="color: #fff;">Minecraft 1.20.1 &bull; Fabric:</strong> Iris 1.7.6 + Sodium 0.5.13 are staged in the documented test environment. Phase 10 visual rendering and profile-menu checks remain unverified.</li>
-<li><strong style="color: #fff;">Minecraft 1.20.1 &bull; Forge:</strong> Oculus 1.8.0 + Embeddium 0.3.31 are staged in the documented test environment. Phase 10 visual rendering and profile-menu checks remain unverified.</li>
-<li><strong style="color: #fff;">Minecraft 26.2 &bull; Fabric / NeoForge:</strong> Iris 1.11.2 appears in the project's documented static-validation targets; V1.0.5 has not been qualified through live rendering on these configurations.</li>
-<li><strong style="color: #fff;">Minecraft 26.2 &bull; Forge:</strong> Oculus Community Port 0.3.0-beta.1 remains experimental; documented partial <code style="color: #bcc4ff; background-color: #181311;">gbuffers_*</code> support does not justify a full Zepholume compatibility claim.</li>
-<li><strong style="color: #fff;">Other Minecraft versions, including 26.3:</strong> no broad V1.0.5 compatibility claim is made without version-specific validation.</li>
-<li><strong style="color: #fff;">Java:</strong> Java 17 is used in the documented Minecraft 1.20.1 runtime test environments.</li>
-<li><strong style="color: #fff;">OptiFine:</strong> not supported or tested for V1.0.5.</li>
-</ul>
-<div style="background-color: #15100e;">
-<div style="font-size: 18px; font-weight: bold; color: #e7c59f;">V1.0.5 runtime qualification is incomplete.</div>
-<div style="color: #a99f99;">The Phase 10 record reports successful automated checks but no qualifying Iris/Oculus screenshots or completed visual recovery test. Confirmation of lighting behaviour, Potato menu visibility, shader reloads and GPU-specific performance remains outstanding.</div>
-</div>
-<p style="color: #9d9490;">Compatibility depends on the exact Minecraft version, shader loader, graphics driver and mod combination. A game's version appearing in project metadata is not proof that this particular ZIP has passed its runtime test.</p>
-<p style="color: #8e8581;">Please report clear reproduction steps, the exact loader version, and screenshots when you encounter rendering problems.</p>
-<p><a style="color: #aab3ff; font-weight: bold; text-decoration: underline;" href="https://github.com/SoumyajitXD/Zepholume-Shaders/blob/main/Zepholume-Shaders/docs/COMPATIBILITY_MATRIX.md" rel="nofollow">Compatibility report</a> <span style="color: #554d49;"> &bull; </span> <a style="color: #aab3ff; font-weight: bold; text-decoration: underline;" href="https://github.com/SoumyajitXD/Zepholume-Shaders/blob/main/Zepholume-Shaders/docs/KNOWN_ISSUES.md" rel="nofollow">Known issues</a></p>
-</div>
-<div style="background-color: #302520;">&nbsp;</div>
-<div>
-<div style="font-size: 12px; font-weight: bold; text-transform: uppercase; color: #9ba7ff;">Installation</div>
-<div style="font-size: 31px; line-height: 1.2; font-weight: 800; color: #fff;">From ZIP to shader menu.</div>
-<ol style="padding-left: 24px; color: #aaa19c;">
-<li>Use a compatible Minecraft instance with an appropriate Iris or Oculus-style shader setup.</li>
-<li>Download <code style="color: #bcc4ff; background-color: #181311;">Zepholume-Shaders-1.0.5.zip</code>.</li>
-<li>Place the ZIP directly inside that Minecraft instance's <code style="color: #bcc4ff; background-color: #181311;">shaderpacks</code> directory.</li>
-<li>Launch Minecraft and open the shader-pack menu.</li>
-<li>Select <strong style="color: #fff;">Zepholume Shaders</strong>.</li>
-<li>Start with <strong style="color: #fff;">Balanced</strong>. Move to Low/Potato when reducing GPU cost, or High/Ultra when you have comfortable headroom.</li>
-</ol>
-<p style="color: #8e8581;">Do not extract the release ZIP. For compatibility testing, a disposable or isolated Minecraft instance is strongly preferable to turning your 300-mod survival installation into a laboratory experiment.</p>
-<p><a style="color: #aab3ff; font-weight: bold; text-decoration: underline;" href="https://github.com/SoumyajitXD/Zepholume-Shaders/blob/main/Zepholume-Shaders/README.md" rel="nofollow">Read the current README &amp; install notes</a></p>
-</div>
-<div style="background-color: #302520;">&nbsp;</div>
-<div>
-<div style="font-size: 12px; font-weight: bold; text-transform: uppercase; color: #c39c79;">Having problems?</div>
-<div style="font-size: 31px; line-height: 1.2; font-weight: 800; color: #fff;">Debug the stack, not random checkboxes.</div>
-<p style="color: #9d9490;">For low FPS or frame-time trouble, move down one Zepholume profile first and compare the same scene using the same graphics settings. Also check resolution, render distance, simulation distance, resource packs and other rendering-heavy mods.</p>
-<p style="color: #9d9490;">For shader loading, compilation, missing profiles, excessive contrast or visual corruption:</p>
-<ul style="padding-left: 23px; color: #aaa19c;">
-<li>verify that you are actually testing <strong style="color: #fff;">Zepholume-Shaders-1.0.5.zip</strong>;</li>
-<li>verify your exact Minecraft and Iris/Oculus versions;</li>
-<li>check Sodium/Embeddium and Fabric/Forge/NeoForge versions where applicable;</li>
-<li>confirm the ZIP is inside the correct instance's <code style="color: #bcc4ff;">shaderpacks</code> directory;</li>
-<li>check the GPU driver if the problem appeared after a driver update;</li>
-<li>reproduce the problem in the smallest practical instance without unrelated rendering mods or resource packs;</li>
-<li>test shader reloads and dimension transitions when reporting intermittent problems;</li>
-<li>for V1.0.5, report whether Potato appears in the options menu and capture the affected scene if brightness or contrast looks wrong;</li>
-<li>when testing a newer Minecraft version, distinguish a source/static-validation target from a version that has actually completed runtime qualification.</li>
-</ul>
-<div>
-<div style="font-size: 19px; color: #fff; font-weight: bold;">Useful bug-report evidence</div>
-<p style="color: #958c87;">Minecraft version &bull; Iris/Oculus version &bull; Fabric/Forge/NeoForge version &bull; Sodium/Embeddium version &bull; Zepholume version and profile &bull; GPU &bull; driver version &bull; graphics API &bull; Java version &bull; complete latest.log &bull; relevant rendering/resource-pack mods &bull; screenshot or short video for visual problems &bull; whether the issue reproduces in a minimal instance.</p>
-</div>
-<p><a style="color: #aab3ff; font-weight: bold; text-decoration: underline;" href="https://github.com/SoumyajitXD/Zepholume-Shaders/blob/main/Zepholume-Shaders/docs/KNOWN_ISSUES.md" rel="nofollow">Known issues</a> <span style="color: #554d49;"> &bull; </span> <a style="color: #aab3ff; font-weight: bold; text-decoration: underline;" href="https://github.com/SoumyajitXD/Zepholume-Shaders/issues" rel="nofollow">Report an issue</a></p>
-</div>
-<div style="background-color: #302520;">&nbsp;</div>
-<div style="text-align: center;">
-<div style="font-size: 12px; font-weight: bold; text-transform: uppercase; color: #9ba7ff;">Open Development</div>
-<div style="font-size: 30px; line-height: 1.2; font-weight: 800; color: #fff;">Inspect the source. Inspect the evidence. Report the weird stuff.</div>
-<p style="color: #958c87;">Zepholume is developed in public. The repository contains the maintained shader source, changelog, validation tooling, architecture documentation, profile definitions, performance-development evidence, compatibility documentation and manual runtime-test protocols.</p>
-<p style="line-height: 2;"><a style="color: #aab3ff; font-weight: bold; text-decoration: underline;" href="https://github.com/SoumyajitXD/Zepholume-Shaders" rel="nofollow">GitHub Repository</a> <span style="color: #554d49;"> &bull; </span> <a style="color: #aab3ff; font-weight: bold; text-decoration: underline;" href="https://github.com/SoumyajitXD/Zepholume-Shaders/blob/main/Zepholume-Shaders/CHANGELOG.md" rel="nofollow">Changelog</a> <span style="color: #554d49;"> &bull; </span> <a style="color: #aab3ff; font-weight: bold; text-decoration: underline;" href="https://github.com/SoumyajitXD/Zepholume-Shaders/blob/main/Zepholume-Shaders/docs/ARCHITECTURE.md" rel="nofollow">Architecture</a> <span style="color: #554d49;"> &bull; </span> <a style="color: #aab3ff; font-weight: bold; text-decoration: underline;" href="https://github.com/SoumyajitXD/Zepholume-Shaders/blob/main/Zepholume-Shaders/docs/PROFILE_GUIDE.md" rel="nofollow">Profiles</a> <span style="color: #554d49;"> &bull; </span> <a style="color: #aab3ff; font-weight: bold; text-decoration: underline;" href="https://github.com/SoumyajitXD/Zepholume-Shaders/blob/main/Zepholume-Shaders/docs/COMPATIBILITY_MATRIX.md" rel="nofollow">Compatibility</a> <span style="color: #554d49;"> &bull; </span> <a style="color: #aab3ff; font-weight: bold; text-decoration: underline;" href="https://github.com/SoumyajitXD/Zepholume-Shaders/issues" rel="nofollow">Issues</a></p>
-<p style="color: #776e69; font-size: 12px;">Screenshots are archival examples of Zepholume at capture time, not confirmed V1.0.5 results. Visual tuning, optimisation and compatibility work can continue between releases.</p>
-</div>
-<div style="text-align: center;"><img style="display: block; width: 100%;" src="https://raw.githubusercontent.com/SoumyajitXD/Zepholume-Shaders/main/Screenshots/06-vanilla-vs-zepholume.png" alt="Vanilla Minecraft compared with Zepholume Shaders &mdash; comparison 06">
-<div style="font-size: 12px; color: #756c68;">Comparison 06</div>
-</div>
-<div style="background-color: #302520;">&nbsp;</div>
-<div style="text-align: center;">
-<div style="font-size: 23px; font-weight: 800; color: #fff;">ZEPHOLUME SHADERS</div>
-<div style="color: #948a85;">Atmospheric visuals &bull; Restrained rendering &bull; Practical performance</div>
-<div style="font-size: 12px; color: #6f6662;">Copyright &copy; 2026 Soumyajit Biswas<br>Licensed under the <a style="color: #9099e9; text-decoration: underline;" href="https://github.com/SoumyajitXD/Zepholume-Shaders/blob/main/LICENSE" rel="nofollow">Apache License 2.0</a>.</div>
-</div>
-</div>
+<div style="background-color: #0c0705; color: #d2cbc7; font-family: Arial, Helvetica, sans-serif; font-size: 15px; line-height: 1.7; border: 14px solid #0c0705;">
+
+  <div style="text-align: center;">
+    <p style="color: #9ba7ff; font-size: 12px; font-weight: 700; text-transform: uppercase;">Minecraft Java Edition &bull; Shader Pack</p>
+    <h1 style="color: #ffffff; font-size: 40px; line-height: 1.12; font-weight: 800; text-align: center;">ZEPHOLUME<br>SHADERS</h1>
+    <h2 style="color: #f2ece8; font-size: 25px; line-height: 1.3; font-weight: 700;">A richer world. A restrained renderer.</h2>
+    <p style="color: #bdb3ae; font-size: 16px;">Atmospheric light, considered colour, expressive water and cohesive skies&mdash;designed for the Minecraft you actually play, not just the screenshot you take.</p>
+    <p style="color: #c39c79; font-size: 12px; font-weight: 700;">LATEST RELEASE &nbsp;&bull;&nbsp; V1.0.5 &nbsp;&bull;&nbsp; OCTOBER 2026</p>
+    <p>
+      <a href="https://www.curseforge.com/minecraft/shaders/zepholume-shaders/files/9144481" style="display: inline-block; background-color: #9ba7ff; border: 11px solid #9ba7ff; border-radius: 6px; color: #0c0705; font-size: 14px; font-weight: 700; text-decoration: none;">Get V1.0.5</a>
+      &nbsp;
+      <a href="https://github.com/SoumyajitXD/Zepholume-Shaders" style="display: inline-block; background-color: #1c171a; border: 11px solid #1c171a; border-radius: 6px; color: #ebe5ff; font-size: 14px; font-weight: 700; text-decoration: none;">Explore the source</a>
+    </p>
+  </div>
+
+  <div>
+    <img src="https://raw.githubusercontent.com/SoumyajitXD/Zepholume-Shaders/main/Screenshots/01-vanilla-vs-zepholume.png" alt="Archival split-screen comparison of a Minecraft savanna and river: vanilla on the left, Zepholume on the right." style="display: block; width: 100%; border-radius: 8px;">
+    <p style="color: #948984; font-size: 12px; text-align: center;">VANILLA / ZEPHOLUME &nbsp;&bull;&nbsp; Archived project comparison; not a verified V1.0.5 capture.</p>
+  </div>
+
+  <hr style="border: 1px solid #302520;">
+
+  <div>
+    <p style="color: #9ba7ff; font-size: 12px; font-weight: 700; text-transform: uppercase;">01 &nbsp;/&nbsp; The experience</p>
+    <h2 style="color: #ffffff; font-size: 32px; line-height: 1.22;">More feeling in every familiar block.</h2>
+    <p style="color: #b8ada8;">Zepholume builds atmosphere through deliberate adjustments to the light, colour and environment already in Minecraft. The result aims to feel cohesive across exploration, building and survival&mdash;without swapping in an oversized effects pipeline.</p>
+
+    <div style="display: flex; flex-wrap: wrap; gap: 12px;">
+      <div style="flex: 1 1 245px; min-width: 220px; background-color: #15100e; border: 12px solid #15100e; border-radius: 9px;">
+        <h3 style="color: #f4eeea; font-size: 19px;">01 &nbsp; Living atmosphere</h3>
+        <p style="color: #b3a8a3;">Skies, horizons and fog respond together as daylight gives way to twilight, night and changing weather.</p>
+      </div>
+      <div style="flex: 1 1 245px; min-width: 220px; background-color: #15100e; border: 12px solid #15100e; border-radius: 9px;">
+        <h3 style="color: #f4eeea; font-size: 19px;">02 &nbsp; Grounded lighting</h3>
+        <p style="color: #b3a8a3;">Directional sun and moon response, restrained ambient treatment and block-light warmth are designed to respect the scene.</p>
+      </div>
+      <div style="flex: 1 1 245px; min-width: 220px; background-color: #15100e; border: 12px solid #15100e; border-radius: 9px;">
+        <h3 style="color: #f4eeea; font-size: 19px;">03 &nbsp; Water with character</h3>
+        <p style="color: #b3a8a3;">Profile-scaled water shading, subtle surface movement on Balanced and above, and restrained underwater atmosphere.</p>
+      </div>
+      <div style="flex: 1 1 245px; min-width: 220px; background-color: #15100e; border: 12px solid #15100e; border-radius: 9px;">
+        <h3 style="color: #f4eeea; font-size: 19px;">04 &nbsp; Controlled colour</h3>
+        <p style="color: #b3a8a3;">Carefully bounded contrast, exposure, saturation and highlight treatment aim for depth without overwhelming Minecraft's identity.</p>
+      </div>
+    </div>
+  </div>
+
+  <hr style="border: 1px solid #302520;">
+
+  <div>
+    <p style="color: #9ba7ff; font-size: 12px; font-weight: 700; text-transform: uppercase;">02 &nbsp;/&nbsp; Visual studies</p>
+    <h2 style="color: #ffffff; font-size: 32px; line-height: 1.22;">The difference is in the atmosphere.</h2>
+    <p style="color: #a99e99;">Explore archived side-by-side captures from the project. They show its visual direction, not final V1.0.5 before-and-after testing.</p>
+    <img src="https://raw.githubusercontent.com/SoumyajitXD/Zepholume-Shaders/main/Screenshots/04-vanilla-vs-zepholume.png" alt="Archival vanilla-versus-Zepholume split comparison of a jungle river and underwater scenery." style="display: block; width: 100%; border-radius: 8px;">
+    <p style="color: #998e89; font-size: 12px; text-align: center;">ENVIRONMENTS &amp; WATER &nbsp;&bull;&nbsp; Comparison 04</p>
+    <img src="https://raw.githubusercontent.com/SoumyajitXD/Zepholume-Shaders/main/Screenshots/03-vanilla-vs-zepholume.png" alt="Archival vanilla-versus-Zepholume split comparison of rocky Minecraft terrain above the coast." style="display: block; width: 100%; border-radius: 8px;">
+    <p style="color: #998e89; font-size: 12px; text-align: center;">LANDSCAPE &amp; DEPTH &nbsp;&bull;&nbsp; Comparison 03</p>
+  </div>
+
+  <hr style="border: 1px solid #302520;">
+
+  <div>
+    <p style="color: #9ba7ff; font-size: 12px; font-weight: 700; text-transform: uppercase;">03 &nbsp;/&nbsp; Choose your balance</p>
+    <h2 style="color: #ffffff; font-size: 32px; line-height: 1.22;">Five profiles. One philosophy.</h2>
+    <p style="color: #b8ada8;">Every profile works within Zepholume's direct-path architecture. Lower tiers leave optional work out; higher tiers refine the same approach instead of replacing it with a heavier renderer.</p>
+
+    <div style="background-color: #211c2b; border: 13px solid #211c2b; border-radius: 9px;">
+      <p style="color: #b6bfff; font-size: 12px; font-weight: 700; text-transform: uppercase;">Recommended starting point &nbsp;&bull;&nbsp; Default</p>
+      <h3 style="color: #ffffff; font-size: 25px;">BALANCED</h3>
+      <p style="color: #e0d9ec;">The intended everyday experience: atmospheric colour, material response, enhanced depth and gentle two-wave water movement. Start here, then adjust for your hardware.</p>
+    </div>
+    <div style="display: flex; flex-wrap: wrap; gap: 12px;">
+      <div style="flex: 1 1 245px; min-width: 220px; background-color: #15100e; border: 12px solid #15100e; border-radius: 9px;">
+        <h3 style="color: #ffffff; font-size: 20px;">POTATO</h3>
+        <p style="color: #b0a5a0;">The minimal-work tier for weaker hardware or troubleshooting. Optional analytical effects are compiled out.</p>
+      </div>
+      <div style="flex: 1 1 245px; min-width: 220px; background-color: #15100e; border: 12px solid #15100e; border-radius: 9px;">
+        <h3 style="color: #ffffff; font-size: 20px;">LOW</h3>
+        <p style="color: #b0a5a0;">Lightweight atmospheric, cloud, weather and water treatment without animated water movement.</p>
+      </div>
+      <div style="flex: 1 1 245px; min-width: 220px; background-color: #15100e; border: 12px solid #15100e; border-radius: 9px;">
+        <h3 style="color: #ffffff; font-size: 20px;">HIGH</h3>
+        <p style="color: #b0a5a0;">More nuanced ambient, cloud and water response for systems with greater graphics headroom.</p>
+      </div>
+      <div style="flex: 1 1 245px; min-width: 220px; background-color: #15100e; border: 12px solid #15100e; border-radius: 9px;">
+        <h3 style="color: #ffffff; font-size: 20px;">ULTRA</h3>
+        <p style="color: #b0a5a0;">Zepholume's fullest available analytical detail, still within the same deliberately restrained rendering design.</p>
+      </div>
+    </div>
+    <p style="color: #988d88; font-size: 13px;">The five profiles are defined in V1.0.5; the Potato option's visibility in the live loader menu has not yet been verified. <a href="https://github.com/SoumyajitXD/Zepholume-Shaders/blob/main/docs/PROFILES.md" style="color: #acb6ff; text-decoration: underline;">See the full profile guide</a>.</p>
+  </div>
+
+  <hr style="border: 1px solid #302520;">
+
+  <div>
+    <p style="color: #c39c79; font-size: 12px; font-weight: 700; text-transform: uppercase;">04 &nbsp;/&nbsp; The current release</p>
+    <h2 style="color: #ffffff; font-size: 32px; line-height: 1.22;">V1.0.5 &mdash; Refine the light.</h2>
+    <p style="color: #b8ada8;">This release concentrates on lighting correctness and shader configuration while keeping the existing lightweight renderer.</p>
+    <ul style="color: #cec3be;">
+      <li><strong style="color: #ffffff;">Lightmap fixes:</strong> restores missing lightmap application on affected lit scene paths to address source-level causes of full-bright caves and interiors.</li>
+      <li><strong style="color: #ffffff;">More deliberate colour:</strong> revises skylight handling, low-light values and highlight processing in response to harsh contrast and lost dark detail.</li>
+      <li><strong style="color: #ffffff;">Cleaner settings:</strong> repairs Iris shader-option tooltip keys and maintains five defined quality profiles.</li>
+      <li><strong style="color: #ffffff;">Broader static testing:</strong> the Phase 10 local checks reported 272 GLSL stage validations, 420 shader-link checks and 630 mocked portability cases.</li>
+    </ul>
+    <div style="background-color: #231b15; border: 12px solid #231b15; border-radius: 8px;">
+      <p style="color: #eed2ad; font-weight: 700;">Development transparency</p>
+      <p style="color: #d2bfb0;">These corrections have source-level and static validation, but V1.0.5 has not completed qualifying in-game Iris/Oculus visual checks. Brightness, contrast and the Potato menu remain subject to runtime verification. No measured FPS gain is claimed.</p>
+    </div>
+    <p><a href="https://www.curseforge.com/minecraft/shaders/zepholume-shaders/files/9144481" style="color: #acb6ff; font-weight: 700; text-decoration: underline;">Read the V1.0.5 release notes</a></p>
+  </div>
+
+  <hr style="border: 1px solid #302520;">
+
+  <div>
+    <p style="color: #9ba7ff; font-size: 12px; font-weight: 700; text-transform: uppercase;">05 &nbsp;/&nbsp; Performance by design</p>
+    <h2 style="color: #ffffff; font-size: 32px; line-height: 1.22;">Less machinery. More Minecraft.</h2>
+    <p style="color: #b8ada8;">A visually ambitious pack does not need an endless chain of render passes. Zepholume uses a GLSL 330 direct-path design, one colour target and compile-time quality boundaries to keep the architecture understandable and the work bounded.</p>
+    <div style="background-color: #15100e; border: 13px solid #15100e; border-radius: 9px;">
+      <p style="color: #c6bbff; font-size: 12px; font-weight: 700; text-transform: uppercase;">Deliberately not included</p>
+      <p style="color: #d5cbc6;">Shadow-map pipelines &nbsp;&bull;&nbsp; Screen-space reflections &nbsp;&bull;&nbsp; SSAO &nbsp;&bull;&nbsp; Bloom pipelines &nbsp;&bull;&nbsp; Temporal/TAA systems &nbsp;&bull;&nbsp; Volumetric lighting &nbsp;&bull;&nbsp; Ray tracing &nbsp;&bull;&nbsp; Heavy post-processing chains</p>
+    </div>
+    <p style="color: #998e89; font-size: 13px;">Efficient design is a goal, not an FPS guarantee. Actual results depend on GPU, drivers, resolution, settings and mod combinations; controlled V1.0.5 gameplay benchmarks remain outstanding. <a href="https://github.com/SoumyajitXD/Zepholume-Shaders/blob/main/docs/ARCHITECTURE.md" style="color: #acb6ff; text-decoration: underline;">Read the architecture overview</a>.</p>
+  </div>
+
+  <hr style="border: 1px solid #302520;">
+
+  <div>
+    <p style="color: #9ba7ff; font-size: 12px; font-weight: 700; text-transform: uppercase;">06 &nbsp;/&nbsp; Get started</p>
+    <h2 style="color: #ffffff; font-size: 32px; line-height: 1.22;">From download to daylight.</h2>
+    <div style="display: flex; flex-wrap: wrap; gap: 12px;">
+      <div style="flex: 1 1 290px; min-width: 220px; background-color: #15100e; border: 13px solid #15100e; border-radius: 9px;">
+        <h3 style="color: #ffffff; font-size: 22px;">Installation</h3>
+        <ol style="color: #cec3be;">
+          <li>Set up Minecraft Java Edition with a compatible Iris or Oculus shader loader.</li>
+          <li>Download <strong style="color: #ffffff;">Zepholume-Shaders-1.0.5.zip</strong> from the <a href="https://www.curseforge.com/minecraft/shaders/zepholume-shaders/files/9144481" style="color: #b6bfff; text-decoration: underline;">Files page</a>.</li>
+          <li>Place the ZIP in that instance's <code style="color: #d8dcff;">shaderpacks</code> folder. Do not extract it.</li>
+          <li>Choose Zepholume in the shader menu, then select <strong style="color: #ffffff;">Balanced</strong>.</li>
+        </ol>
+        <p><a href="https://github.com/SoumyajitXD/Zepholume-Shaders/blob/main/docs/INSTALLATION.md" style="color: #acb6ff; text-decoration: underline;">Full installation guide</a></p>
+      </div>
+      <div style="flex: 1 1 290px; min-width: 220px; background-color: #15100e; border: 13px solid #15100e; border-radius: 9px;">
+        <h3 style="color: #ffffff; font-size: 22px;">Compatibility</h3>
+        <p style="color: #cec3be;">Zepholume targets Iris and Oculus-style shader environments. The most thoroughly staged V1.0.5 setup is Minecraft <strong style="color: #ffffff;">1.20.1</strong> with Iris/Fabric or Oculus/Forge; even these have not completed final launch-and-render qualification.</p>
+        <p style="color: #cec3be;">Minecraft 26.2 has static or experimental target lanes; versions such as 26.3 may be listed in file metadata without a completed runtime test. OptiFine is not a tested or supported target.</p>
+        <p><a href="https://github.com/SoumyajitXD/Zepholume-Shaders/blob/main/docs/COMPATIBILITY.md" style="color: #acb6ff; text-decoration: underline;">Check compatibility evidence</a></p>
+      </div>
+    </div>
+  </div>
+
+  <hr style="border: 1px solid #302520;">
+
+  <div style="text-align: center;">
+    <p style="color: #c39c79; font-size: 12px; font-weight: 700; text-transform: uppercase;">Open source &nbsp;&bull;&nbsp; Built with intention</p>
+    <h2 style="color: #ffffff; font-size: 30px; line-height: 1.2;">Make the world feel like yours.</h2>
+    <p style="color: #b8ada8;">Follow development, explore the code or help improve Zepholume with a clear bug report. Include your Minecraft and loader versions, GPU, selected profile, latest.log and a screenshot for visual issues.</p>
+    <p>
+      <a href="https://github.com/SoumyajitXD/Zepholume-Shaders/issues" style="color: #b6bfff; font-weight: 700; text-decoration: underline;">Report an issue</a>
+      &nbsp;&bull;&nbsp;
+      <a href="https://github.com/SoumyajitXD/Zepholume-Shaders/blob/main/docs/TROUBLESHOOTING.md" style="color: #b6bfff; font-weight: 700; text-decoration: underline;">Troubleshooting</a>
+      &nbsp;&bull;&nbsp;
+      <a href="https://github.com/SoumyajitXD/Zepholume-Shaders" style="color: #b6bfff; font-weight: 700; text-decoration: underline;">GitHub</a>
+    </p>
+    <img src="https://raw.githubusercontent.com/SoumyajitXD/Zepholume-Shaders/main/Screenshots/06-vanilla-vs-zepholume.png" alt="Archived split-screen comparison of a ruined Nether portal in vanilla Minecraft and Zepholume Shaders." style="display: block; width: 100%; border-radius: 8px;">
+    <p style="color: #948984; font-size: 12px;">ARCHIVED VISUAL STUDY &nbsp;&bull;&nbsp; Comparison 06</p>
+    <hr style="border: 1px solid #302520;">
+    <p style="color: #ffffff; font-size: 22px; font-weight: 800;">ZEPHOLUME SHADERS</p>
+    <p style="color: #a79a94; font-size: 13px;">Atmospheric visuals &nbsp;&bull;&nbsp; Restrained rendering &nbsp;&bull;&nbsp; Practical performance</p>
+    <p style="color: #948984; font-size: 12px;">Copyright &copy; 2026 Soumyajit Biswas &nbsp;&bull;&nbsp; <a href="https://github.com/SoumyajitXD/Zepholume-Shaders/blob/main/LICENSE" style="color: #aeb8ff; text-decoration: underline;">Apache License 2.0</a></p>
+  </div>
+
 </div>
