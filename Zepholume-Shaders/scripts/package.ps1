@@ -1,7 +1,7 @@
 [CmdletBinding()]
 param(
     [ValidatePattern('^[A-Za-z0-9][A-Za-z0-9._-]*\.zip$')]
-    [string]$OutputName = 'Zepholume-Shaders-1.0.5-dev-phase5.zip',
+    [string]$OutputName = 'Zepholume-Shaders-ci-dev.zip',
     [string]$OutputDirectory
 )
 
