@@ -70,4 +70,4 @@ $markdown += "`nThese inputs are Zepholume-preprocessed source, not Iris-patched
 Set-Content -LiteralPath (Join-Path $ReportRoot 'glslang-report.md') -Value $markdown -Encoding utf8
 if (($rows | Where-Object Result -eq 'fail').Count) { exit 1 }
 if (($links | Where-Object Result -eq 'fail').Count) { exit 1 }
-if ($WarningsAsErrors -and @($rows | Where-Object { $_.WarningCount -gt 0 }).Count) { Write-Error 'Standalone GLSL compiler emitted warning(s) and -WarningsAsErrors is enabled.'; exit 1 }
+if ($WarningsAsErrors -and ((@($rows | Where-Object { $_.WarningCount -gt 0 }).Count -gt 0) -or (@($links | Where-Object { $_.WarningCount -gt 0 }).Count -gt 0))) { Write-Error 'Standalone GLSL compilation/linking emitted warning(s) and -WarningsAsErrors is enabled.'; exit 1 }
