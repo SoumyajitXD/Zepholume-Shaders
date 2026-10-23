@@ -1,0 +1,11 @@
+# Keep checked-out shader sources stable across Linux and Windows.
+# Runtime/profile parsers must still tolerate CRLF content from external editors.
+*.vsh text eol=lf
+*.fsh text eol=lf
+*.glsl text eol=lf
+*.properties text eol=lf
+*.lang text eol=lf
+*.ps1 text eol=lf
+*.py text eol=lf
+*.yml text eol=lf
+*.yaml text eol=lf
