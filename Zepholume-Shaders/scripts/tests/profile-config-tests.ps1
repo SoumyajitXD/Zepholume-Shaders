@@ -70,7 +70,7 @@ try {
     if (-not $rejectedDuplicate) { throw 'Profile parser accepted a duplicate profile definition.' }
 
     # Profile parsing must be independent of Git checkout line endings and BOM.
-    $canonical = ($properties -replace "`r`n", "`n").TrimEnd("`r", "`n")
+    $canonical = (($properties -replace "`r`n", "`n") -replace "[`r`n]+$", "")
     foreach ($sample in @(
         @{ Name='LF'; Newline="`n"; Bom=$false },
         @{ Name='CRLF'; Newline="`r`n"; Bom=$false },
