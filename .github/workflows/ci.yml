@@ -78,6 +78,14 @@ jobs:
           raise SystemExit(1 if errors else 0)
           PY
 
+      - name: Audit workflow security with zizmor
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 -m venv "$RUNNER_TEMP/zizmor-venv"
+          "$RUNNER_TEMP/zizmor-venv/bin/pip" install --disable-pip-version-check zizmor==1.31.1
+          "$RUNNER_TEMP/zizmor-venv/bin/zizmor" --offline --format=github --min-severity high .github
+
       - name: Install actionlint
         shell: bash
         run: |
@@ -125,6 +133,13 @@ jobs:
           $ErrorActionPreference = 'Stop'
           ./scripts/tests/validate-tests.ps1
 
+      - name: Test GLSL coverage-integrity gate (positive and negative fixtures)
+        shell: bash
+        working-directory: Zepholume-Shaders
+        run: |
+          set -euo pipefail
+          python3 scripts/ci/test_verify_variants.py
+
       - name: Benchmark tooling regression suite
         shell: pwsh
         working-directory: Zepholume-Shaders
@@ -148,14 +163,6 @@ jobs:
     runs-on: windows-latest
     timeout-minutes: 20
     steps:
-      # The profile validator's regex can capture trailing CR from CRLF files.
-      # Disable Windows Git's automatic LF-to-CRLF conversion before checkout.
-      - name: Use LF source checkout on Windows
-        shell: pwsh
-        run: |
-          $ErrorActionPreference = 'Stop'
-          git config --global core.autocrlf false
-
       - name: Checkout repository
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
         with:
@@ -168,10 +175,14 @@ jobs:
         working-directory: Zepholume-Shaders
         run: |
           $ErrorActionPreference = 'Stop'
-          # Fail explicitly if the checkout workaround stops working.
-          $properties = [System.IO.File]::ReadAllText((Resolve-Path 'shaders/shaders.properties').Path)
-          if ($properties.Contains("`r")) { throw 'CRLF profile source detected on Windows runner' }
           ./scripts/validate.ps1
+
+      - name: Validate all profile line-ending and BOM fixtures
+        shell: pwsh
+        working-directory: Zepholume-Shaders
+        run: |
+          $ErrorActionPreference = 'Stop'
+          ./scripts/tests/profile-config-tests.ps1
 
       - name: Run mathematical tests
         shell: pwsh
@@ -217,6 +228,15 @@ jobs:
           Add-Content -LiteralPath $env:GITHUB_STEP_SUMMARY -Value "- Mocked cases validated: **$($rows.Count)**"
           Add-Content -LiteralPath $env:GITHUB_STEP_SUMMARY -Value "- This is static/preprocessor evidence, not real GPU runtime qualification."
 
+      - name: Upload static portability evidence
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: zepholume-portability-${{ github.run_id }}
+          path: ${{ runner.temp }}/zepholume-portability/
+          if-no-files-found: warn
+          retention-days: 14
+
   glsl-compiler:
     name: GLSL compiler validation
     runs-on: ubuntu-latest
@@ -251,6 +271,22 @@ jobs:
           $variants = Join-Path $env:RUNNER_TEMP 'zepholume-variants'
           ./scripts/generate-compiled-variants.ps1 -OutputRoot $variants -Validator $env:GLSLANG_VALIDATOR
 
+      - name: Verify complete evaluated GLSL coverage
+        shell: bash
+        working-directory: Zepholume-Shaders
+        run: |
+          set -euo pipefail
+          python3 scripts/ci/verify_variants.py "$RUNNER_TEMP/zepholume-variants" shaders
+
+      - name: Upload evaluated variant coverage report
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: zepholume-variant-coverage-${{ github.run_id }}
+          path: ${{ runner.temp }}/zepholume-variants/coverage-report.json
+          if-no-files-found: warn
+          retention-days: 14
+
       - name: Compile every unique evaluated variant
         shell: pwsh
         working-directory: Zepholume-Shaders
@@ -260,7 +296,7 @@ jobs:
           $ErrorActionPreference = 'Stop'
           $variants = Join-Path $env:RUNNER_TEMP 'zepholume-variants'
           $reports = Join-Path $env:RUNNER_TEMP 'zepholume-glslang'
-          ./scripts/validate-glsl.ps1 -VariantRoot $variants -ReportRoot $reports -Validator $env:GLSLANG_VALIDATOR
+          ./scripts/validate-glsl.ps1 -VariantRoot $variants -ReportRoot $reports -Validator $env:GLSLANG_VALIDATOR -WarningsAsErrors
 
           $markdown = Join-Path $reports 'glslang-report.md'
           if (-not (Test-Path -LiteralPath $markdown)) { throw "GLSL validation report was not produced" }
@@ -273,7 +309,7 @@ jobs:
           name: glslang-validation-${{ github.run_id }}
           path: ${{ runner.temp }}/zepholume-glslang
           if-no-files-found: warn
-          retention-days: 7
+          retention-days: 14
 
   package-validation:
     name: Deterministic package validation
