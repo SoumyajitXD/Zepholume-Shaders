@@ -1,88 +1,50 @@
-# Installation Guide
+# Zepholume Shaders V1.0.6 — Installation
 
-Zepholume Shaders is a Minecraft Java Edition shader pack and requires a compatible shader loader.
+Zepholume is a **Minecraft Java Edition** shader pack. It does not include Minecraft, Iris, Oculus, a mod loader or Java.
 
-## V1.0.5 requirements
+## Download the archive
 
-The strongest current staged baseline remains **Minecraft Java 1.20.1**.
+- [Zepholume-Shaders-1.0.6.zip on GitHub](../Releases/Zepholume-Shaders-1.0.6.zip)
+- [CurseForge Files — check actually published versions](https://www.curseforge.com/minecraft/shaders/zepholume-shaders/files)
 
-Prepared 1.20.1 environments currently use:
+The GitHub archive is **55,248 bytes** with SHA-256 `F72C149F44E6EE026025215D27886CD50D73252A4FE046E184DDBBB8E552331C`. A release ZIP existing does **not** mean that its Minecraft runtime compatibility has been verified. Read [Compatibility](COMPATIBILITY.md).
 
-- **Iris 1.7.6 + Sodium 0.5.13** on Minecraft 1.20.1
-- **Oculus 1.8.0 + Embeddium 0.3.31 + Forge 47.4.22** on Minecraft 1.20.1
-- **Java 17**
+## Install with Iris
 
-Minecraft **26.2** also has static target lanes for Iris on Fabric/NeoForge, but those lanes are not yet runtime-qualified. The Forge/Oculus Community Port 26.2 lane is experimental and currently blocked for Zepholume's ordinary `gbuffers_*` world programs by the port's declared partial program support.
+1. Create a suitable Minecraft Java instance with **Iris** and the dependencies required by the chosen version (generally Sodium).
+2. Launch the instance once to establish its game directory.
+3. Download `Zepholume-Shaders-1.0.6.zip`.
+4. Copy the **intact ZIP** into the instance's `shaderpacks` directory. **Do not extract it.**
+5. Launch Minecraft, open the shader-pack menu, and select Zepholume.
+6. Start with **Balanced**. Move to Low/Potato if needed for performance.
+7. If anything looks wrong, preserve `latest.log` and retest in a minimal instance.
 
-Static validation or staged files do not equal a completed launch-and-render test. Treat configurations outside the documented evidence boundary as unverified unless separately qualified.
+A previously observed Minecraft **26.1.2 Fabric/Iris** session and an older **1.20.1 Iris 1.7.6 / Sodium 0.5.13 / Java 17** staged environment are historical evidence, **not V1.0.6 final-ZIP runtime qualifications**.
 
-**Archive availability:** The Phase 10 V1.0.5 source was pushed to GitHub, but `Zepholume-Shaders-1.0.5.zip` was not in the repository's `Releases/` folder. Confirm that the [CurseForge Files page](https://www.curseforge.com/minecraft/shaders/zepholume-shaders/files) actually lists the final ZIP before attempting installation. Renaming a development ZIP does not establish runtime qualification.
+## Install with Oculus (unqualified compatibility path)
 
-## Install with Iris on the staged 1.20.1 baseline
+Create a Forge instance with compatible **Oculus**, **Embeddium** and dependencies, then copy the ZIP into its `shaderpacks` directory and select Zepholume. A staged 1.20.1 stack used Forge 47.4.22, Oculus 1.8.0, Embeddium 0.3.31 and Java 17, but **the final V1.0.6 ZIP has not completed Oculus gameplay qualification**.
 
-1. Create or use a **Minecraft 1.20.1** Fabric instance.
-2. Install Iris and its required Sodium stack.
-3. Launch the instance once so Minecraft creates the required directories.
-4. Download `Zepholume-Shaders-1.0.5.zip` if the final archive is listed on the project Files page; otherwise use the last available release.
-5. Copy the ZIP into that instance's `shaderpacks` directory.
-6. Launch Minecraft.
-7. Open the shader-pack menu.
-8. Select **Zepholume Shaders**.
-9. Start with the **Balanced** profile.
+Experimental modern Oculus ports have additional limitations. OptiFine is not supported or tested.
 
-## Install with Oculus on the staged 1.20.1 baseline
+## Find the shaderpacks directory
 
-1. Create or use a **Minecraft 1.20.1** Forge instance.
-2. Install Oculus, Embeddium, and any dependencies required by the selected builds.
-3. Launch the instance once.
-4. Download `Zepholume-Shaders-1.0.5.zip` if the final archive is listed on the project Files page; otherwise use the last available release.
-5. Copy the ZIP into that instance's `shaderpacks` directory.
-6. Launch Minecraft and open the shader-pack menu.
-7. Select **Zepholume Shaders**.
-8. Start with the **Balanced** profile.
-
-## Do not extract the release ZIP
-
-Place `Zepholume-Shaders-1.0.5.zip` directly in `shaderpacks` unless a future release explicitly says otherwise.
-
-## Finding the shaderpacks folder
-
-The normal Windows location is inside the Minecraft game directory, for example:
+The typical Windows directory is:
 
 ```text
 %APPDATA%\.minecraft\shaderpacks
 ```
 
-Third-party launchers and separate instances can use a different game directory. Put Zepholume in the `shaderpacks` folder belonging to the **actual instance you launch**.
+Third-party launchers and per-instance profiles can use a different game folder. Use the one belonging to **the actual instance you launch**. Create its `shaderpacks` directory if needed. The ZIP must have `shaders/` directly at its root; do not nest an extracted folder inside another folder.
 
-## Choosing a profile
+## Profiles and updating
 
-Start with **Balanced**. It is Zepholume's default general-gameplay tier.
+Balanced is recommended. Potato, Low, High and Ultra scale optional work. No official V1.0.6 in-game FPS percentage is available.
 
-- move down to **Low** or **Potato** when you need to reduce shader work
-- move up to **High** or **Ultra** only when you have comfortable GPU headroom
+When updating, quit Minecraft, keep the previous ZIP as a rollback option, place the new archive in the correct instance, select it, and re-check the chosen shader profile. Existing option values can persist across updates.
 
-Changing to Ultra before checking whether Balanced already looks good is still the shader equivalent of buying a forklift to move a chair.
+## Diagnosing a failure
 
-See [Quality Profiles](PROFILES.md) for details.
+Test in an isolated instance; record the Minecraft version, shader loader, profile, GPU/driver, full `latest.log` and screenshot. V1.0.6's important unresolved visual tests concern **waterfall triangles, first-person hand lighting and covered/nighttime water**.
 
-## Updating Zepholume
-
-When moving to a newer release:
-
-1. Exit Minecraft.
-2. Place the new Zepholume archive in `shaderpacks`.
-3. Keep the previous release temporarily if you want an easy rollback path.
-4. Launch Minecraft and select the new release.
-5. Re-check your profile and shader options.
-6. Remove the old archive after the new build is confirmed working on your setup.
-
-## Safer compatibility testing
-
-For loader, driver, or mod compatibility testing, prefer an **isolated or disposable Minecraft instance**. Do not use an irreplaceable modpack save as a test harness when a clean instance can answer the question more clearly.
-
-For Minecraft 26.2 specifically, read [Compatibility](COMPATIBILITY.md) before testing: the current 26.2 lanes have weaker evidence than the staged 1.20.1 baseline and must not be treated as equivalent runtime support.
-
-## If it does not load
-
-See [Troubleshooting](TROUBLESHOOTING.md). The most useful diagnostic is usually the complete `latest.log` from the affected Minecraft instance.
+See [Troubleshooting](TROUBLESHOOTING.md), [Compatibility](COMPATIBILITY.md) and [V1.0.6 release notes](../Zepholume-Shaders/docs/V1.0.6_RELEASE_NOTES.md).
