@@ -26,6 +26,17 @@ loader-patched compilation, working profile UI, Minecraft rendering or FPS.
 
 Do not make compatibility claims based solely on these checks.
 
+## Current hosted status (2026-10-28)
+
+**The latest V1.0.6 main-branch GitHub Actions runs are failing.** Do not describe the branch as green because local final-source validation or individual hosted jobs passed.
+
+- [Run 40680015526](https://github.com/SoumyajitXD/Zepholume-Shaders/actions/runs/40680015526) on commit `b4f101d`: **Full regression tests FAILED**, because the clean-tree guard detected modifications to tracked files after running tests. The required aggregate also failed.
+- The observed tracked modifications were `Zepholume-Shaders/bench/run-manifest-template.json`, `Zepholume-Shaders/bench/v103-control.json` and `Zepholume-Shaders/docs/BENCHMARK_PROTOCOL.md`. This is a test side-effect/source-isolation defect, **not** evidence of a GLSL compilation failure in this run.
+- In that run, workflow policy, GLSL compiler validation, mocked portability, Windows smoke, deterministic packaging, independent Windows packaging and cross-runner package contents **passed**.
+- This documentation update intentionally does **not** alter the protected `Zepholume-Shaders/` source or weaken the clean-tree check. The fixture/test code must be repaired in a separately authorised change, and a complete new hosted workflow run must pass before claiming CI green.
+
+Final V1.0.6 packaging is separately documented in the [release report](../Zepholume-Shaders/docs/V1.0.6_FINAL_RELEASE.md). That report's offline pass and final archive export do not establish in-game qualification or passing hosted CI.
+
 ## Release evidence verification
 
 The manual `.github/workflows/release-qualification.yml` workflow invokes
