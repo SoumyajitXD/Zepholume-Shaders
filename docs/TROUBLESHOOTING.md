@@ -6,7 +6,7 @@ This guide covers the fastest way to isolate common Zepholume problems without t
 
 Check that:
 
-- a **published** `Zepholume-Shaders-1.0.5.zip` is inside the correct instance's `shaderpacks` folder (GitHub's source push did not add the final ZIP to `Releases/`)
+- a valid `Zepholume-Shaders-1.0.6.zip` from the [GitHub archive](../Releases/Zepholume-Shaders-1.0.6.zip), or a version actually listed on [CurseForge Files](https://www.curseforge.com/minecraft/shaders/zepholume-shaders/files), is inside the correct instance's `shaderpacks` folder
 - the release archive has not been placed inside another ZIP
 - you are launching the same Minecraft instance whose folder you edited
 - the intended shader loader is actually installed and loading
@@ -16,7 +16,7 @@ Check that:
 1. Confirm the exact Minecraft version and compare it with the documented compatibility lane.
 2. Confirm the exact Iris/Oculus version.
 3. Confirm required loader dependencies are present.
-4. Confirm you are testing `Zepholume-Shaders-1.0.5.zip` rather than an older archive.
+4. Confirm you are testing `Zepholume-Shaders-1.0.6.zip` rather than an older archive.
 5. Try the same release in a minimal clean instance.
 6. Read the complete `latest.log` and search for shader compilation/preprocessor errors.
 7. If the loader exposes patched shader output, preserve it for diagnosis.
@@ -53,7 +53,7 @@ Then reproduce in a minimal instance. If the problem disappears there, reintrodu
 
 ## Cave/interior lighting looks wrong
 
-V1.0.5 corrects the previously missing lightmap application in lit fragment paths and revises skylight and low-light processing. These changes target the full-bright cave bug, excess contrast, and crushed shadows seen in prior visual-review screenshots. **Actual in-game recovery is still unverified.** The existing skylight and profile-specific ambient effects remain.
+V1.0.5 corrected generic lit-path lightmapping. V1.0.6 additionally repairs hand lightmap routing, camera-space world-up handling and short fog ranges in source and offline fixtures. **Actual final-ZIP Minecraft lighting recovery remains unverified.**
 
 If a cave or enclosed room still looks strongly sunlit, moonlit, uniformly orange, or strangely flat:
 
@@ -67,7 +67,7 @@ High and Ultra also add bounded dual-hemisphere ambient irradiance. If the issue
 
 ## Water or underwater rendering looks wrong
 
-V1.0.5 retains direct-path water and the earlier exact-zero celestial-specular gate. It additionally confines analytical water treatment to classified Minecraft water rather than other translucent geometry; loader rendering must still verify the result.
+V1.0.6 retains classified-water-only analytical effects and the earlier exact-zero celestial-specular gate. It also corrects ray and per-fragment distance interpolation that reproduced triangle-diagonal differences in GPU fixtures. **The original Minecraft waterfall triangles have not been retested with the final ZIP.**
 
 Water behaviour is profile-dependent:
 
@@ -87,9 +87,27 @@ Check whether the issue:
 
 That profile split matters. A High-only reflection issue is a much better report than “water weird”.
 
+## First-person hand or held item is too bright
+
+V1.0.6 fixes a missing hand lightmap flag in source and passes synthetic dark/partial/full irradiance tests, but real Minecraft hand/item variants remain unverified.
+
+- Compare an empty hand and ordinary held item in darkness, torchlight and daylight in the **same** scene.
+- Check opaque, translucent and emissive held items separately if the defect depends on item type.
+- Record the profile, shader loader, Minecraft version, screenshot, full `latest.log` and any loader-patched shader output.
+- Distinguish a hand-only problem from globally bright terrain or caves; their rendering paths differ.
+
+## Waterfall triangles or covered nighttime water
+
+Two distinct problems require different comparisons:
+
+1. **Triangle-diagonal seams:** V1.0.6 corrected ray/distance interpolation in offline GPU tests; retest a real waterfall with matched shader-on/off conditions.
+2. **Overbright sky reflections under cover:** analytical water highlights lack reliable local directional skylight occlusion. Compare open-sky and covered water at the same time/profile; a global brightness slider is not a root-cause test.
+
+For transparency errors, compare still and flowing water, camera angles and adjacent non-water translucent materials. Synthetic draws do not model Minecraft's complete fluid meshes, blending or sorting.
+
 ## Clouds look wrong
 
-High and Ultra retain top-facet solar rim highlighting in V1.0.5. If a cloud artefact appears only on those profiles, capture the time of day, weather, camera direction, and whether the issue disappears on Balanced.
+High and Ultra retain top-facet solar rim highlighting in V1.0.6. If a cloud artefact appears only on those profiles, capture the time of day, weather, camera direction, and whether the issue disappears on Balanced.
 
 ## Low FPS
 
@@ -109,7 +127,7 @@ Also inspect:
 
 A profile comparison is only meaningful when the scene and settings stay fixed.
 
-V1.0.5 does not currently have a completed controlled real-loader A/B benchmark, so do not compare your result against invented official FPS numbers—there are none.
+V1.0.6 does not currently have a completed controlled real-loader A/B benchmark, so do not compare your result against invented official FPS numbers—there are none.
 
 ## Stutter or bad frame pacing
 
@@ -165,6 +183,6 @@ Screenshot/video attached: yes/no
 
 ## Support boundary
 
-For **Zepholume V1.0.5**, Minecraft **1.20.1** is the strongest staged evidence baseline. Minecraft **26.2** has explicit static/experimental lanes but is not yet equivalent to completed runtime support, and intermediate Minecraft versions are not automatically validated by implication.
+For **Zepholume V1.0.6**, the final ZIP has **no completed Minecraft runtime qualification**. Historical staged 1.20.1 lanes, a previous 26.1.2 Fabric/Iris session with the Phase 8 development ZIP installed, and static/experimental 26.2 lanes must not be represented as final-ZIP support. Intermediate versions through 26.3 are not automatically validated.
 
 OptiFine is not a supported Zepholume target. Broad GPU, driver, loader, or performance claims require completed real runtime evidence rather than static validation alone.
