@@ -8,7 +8,7 @@ Use **Balanced** first. It is the intended general-gameplay baseline, not a disg
 
 The selected profile caps which capability tiers are allowed to compile. Lower overrides can reduce work, but they cannot silently enable features above the chosen baseline.
 
-| Profile | Intended use | V1.0.5 baseline |
+| Profile | Intended use | V1.0.6 baseline |
 | --- | --- | --- |
 | **Potato** | Weak/integrated GPUs and compatibility triage | Direct scene grade and loader sky/fog only; analytical face/material/cloud/water/weather/underwater-colour work compiled out |
 | **Low** | Lower-end hardware | Directional face/cloud response, bounded analytical water/weather, and subtle underwater fog tint |
@@ -18,9 +18,9 @@ The selected profile caps which capability tiers are allowed to compile. Lower o
 
 `Ultra Lite` remains a **deprecated compatibility alias for Low** so older selections remain meaningful.
 
-## V1.0.5 profile behaviour
+## V1.0.6 profile behaviour
 
-The Phase 10 shader pack declares **exactly five** selectable profiles: Potato, Low, Balanced, High, and Ultra. Balanced stays the default.
+The final V1.0.6 shader configuration declares **exactly five** selectable profiles: Potato, Low, Balanced, High, and Ultra, with 15 source-validated assignments each. Balanced remains the default; in-game menu visibility and switching on the final ZIP remain unverified.
 
 - Potato compiles out the optional analytical work; whether the preset is visible in a real loader's menu still requires verification.
 - Low keeps the lighter face/cloud/weather/water path.
@@ -29,7 +29,9 @@ The Phase 10 shader pack declares **exactly five** selectable profiles: Potato, 
 - `Ultra Lite` remains a deprecated Low compatibility alias, not a sixth selectable profile.
 - The exact-zero water celestial-specular gate introduced in V1.0.4 is retained; no FPS uplift is claimed.
 
-V1.0.5 corrects Iris tooltip key syntax and maintains static profile regressions. None of those tests proves in-game profile switching or visual correctness.
+V1.0.5 corrected Iris tooltip syntax. V1.0.6 preserves that correction and adds final profile/default/option validation, but none of those tests establishes working in-game profile selection or visual correctness. See the [final compatibility audit](../Zepholume-Shaders/docs/V1.0.6_FINAL_COMPATIBILITY.md).
+
+**Important for V1.0.6:** Final source/GPU regressions passed, but water triangles, hand lighting, covered-water reflections and real frame-time effects remain unverified in Minecraft. Profile selection does not fix a loader compatibility problem.
 
 ## What profiles do not do
 
@@ -65,7 +67,7 @@ Use Balanced for normal play. This is the default profile and the best starting 
 
 ### High
 
-Use High when Balanced has comfortable GPU headroom and you want the stronger V1.0.5 ambient, water, and cloud refinements.
+Use High when Balanced has comfortable GPU headroom and you want the retained ambient, water, and cloud refinements.
 
 ### Ultra
 
@@ -85,4 +87,4 @@ If you are losing FPS or frame-time consistency:
 
 When comparing profiles, keep the world, position, camera direction, weather, time, render distance, resolution, and FPS/VSync settings fixed. Otherwise the comparison is mostly decorative statistics.
 
-Zepholume does not publish profile-specific FPS percentages without controlled runtime measurements. V1.0.5 has not yet completed a controlled real-loader A/B benchmark pass, so no profile performance delta should be invented from static source metrics or mathematical regression tests.
+Zepholume does not publish profile-specific FPS percentages without controlled runtime measurements. V1.0.6 has not completed a controlled real-loader A/B benchmark pass, so no profile performance delta should be invented from static source metrics or mathematical regression tests.
