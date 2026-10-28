@@ -9,9 +9,9 @@ vec3 zephAtmosphereColour(vec3 baseFog, float daylight, float storm) {
 }
 
 float zephAtmosphereFactor(float distance, float viewDirectionY, float rain) {
-    float start = max(fogStart, 1.0);
-    float end = max(fogEnd, start + 1.0);
-    float linear = zephSaturate((distance - start) / (end - start));
+    float range = fogEnd - fogStart;
+    if (range <= 0.0) return distance >= fogStart ? 1.0 : 0.0;
+    float linear = zephSaturate((distance - fogStart) / range);
 #if ZEPH_EFFECTIVE_ATMOSPHERE_QUALITY == 0
     return linear;
 #else

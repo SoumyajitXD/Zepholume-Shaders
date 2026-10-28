@@ -1,5 +1,49 @@
 # Changelog
 
+## 1.0.6 — released 2026-10-28
+
+- Restored hand-program lightmap multiplication in all dimension wrappers; retained existing hand grading and alpha, including the documented translucent-hand fallback.
+- Corrected raw view-space interpolation and fragment-local distance calculation, eliminating reproduced triangle-diagonal differences in standalone water and fog fixtures without altering wave geometry.
+- Corrected camera-space world-elevation calculations and preserved valid short loader fog ranges, with defined handling for equal or reversed endpoints.
+- Preserved Potato, Low, Balanced, High and Ultra, with Balanced as the recommended default and the existing direct one-colour-target architecture.
+- Expanded source-bound compilation, portability, profile, lighting and water regression coverage, plus deterministic archive verification.
+- Released with explicit testing limitations: Minecraft visual outcomes, loader/version combinations, transparency behavior and in-game FPS are not qualified. Analytical water reflections still lack local skylight occlusion.
+
+## 1.0.6-dev-phase8 — unreleased
+
+- Restored per-surface lightmap irradiance to the hand program in all three dimension wrappers, including the translucent-hand fallback. Retained the existing hand grade and alpha.
+- Interpolate the raw view-space position before normalizing water view rays and calculating fragment distance. This removes reproduced triangle-diagonal differences in analytical water and generic distance fog without changing wave geometry or visual tuning parameters.
+- Added focused hand routing and native irradiance regressions. Minecraft hand/item visuals, loader compatibility and performance still require qualification.
+
+## 1.0.6-dev-phase7 — unreleased
+
+- Corrected world-elevation calculations to compare view-space celestial positions and surface normals with camera-transformed world up. Camera pitch should no longer change day/night weights, sky elevation, cloud facets, horizon fog, or dimensional vertical fill.
+- Added camera-rotation numerical and native Intel regression checks; these are standalone evidence. Minecraft visuals, profile UI, loader compatibility, and frame-time performance still require runtime qualification.
+- Fixed Windows crash-report evidence redaction and strict linker-warning enforcement, with targeted negative fixtures. Frozen control archives remain unchanged.
+
+## 1.0.6-dev-phase6 — unreleased
+
+- Hardened five-profile parsing and settings localization checks, and expanded source-derived Intel GPU fog and framebuffer regressions. These checks are offline evidence, not Minecraft qualification.
+- Made development packaging refuse existing archive names and emit an entry-hash manifest. Added a post-launch evidence collector with a dry-run mode and fresh-session checks.
+- Production GLSL is unchanged. The seven historical short-range fog differences match the corrected loader-range equation; no measured Minecraft performance or release-readiness claim is made.
+
+## 1.0.6-dev-phase3 — unreleased
+
+- Preserved every positive loader fog range in immersed, open-air, and cloud paths. Equal or reversed ranges now use a defined step at `fogStart`; numerical tests cover zero, short, tiny, negative-start, and invalid ranges.
+- Reused computed water sun/moon specular weights, and moved disabled Potato cloud colour calculations inside the compile-time feature gate. These are source-level reductions, not measured FPS gains.
+- Corrected the cloud-fog menu label, added source-locked math regressions and a native Windows OpenGL compiler harness. Standalone Intel driver compilation is separate from Iris/Oculus runtime qualification.
+
+## 1.0.6-dev-phase2 — unreleased
+
+- Preserved exact loader fog start/end values for valid sub-block immersed-media ranges while guarding a zero denominator. Added numerical cases for water, lava, and powdered snow across all five tiers.
+- Staged hash-verified, disposable 1.20.1 Iris and Oculus test lanes with source revision and package hashes. The available launcher session is offline only, so loader compilation, rendered visuals, and frame times remain unverified.
+
+## 1.0.6-dev-phase1 — unreleased
+
+- Corrected underwater fog to use the loader's medium distance range and reach its endpoint regardless of view angle or rain. Low through Ultra retain their small profile fog-strength adjustment; lava and powdered snow retain the loader range.
+- Corrected CRLF profile parsing so the five preset assignments validate on Windows. Added LF/CRLF and immersed-fog endpoint regressions.
+- Standalone compilation and package checks are development evidence only. Loader-rendered visuals, cross-GPU behavior, and performance remain unverified.
+
 ## 1.0.5-dev — unreleased
 
 - Phase 9 recovery froze and compared the workspace against the preserved Phase 8 ZIP; no surviving Gemini production shader changes were found. The operator screenshots exposed severe black crush and day/night/cave imbalance. A bounded face response, positive contrast toe, and in-gamut-neutral highlight shoulder repair the source-level attenuation path without disabling the lightmap. Profile selection now contains exactly Potato, Low, Balanced, High, and Ultra; High/Ultra no longer force stronger contrast or saturation. Loader-rendered visual QA remains required.

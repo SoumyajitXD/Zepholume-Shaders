@@ -65,6 +65,7 @@ try {
     Invoke-Invalid 'missing-lightmap-irradiance' { param($root) $p=Join-Path $root 'shaders/lib/fragment.glsl'; (Get-Content -LiteralPath $p -Raw).Replace('source.rgb *= texture2D(lightmap, zephLightCoord).rgb;', '// lightmap application removed') | Set-Content -LiteralPath $p -Encoding utf8NoBOM }
     Invoke-Invalid 'unlit-lightmap-routing' { param($root) $p=Join-Path $root 'shaders/gbuffers_textured.fsh'; (Get-Content -LiteralPath $p -Raw).Replace('#include "/lib/fragment.glsl"', "#define ZEPH_LIGHTMAP_LIT_PROGRAM`n#include `"/lib/fragment.glsl`"") | Set-Content -LiteralPath $p -Encoding utf8NoBOM }
     Invoke-Invalid 'missing-lit-lightmap-routing' { param($root) $p=Join-Path $root 'shaders/gbuffers_terrain.fsh'; (Get-Content -LiteralPath $p -Raw).Replace('#define ZEPH_LIGHTMAP_LIT_PROGRAM', '// lightmap marker removed') | Set-Content -LiteralPath $p -Encoding utf8NoBOM }
+    Invoke-Invalid 'missing-hand-lightmap-routing' { param($root) foreach ($dimension in @('','world0','world-1','world1')) { $p=Join-Path $root "shaders/$dimension/gbuffers_hand.fsh"; (Get-Content -LiteralPath $p -Raw).Replace('#define ZEPH_LIGHTMAP_LIT_PROGRAM', '// lightmap marker removed') | Set-Content -LiteralPath $p -Encoding utf8NoBOM } }
     Invoke-Invalid 'late-lightmap-routing' { param($root) $p=Join-Path $root 'shaders/gbuffers_terrain.fsh'; (Get-Content -LiteralPath $p -Raw).Replace('#define ZEPH_LIGHTMAP_LIT_PROGRAM', '').Replace('#include "/lib/fragment.glsl"', "#include `"/lib/fragment.glsl`"`n#define ZEPH_LIGHTMAP_LIT_PROGRAM") | Set-Content -LiteralPath $p -Encoding utf8NoBOM }
     Invoke-Invalid 'forbidden-composite-program' { param($root) $s=Join-Path $root 'shaders'; Set-Content -LiteralPath (Join-Path $s 'composite.vsh') '#version 330 compatibility`nvoid main() { gl_Position = vec4(0.0); }' -Encoding utf8NoBOM; Set-Content -LiteralPath (Join-Path $s 'composite.fsh') '#version 330 compatibility`nvoid main() { gl_FragData[0] = vec4(1.0); }' -Encoding utf8NoBOM }
     Invoke-Invalid 'forbidden-extension' { param($root) Add-Content -LiteralPath (Join-Path $root 'shaders/gbuffers_basic.fsh') -Value "`n#extension GL_ARB_gpu_shader5 : enable" }
@@ -78,7 +79,7 @@ try {
     Invoke-Invalid 'corrupted-dimension-wrapper' { param($root) Add-Content -LiteralPath (Join-Path $root 'shaders/world-1/gbuffers_basic.vsh') -Value "`n// fixture wrapper drift" }
     Invoke-Invalid 'non-water-material-mapping' { param($root) $p=Join-Path $root 'shaders/block.properties'; (Get-Content -LiteralPath $p -Raw).Replace('block.10001=minecraft:water', 'block.10001=minecraft:water minecraft:glass') | Set-Content -LiteralPath $p -Encoding utf8NoBOM }
     Invoke-Invalid 'non-flat-water-classification' { param($root) $p=Join-Path $root 'shaders/lib/vertex.glsl'; (Get-Content -LiteralPath $p -Raw).Replace('flat varying float zephIsWater;', 'varying float zephIsWater;') | Set-Content -LiteralPath $p -Encoding utf8NoBOM }
-    Invoke-Invalid 'stale-release-metadata' { param($root) $p=Join-Path $root 'README.md'; (Get-Content -LiteralPath $p -Raw).Replace('V1.0.5 development', '0.2.0-dev') | Set-Content -LiteralPath $p -Encoding utf8NoBOM }
+    Invoke-Invalid 'stale-release-metadata' { param($root) $p=Join-Path $root 'README.md'; (Get-Content -LiteralPath $p -Raw).Replace('V1.0.6 final release', '0.2.0-dev') | Set-Content -LiteralPath $p -Encoding utf8NoBOM }
     $badZip = Join-Path $work 'backslash-paths.zip'
     Add-Type -AssemblyName System.IO.Compression.FileSystem
     $zip = [IO.Compression.ZipFile]::Open($badZip, [IO.Compression.ZipArchiveMode]::Create)
@@ -90,6 +91,19 @@ try {
     try { $zip.CreateEntry('shaders/shaders.properties') | Out-Null; $zip.CreateEntry('shaders/shaders.properties') | Out-Null } finally { $zip.Dispose() }
     if ((Invoke-Validator $projectRoot $duplicateZip) -eq 0) { throw 'Expected validator rejection: duplicate ZIP entry' }
     Write-Host 'Rejected as expected: duplicate ZIP entry'
+    $wrongCaseZip = Join-Path $work 'wrong-case-entry.zip'
+    $sourceZip = [IO.Compression.ZipFile]::OpenRead($package)
+    $caseZip = [IO.Compression.ZipFile]::Open($wrongCaseZip, [IO.Compression.ZipArchiveMode]::Create)
+    try {
+        foreach ($sourceEntry in $sourceZip.Entries) {
+            $name = if ($sourceEntry.FullName -ceq 'shaders/shaders.properties') { 'shaders/Shaders.properties' } else { $sourceEntry.FullName }
+            $targetEntry = $caseZip.CreateEntry($name)
+            $input = $sourceEntry.Open(); $output = $targetEntry.Open()
+            try { $input.CopyTo($output) } finally { $output.Dispose(); $input.Dispose() }
+        }
+    } finally { $caseZip.Dispose(); $sourceZip.Dispose() }
+    if ((Invoke-Validator $projectRoot $wrongCaseZip) -eq 0) { throw 'Expected validator rejection: wrong-case ZIP entry' }
+    Write-Host 'Rejected as expected: wrong-case ZIP entry'
     Write-Host 'Validator regression tests passed.'
     exit 0
 } finally {

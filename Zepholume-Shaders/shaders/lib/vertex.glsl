@@ -15,7 +15,6 @@ varying vec2 zephTexCoord;
 #endif
 varying vec2 zephLightCoord;
 varying vec4 zephVertexColour;
-varying float zephDistance;
 varying vec3 zephNormalView;
 varying vec3 zephViewDirection;
 void main() {
@@ -27,9 +26,11 @@ void main() {
     }
 #endif
     vec4 viewPosition = gl_ModelViewMatrix * position;
-    zephDistance = length(viewPosition.xyz);
     zephNormalView = gl_NormalMatrix * gl_Normal;
-    zephViewDirection = -viewPosition.xyz / max(zephDistance, 0.0001);
+    // Interpolate the affine view-space ray before normalizing in consumers.
+    // Unit rays at unequal-distance corners do not interpolate to the true
+    // fragment ray and introduce diagonal-dependent Fresnel on planar water.
+    zephViewDirection = -viewPosition.xyz;
     zephLightCoord = clamp((gl_TextureMatrix[1] * gl_MultiTexCoord1).xy, 0.0, 1.0);
 #ifndef ZEPH_UNTEXTURED_PROGRAM
     zephTexCoord = (gl_TextureMatrix[0] * gl_MultiTexCoord0).xy;

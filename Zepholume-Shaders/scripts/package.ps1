@@ -1,7 +1,7 @@
 [CmdletBinding()]
 param(
     [ValidatePattern('^[A-Za-z0-9][A-Za-z0-9._-]*\.zip$')]
-    [string]$OutputName = 'Zepholume-Shaders-ci-dev.zip',
+    [string]$OutputName = 'Zepholume-Shaders-1.0.6.zip',
     [string]$OutputDirectory
 )
 
@@ -14,6 +14,10 @@ $dist = if ($OutputDirectory) { [IO.Path]::GetFullPath($OutputDirectory) } else 
 New-Item -ItemType Directory -Force -Path $dist | Out-Null
 $zip = Join-Path $dist $OutputName
 $hash = "$zip.sha256"
+$manifest = "$zip.manifest.json"
+if ((Test-Path -LiteralPath $zip) -or (Test-Path -LiteralPath $hash) -or (Test-Path -LiteralPath $manifest)) {
+    throw "Refusing to overwrite an existing package or sidecar: $zip"
+}
 $stagingZip = Join-Path $dist ('.' + [IO.Path]::GetFileNameWithoutExtension($OutputName) + '.staging-' + [guid]::NewGuid().ToString('N') + '.zip')
 $stagingHash = "$stagingZip.sha256"
 
@@ -46,8 +50,21 @@ Set-Content -LiteralPath $stagingHash -Value "$sum  $OutputName" -Encoding utf8N
 try {
     & (Join-Path $PSScriptRoot 'validate.ps1') -Package $stagingZip
     if (-not $?) { throw 'Created ZIP did not pass package validation.' }
-    [IO.File]::Move($stagingZip, $zip, $true)
-    [IO.File]::Move($stagingHash, $hash, $true)
+    $gitRoot = Split-Path -Parent $root
+    $revision = (& git -C $gitRoot rev-parse HEAD 2>$null)
+    $sourceState = if ($LASTEXITCODE -eq 0) { if (@(& git -C $gitRoot status --porcelain).Count -eq 0) { 'clean' } else { 'dirty' } } else { 'git-unavailable' }
+    $entryHashes = @($files | ForEach-Object {
+        [ordered]@{ path=$_.FullName.Substring($root.Length + 1).Replace('\','/'); sha256=(Get-FileHash -LiteralPath $_.FullName -Algorithm SHA256).Hash }
+    })
+    $buildManifest = [ordered]@{
+        schemaVersion=1; archive=$OutputName; archiveSha256=$sum; commit=if ($revision) { "$revision".Trim() } else { $null }
+        sourceState=$sourceState; validator='scripts/validate.ps1 and scripts/validate.ps1 -Package passed'
+        buildConfiguration=[ordered]@{ compression='Optimal'; entryTimestampUtc='1980-01-01T00:00:00Z'; ordering='ordinal source path' }
+        entries=$entryHashes
+    }
+    $buildManifest | ConvertTo-Json -Depth 6 | Set-Content -LiteralPath $manifest -Encoding utf8NoBOM
+    [IO.File]::Move($stagingZip, $zip)
+    [IO.File]::Move($stagingHash, $hash)
 } finally {
     Remove-Item -LiteralPath $stagingZip,$stagingHash -Force -ErrorAction SilentlyContinue
 }

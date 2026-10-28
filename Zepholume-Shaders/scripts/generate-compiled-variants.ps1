@@ -111,12 +111,15 @@ foreach ($profile in $profiles | Sort-Object Name) {
                 if ($profile.Name -eq 'Potato' -and $program.Name -eq 'gbuffers_terrain.fsh' -and $expanded -match 'zephSafeNormalize\s*\(\s*zephNormalView\s*\)') {
                     $auditErrors.Add("Potato terrain retains a normal normalization consumer: $candidateRelative")
                 }
+                if ($profile.Name -eq 'Potato' -and $program.Name -eq 'gbuffers_clouds.fsh' -and $expanded -match '\b(?:sunDir|nightTint|sunLift)\b') {
+                    $auditErrors.Add("Potato clouds retain disabled analytical colour work: $candidateRelative")
+                }
                 if ($candidateRelative -match '^world(?:-1|1)/' -and $program.Extension -eq '.fsh' -and $expanded -match '\b(?:sunSpecular|moonSpecular|zephCelestialGlow|zephAnalyticSky)\b') {
                     $auditErrors.Add("Dimension wrapper retains Overworld celestial shading: $candidateRelative")
                 }
                 $bytes = [Text.Encoding]::UTF8.GetBytes($expanded)
                 $hash = (Get-FileHash -InputStream ([IO.MemoryStream]::new($bytes)) -Algorithm SHA256).Hash.ToLowerInvariant()
-                $uniquePath = Join-Path $OutputRoot ("unique\\$hash$($program.Extension)")
+                $uniquePath = Join-Path $OutputRoot ("unique/$hash$($program.Extension)")
                 if (-not (Test-Path -LiteralPath $uniquePath)) { New-Item -ItemType Directory -Path (Split-Path $uniquePath) -Force | Out-Null; [IO.File]::WriteAllBytes($uniquePath, $bytes) }
                 foreach ($gpu in $gpus) {
                     $logical += [pscustomobject]@{ Profile=$profile.Name; Dimension=$dimensionName; LoaderModel=$loader.Name; GpuIdentity=$gpu; Program=[IO.Path]::GetFileNameWithoutExtension($program.Name); Stage=$program.Extension.TrimStart('.'); ContentHash=$hash; Artifact=($uniquePath.Substring($OutputRoot.Length + 1) -replace '\\','/'); OriginalSource=($candidate.Substring($sourceRoot.Length + 1) -replace '\\','/'); Includes=@($includes | ForEach-Object { $_.Substring($sourceRoot.Length + 1) -replace '\\','/' } | Select-Object -Unique) }

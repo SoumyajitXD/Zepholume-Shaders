@@ -12,7 +12,7 @@ void main() {
     zephCloudTexCoord = (gl_TextureMatrix[0] * gl_MultiTexCoord0).xy;
     zephCloudVertexColour = gl_Color;
     zephCloudDistance = length(viewPosition.xyz);
-    zephCloudNormalUp = clamp(zephSafeNormalize(gl_NormalMatrix * gl_Normal).y * 0.5 + 0.5, 0.0, 1.0);
+    zephCloudNormalUp = clamp(zephWorldElevation(gl_NormalMatrix * gl_Normal) * 0.5 + 0.5, 0.0, 1.0);
     gl_Position = gl_ProjectionMatrix * viewPosition;
 }
 #endif

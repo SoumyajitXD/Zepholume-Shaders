@@ -8,3 +8,4 @@ tools/glslang/
 .vscode/
 *.tmp
 *.bak
+__pycache__/

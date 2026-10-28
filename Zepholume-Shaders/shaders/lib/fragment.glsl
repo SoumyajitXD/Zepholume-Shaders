@@ -24,7 +24,6 @@ uniform vec3 sunPosition;
 uniform vec3 moonPosition;
 varying vec2 zephLightCoord;
 varying vec4 zephVertexColour;
-varying float zephDistance;
 varying vec3 zephNormalView;
 varying vec3 zephViewDirection;
 #ifdef ZEPH_WATER_PROGRAM
@@ -47,6 +46,9 @@ flat varying float zephIsWater;
 #undef ZEPH_HAS_MOON_POSITION
 
 void main() {
+    // Length is nonlinear: derive distance from the interpolated position,
+    // rather than interpolating corner lengths across a triangle diagonal.
+    float zephDistance = length(zephViewDirection);
 #ifdef ZEPH_UNTEXTURED_PROGRAM
     vec4 source = zephVertexColour;
 #else
@@ -94,7 +96,7 @@ void main() {
     graded = zephGradeLinearScene(linear);
 #endif
 #ifndef ZEPH_NO_FOG
-    graded = mix(graded, zephFogColour(zephViewDirection), zephFogFactor(zephDistance, zephViewDirection.y));
+    graded = mix(graded, zephFogColour(zephViewDirection), zephFogFactor(zephDistance, zephWorldElevation(zephViewDirection)));
 #endif
     gl_FragData[0] = vec4(graded, clamp(source.a, 0.0, 1.0));
 }

@@ -36,8 +36,8 @@ vec3 zephFogColour(vec3 viewDir) {
     return mix(fogColor, vec3(0.090, 0.070, 0.145), 0.15);
 #else
     vec3 sunDir = zephSafeNormalize(sunPosition);
-    float daylight = zephDaylightFromElevation(sunDir.y);
-    float twilight = zephTwilightFromElevation(sunDir.y);
+    float daylight = zephDaylightFromDirection(sunDir);
+    float twilight = zephTwilightFromDirection(sunDir);
     float storm = zephSaturate(rainStrength);
     vec3 haze = zephAtmosphereColour(fogColor, daylight, storm);
     // Low-order horizon warmth connects fog to the sky without replacing
@@ -52,28 +52,29 @@ vec3 zephFogColour() {
 }
 
 float zephFogFactor(float d, float viewDirectionY) {
-    if (isEyeInWater >= 2) {
-        float mediumStart = max(fogStart, 1.0);
-        float mediumEnd = max(fogEnd, mediumStart + 1.0);
-        return zephSaturate((d - mediumStart) / (mediumEnd - mediumStart));
-    }
-    float factor = zephAtmosphereFactor(d, viewDirectionY, rainStrength);
+    if (isEyeInWater >= 1) {
+        // A non-positive loader range has no interior. Use a step at its
+        // start; positive ranges, however small, retain their exact endpoints.
+        float mediumRange = fogEnd - fogStart;
+        if (mediumRange <= 0.0) return d >= fogStart ? 1.0 : 0.0;
+        float factor = zephSaturate((d - fogStart) / mediumRange);
 #if ZEPH_EFFECTIVE_PROFILE_TIER >= 1
-    if (isEyeInWater == 1) {
-        // Reuse the existing monotonic fog distance rather than add exp/pow.
-        // The small tiered multiplier only affects the already-active water
-        // fog path and remains clamped at the loader fog endpoint.
+        if (isEyeInWater == 1) {
+            // Keep underwater fog independent of open-air horizon and weather.
+            // Reach the loader fog endpoint even in clear vertical views.
 #if ZEPH_EFFECTIVE_PROFILE_TIER == 1
-        factor *= 1.02;
+            factor *= 1.02;
 #elif ZEPH_EFFECTIVE_PROFILE_TIER == 2
-        factor *= 1.06;
+            factor *= 1.06;
 #elif ZEPH_EFFECTIVE_PROFILE_TIER == 3
-        factor *= 1.09;
+            factor *= 1.09;
 #else
-        factor *= 1.12;
+            factor *= 1.12;
 #endif
+        }
+#endif
+        return zephSaturate(factor);
     }
-#endif
-    return zephSaturate(factor);
+    return zephAtmosphereFactor(d, viewDirectionY, rainStrength);
 }
 #endif

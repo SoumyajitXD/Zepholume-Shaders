@@ -5,7 +5,18 @@ function Get-ZephShaderOptions {
     $settings = Get-Content -LiteralPath $settingsPath -Raw
     $options = [ordered]@{}
     foreach ($match in [regex]::Matches($settings, '(?m)^#define\s+(ZEPH_[A-Z_]+)\s+(\d+)\s*//\s*\[([^\]]+)\]')) {
-        $options[$match.Groups[1].Value] = @($match.Groups[3].Value -split '\s+' | ForEach-Object { [int]$_ })
+        $name = $match.Groups[1].Value
+        if ($options.Contains($name)) { throw "Duplicate shader option definition: $name" }
+        $values = @($match.Groups[3].Value.Trim() -split '\s+' | ForEach-Object { [int]$_ })
+        if ($values.Count -ne @($values | Select-Object -Unique).Count) { throw "Duplicate shader option value: $name" }
+        if ($values -notcontains [int]$match.Groups[2].Value) { throw "Shader option default outside declared range: $name" }
+        $options[$name] = $values
+    }
+    $seen = [System.Collections.Generic.HashSet[string]]::new([System.StringComparer]::Ordinal)
+    foreach ($match in [regex]::Matches($settings, '(?m)^#define\s+(ZEPH_[A-Z_]+)\b')) {
+        $name = $match.Groups[1].Value
+        if (-not $seen.Add($name)) { throw "Duplicate shader option definition: $name" }
+        if (-not $options.Contains($name)) { throw "Shader option lacks a valid numeric range: $name" }
     }
     return $options
 }
@@ -22,7 +33,7 @@ function Get-ZephProfiles {
     foreach ($match in [regex]::Matches((Get-Content -LiteralPath $propertiesPath -Raw), '(?m)^profile\.([^\s=]+)\s*=\s*([^\r\n]*)')) {
         if (-not $names.Add($match.Groups[1].Value)) { throw "Duplicate profile definition: $($match.Groups[1].Value)" }
         $values = [ordered]@{}
-        foreach ($assignment in ($match.Groups[2].Value.Trim() -split '\s+')) {
+        foreach ($assignment in $match.Groups[2].Value.Trim() -split '\s+') {
             if ($assignment -notmatch '^(ZEPH_[A-Z_]+):(\d+)$') { throw "Invalid profile assignment in $($match.Groups[1].Value): $assignment" }
             $option = $Matches[1]
             $value = [int]$Matches[2]

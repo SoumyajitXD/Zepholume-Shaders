@@ -55,10 +55,10 @@ value.ZEPH_MATERIAL_QUALITY.0=Off
 value.ZEPH_MATERIAL_QUALITY.1=On
 option.ZEPH_MATERIAL_QUALITY.comment=Enables the bounded analytical material-response approximation.
 
-option.ZEPH_FOG_QUALITY=Distance fog
+option.ZEPH_FOG_QUALITY=Cloud fog
 value.ZEPH_FOG_QUALITY.0=Lite
 value.ZEPH_FOG_QUALITY.1=Atmospheric
-option.ZEPH_FOG_QUALITY.comment=Controls the cloud and distance-fog response.
+option.ZEPH_FOG_QUALITY.comment=Controls rain-responsive cloud fog attenuation.
 
 option.ZEPH_ATMOSPHERE_QUALITY=Atmosphere quality
 value.ZEPH_ATMOSPHERE_QUALITY.0=Lite

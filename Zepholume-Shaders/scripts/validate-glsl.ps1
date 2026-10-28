@@ -12,6 +12,7 @@ $ErrorActionPreference = 'Stop'
 $validatorBackend = Resolve-ZephValidatorBackend -ValidatorMode $ValidatorMode -Validator $Validator -WslDistribution $WslDistribution
 $VariantRoot = (Resolve-Path -LiteralPath $VariantRoot).Path
 $SourceRoot = (Resolve-Path -LiteralPath $SourceRoot).Path
+$ReportRoot = [IO.Path]::GetFullPath($ReportRoot)
 $sourceManifestPath = Join-Path $VariantRoot 'source-manifest.json'
 $indexPath = Join-Path $VariantRoot 'index.json'
 if (-not (Test-Path -LiteralPath $sourceManifestPath) -or -not (Test-Path -LiteralPath $indexPath)) { throw 'Variant inputs are incomplete: source-manifest.json and index.json are required. Regenerate variants before compilation.' }

@@ -1,5 +1,8 @@
 #ifndef ZEPHO_COMMON_GLSL
 #define ZEPHO_COMMON_GLSL
+// Loader celestial positions and transformed normals are in view space.
+// Player-space up must follow the camera before taking an elevation dot.
+uniform mat4 gbufferModelView;
 float zephSaturate(float v) { return clamp(v, 0.0, 1.0); }
 vec3 zephSaturate(vec3 v) { return clamp(v, vec3(0.0), vec3(1.0)); }
 
@@ -7,6 +10,14 @@ vec3 zephSaturate(vec3 v) { return clamp(v, vec3(0.0), vec3(1.0)); }
 // so use a bounded denominator everywhere a direction is only approximate.
 vec3 zephSafeNormalize(vec3 v) {
     return v * inversesqrt(max(dot(v, v), 0.00000001));
+}
+
+vec3 zephWorldUpView() {
+    return zephSafeNormalize(gbufferModelView[1].xyz);
+}
+
+float zephWorldElevation(vec3 viewDirection) {
+    return dot(zephSafeNormalize(viewDirection), zephWorldUpView());
 }
 
 float zephDaylightFromElevation(float elevation) {
@@ -17,16 +28,13 @@ float zephTwilightFromElevation(float elevation) {
     return 1.0 - smoothstep(0.06, 0.34, abs(elevation));
 }
 
-// sunPosition is loader supplied and has a stable direction, unlike the
-// historical fixed-scale approximation. Keeping this in one helper makes
-// terrain, sky, clouds and fog transition through day/night together.
+// Compare view-space light directions against world up in the same space.
+// Camera pitch must not change the world's day/night or twilight weights.
 float zephDaylightFromDirection(vec3 lightDirection) {
-    float invLen = inversesqrt(max(dot(lightDirection, lightDirection), 0.00000001));
-    return zephDaylightFromElevation(lightDirection.y * invLen);
+    return zephDaylightFromElevation(zephWorldElevation(lightDirection));
 }
 
 float zephTwilightFromDirection(vec3 lightDirection) {
-    float invLen = inversesqrt(max(dot(lightDirection, lightDirection), 0.00000001));
-    return zephTwilightFromElevation(lightDirection.y * invLen);
+    return zephTwilightFromElevation(zephWorldElevation(lightDirection));
 }
 #endif

@@ -31,7 +31,7 @@ vec3 zephAnalyticSky(float up, vec3 direction, vec3 sunDir, float daylight, floa
     float horizonMix = smoothstep(0.06, 0.84, up);
     vec3 atmosphere = mix(mix(horizonNight, zenithNight, horizonMix), mix(horizonDay, zenithDay, horizonMix), daylight);
 #if ZEPH_EFFECTIVE_PROFILE_TIER >= 1
-    float dawn = zephTwilightFromElevation(sunDir.y);
+    float dawn = zephTwilightFromDirection(sunDir);
     float sunSide = zephSaturate(dot(direction, sunDir) * 0.5 + 0.5);
     atmosphere = mix(atmosphere, vec3(0.94, 0.54, 0.30), dawn * (1.0 - horizonMix) * sunSide * 0.30);
 #endif
@@ -66,7 +66,7 @@ void main() {
 #endif
     float storm = clamp(rainStrength, 0.0, 1.0);
     vec3 sunDir = zephSafeNormalize(sunPosition);
-    float daylight = zephDaylightFromElevation(sunDir.y);
+    float daylight = zephDaylightFromDirection(sunDir);
     // Direction varyings are linearly interpolated and are not guaranteed to
     // remain unit length across a large sky primitive. Normalize once before
     // angular dawn and celestial-halo calculations.

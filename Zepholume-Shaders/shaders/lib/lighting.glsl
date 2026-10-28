@@ -18,16 +18,16 @@ float zephFaceLight(vec3 normal, vec2 lightCoord, float storm) {
 #elif defined(ZEPH_DIM_NETHER)
     // Nether has no celestial bodies. Ambient vertical fill creates cavern depth
     // without phantom directional shadows from an invisible sun.
-    float upward = normal.y * 0.5 + 0.5;
+    float upward = zephWorldElevation(normal) * 0.5 + 0.5;
     return mix(0.85, 1.05, upward);
 #elif defined(ZEPH_DIM_END)
     // The End has no celestial sun/moon. Omnidirectional void-grounded ambient.
-    float upward = max(normal.y, 0.0);
+    float upward = max(zephWorldElevation(normal), 0.0);
     return mix(0.88, 1.02, upward * 0.6 + 0.4);
 #else
     vec3 sunDir = zephSafeNormalize(sunPosition);
     vec3 moonDir = zephSafeNormalize(moonPosition);
-    float daylight = zephDaylightFromElevation(sunDir.y);
+    float daylight = zephDaylightFromDirection(sunDir);
 
     // The lightmap and vertex colour already carry the main scene lighting.
     // Use celestial direction only for bounded face shape, not a second deep
@@ -103,7 +103,7 @@ vec3 zephApplySceneLighting(vec3 linearColour, vec3 normal, vec2 lightCoord, flo
 #if ZEPH_EFFECTIVE_FACE_LIGHTING_QUALITY >= 3 && !defined(ZEPH_DIM_NETHER) && !defined(ZEPH_DIM_END)
     // High & Ultra dual-hemisphere ambient irradiance: upward surfaces receive subtle cool sky fill,
     // downward surfaces receive subtle warm ground bounce.
-    float up = normal.y * 0.5 + 0.5;
+    float up = zephWorldElevation(normal) * 0.5 + 0.5;
     vec3 skyHemisphere = vec3(0.96, 0.98, 1.04);
     vec3 groundBounce = vec3(1.02, 0.99, 0.96);
     vec3 domeFill = mix(groundBounce, skyHemisphere, up);

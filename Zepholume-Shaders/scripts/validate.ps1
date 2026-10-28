@@ -42,8 +42,8 @@ if ($Package) {
         @(Get-Item -LiteralPath (Join-Path $Root 'THIRD_PARTY_NOTICES.md'))
     )
     $expectedEntries = @($expectedPackageFiles | ForEach-Object { $_.FullName.Substring($Root.Length + 1).Replace('\','/') })
-    foreach ($missing in Compare-Object $expectedEntries $packageEntries | Where-Object SideIndicator -eq '<=' | ForEach-Object InputObject) { $errors.Add("ZIP missing expected entry: $missing") }
-    foreach ($extra in Compare-Object $expectedEntries $packageEntries | Where-Object SideIndicator -eq '=>' | ForEach-Object InputObject) { $errors.Add("ZIP contains unexpected entry: $extra") }
+    foreach ($missing in Compare-Object $expectedEntries $packageEntries -CaseSensitive | Where-Object SideIndicator -eq '<=' | ForEach-Object InputObject) { $errors.Add("ZIP missing expected entry: $missing") }
+    foreach ($extra in Compare-Object $expectedEntries $packageEntries -CaseSensitive | Where-Object SideIndicator -eq '=>' | ForEach-Object InputObject) { $errors.Add("ZIP contains unexpected entry: $extra") }
     Add-Type -AssemblyName System.IO.Compression.FileSystem
     $archive = [System.IO.Compression.ZipFile]::OpenRead($Package)
     try {
@@ -141,10 +141,11 @@ if (Test-Path -LiteralPath $fragmentLibrary) {
 }
 
 # Minecraft's unlit gbuffers paths (world border, unlit particles, glint,
-# debug/leash, and hand) must not inherit the terrain lightmap multiplication.
+# and debug/leash) must not inherit the terrain lightmap multiplication.
+# Hands, including the hand_water fallback, do receive per-surface lightmap.
 # Keep this source-derived routing table explicit so a new shared-program use
 # cannot silently change which geometry receives per-surface irradiance.
-$expectedLightmapBasenames = @('gbuffers_block.fsh','gbuffers_damagedblock.fsh','gbuffers_entities.fsh','gbuffers_terrain.fsh','gbuffers_textured_lit.fsh','gbuffers_water.fsh','gbuffers_weather.fsh')
+$expectedLightmapBasenames = @('gbuffers_block.fsh','gbuffers_damagedblock.fsh','gbuffers_entities.fsh','gbuffers_hand.fsh','gbuffers_terrain.fsh','gbuffers_textured_lit.fsh','gbuffers_water.fsh','gbuffers_weather.fsh')
 foreach ($fragmentProgram in (Get-ChildItem -LiteralPath $shaderRoot -Recurse -File -Filter '*.fsh')) {
     $relative = $fragmentProgram.FullName.Substring($shaderRoot.Length + 1).Replace('\','/')
     $wrapperSource = Get-Content -LiteralPath $fragmentProgram.FullName -Raw
@@ -169,7 +170,7 @@ $blockProperties = Get-Content -LiteralPath (Join-Path $shaderRoot 'block.proper
 if ($blockProperties -notmatch '(?m)^block\.10001\s*=\s*minecraft:water\s*$') { $errors.Add('block.properties must map pack-local material 10001 only to minecraft:water.') }
 if ($vertexLibrary -notmatch 'mc_Entity\.x\s*-\s*10001\.0' -or $vertexLibrary -notmatch 'if\s*\(\s*zephIsWater\s*>\s*0\.5\s*\)') { $errors.Add('Water vertex displacement must be gated by the classified water material.') }
 $fogLibrary = Get-Content -LiteralPath (Join-Path $shaderRoot 'lib/fog.glsl') -Raw
-if (([regex]::Matches($fogLibrary, 'isEyeInWater\s*>=\s*2')).Count -lt 2) { $errors.Add('Lava and powdered-snow fog colour/factor must preserve the loader route.') }
+if ($fogLibrary -notmatch 'isEyeInWater\s*>=\s*2' -or $fogLibrary -notmatch 'isEyeInWater\s*>=\s*1') { $errors.Add('Immersed media must preserve the loader fog colour and distance route.') }
 $skyFragmentLibrary = Get-Content -LiteralPath (Join-Path $shaderRoot 'lib/sky_fragment.glsl') -Raw
 if ($skyFragmentLibrary -notmatch 'skyDir\s*=\s*zephSafeNormalize\s*\(\s*zephSkyDirection\s*\)') { $errors.Add('Interpolated sky direction must be normalized in the fragment stage.') }
 
@@ -225,10 +226,12 @@ foreach ($staleVersion in @('0.1.0-dev','0.2.0-dev')) {
         $errors.Add("Stale development version remains in release-facing metadata: $staleVersion")
     }
 }
-if ($properties -notmatch 'Zepholume 1\.0\.5 development candidate') { $errors.Add('Shader properties must identify the V1.0.5 development candidate.') }
+if ($properties -notmatch 'Zepholume 1\.0\.6 final release') { $errors.Add('Shader properties must identify the V1.0.6 final release.') }
+if ($changelog -notmatch '(?m)^## 1\.0\.6 .+released') { $errors.Add('Changelog must contain the V1.0.6 released heading.') }
 if ($changelog -notmatch '(?m)^## 1\.0\.4 .+released') { $errors.Add('Changelog must contain the V1.0.4 released heading.') }
 if ($changelog -notmatch '(?m)^## 1\.0\.5-dev .+unreleased') { $errors.Add('Changelog must contain the V1.0.5 development heading.') }
-if ($readme -notmatch '(?i)V1\.0\.5 development') { $errors.Add('README must identify the active V1.0.5 development cycle.') }
+if ($changelog -notmatch '(?m)^## 1\.0\.6-dev-phase3 .+unreleased') { $errors.Add('Changelog must contain the V1.0.6 Phase 3 development heading.') }
+if ($readme -notmatch '(?i)V1\.0\.6 final release') { $errors.Add('README must identify the V1.0.6 final release.') }
 $definitions = @{}
 foreach ($m in [regex]::Matches($settings, '(?m)^#define\s+(ZEPH_[A-Z_]+)\s+(\d+)\s*//\s*\[([^\]]+)\]')) { $definitions[$m.Groups[1].Value] = @($m.Groups[3].Value -split '\s+' | ForEach-Object {[int]$_}) }
 $options = @([regex]::Matches($properties, 'ZEPH_[A-Z_]+') | ForEach-Object Value | Sort-Object -Unique)
@@ -245,7 +248,7 @@ if (($actualProfiles.Count -ne $requiredProfiles.Count) -or (Compare-Object $act
 }
 if ($properties -notmatch '(?m)^screen\s*=\s*[^\r\n]*<profile>(?:\s|$)') { $errors.Add('Main settings screen must expose <profile>.') }
 foreach ($profile in $profileMatches) {
-    foreach ($assignment in $profile.Groups[2].Value -split '\s+') {
+    foreach ($assignment in $profile.Groups[2].Value.Trim() -split '\s+') {
         if ($assignment -notmatch '^(ZEPH_[A-Z_]+):(\d+)$') { $errors.Add("Invalid profile assignment in $($profile.Groups[1].Value): $assignment"); continue }
         $name,$value = $Matches[1],[int]$Matches[2]
         if (-not $definitions.ContainsKey($name)) { $errors.Add("Profile references unknown option: $name"); continue }
@@ -269,7 +272,7 @@ foreach ($profileName in $requiredProfiles) {
     $propertyMatch = [regex]::Match($properties, "(?m)^profile\.$profileName\s*=\s*(.+)$")
     if (-not $propertyMatch.Success) { continue }
     $actual = @{}
-    foreach ($assignment in $propertyMatch.Groups[1].Value -split '\s+') { if ($assignment -match '^(ZEPH_[A-Z_]+):(\d+)$') { $actual[$Matches[1]] = [int]$Matches[2] } }
+    foreach ($assignment in $propertyMatch.Groups[1].Value.Trim() -split '\s+') { if ($assignment -match '^(ZEPH_[A-Z_]+):(\d+)$') { $actual[$Matches[1]] = [int]$Matches[2] } }
     if (($actual.Count -ne $matrix[$profileName].Count) -or (Compare-Object ($actual.GetEnumerator() | ForEach-Object { "$($_.Key):$($_.Value)" } | Sort-Object) ($matrix[$profileName].GetEnumerator() | ForEach-Object { "$($_.Key):$($_.Value)" } | Sort-Object))) { $errors.Add("Profile does not match authoritative matrix: $profileName") }
 }
 $balanced = $matrix['Balanced']

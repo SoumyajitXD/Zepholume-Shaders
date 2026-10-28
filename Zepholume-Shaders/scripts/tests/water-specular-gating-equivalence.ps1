@@ -7,15 +7,15 @@ $water = Get-Content -LiteralPath (Join-Path $projectRoot 'shaders/lib/water.gls
 
 # The branch predicates must be constructed from the exact clamped uniform
 # values used by the original product. The guarded bodies retain the former
-# multiplication order, so a skipped finite lobe is exactly its former zero.
+# weight values, so a skipped finite lobe is exactly its former zero.
 foreach ($required in @(
     'float sunWeight = daylight * sunHorizonFade;',
     'if (sunWeight > 0.0)',
-    'float sunSpecFactor = zephSpecularLobe(sunNdotH) * daylight * sunHorizonFade;',
+    'float sunSpecFactor = zephSpecularLobe(sunNdotH) * sunWeight;',
     'if (daylight < 1.0)',
     'float moonWeight = (1.0 - daylight) * moonHorizonFade;',
     'if (moonWeight > 0.0)',
-    'float moonSpecFactor = zephSpecularLobe(moonNdotH) * (1.0 - daylight) * moonHorizonFade;'
+    'float moonSpecFactor = zephSpecularLobe(moonNdotH) * moonWeight;'
 )) {
     if ($water -notmatch [regex]::Escape($required)) { throw "Water gating source lock failed: missing $required" }
 }

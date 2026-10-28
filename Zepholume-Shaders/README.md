@@ -4,9 +4,9 @@ Zepholume is an original, direct-path Minecraft Java shader pack for clean survi
 
 ## Status and supported evidence
 
-**V1.0.5 development.** The preserved **V1.0.4 final release** remains available unchanged. V1.0.5 restores the missing per-surface Minecraft lightmap multiplication, complete legacy dimension-wrapper topology, texture-matrix routing, water-only translucent treatment, and loader-owned lava/powder-snow fog. It is not release-ready until loader-rendered cave/night, dimension, water, and profile QA completes. The exact-zero water celestial-specular gate remains retained, but neither it nor V1.0.5 has a measured FPS claim. The isolated test lanes are Fabric/Iris 1.7.6 + Sodium 0.5.13 and Forge/Oculus 1.8.0 + Embeddium 0.3.31, using Java 17.
+**V1.0.6 final release.** This release incorporates the validated hand-lightmap, triangle-interpolation, camera-space and fog-range corrections. The final production ZIP is `Zepholume-Shaders-1.0.6.zip`. It is exported under the user's explicit decision to ship with incomplete Minecraft runtime qualification. Offline compilation and synthetic GPU fixtures verify their stated source contracts; **Minecraft runtime qualification: NOT TESTED** for this final artifact. See the [final verification report](docs/V1.0.6_FINAL_RELEASE.md), [release notes](docs/V1.0.6_RELEASE_NOTES.md) and [compatibility notes](docs/V1.0.6_FINAL_COMPATIBILITY.md).
 
-Minecraft 26.1.2 installations exist locally but no Zepholume evidence is associated with them. OptiFine is not supported or tested.
+The analytical water reflection model has no local skylight occlusion, so reflected sky and celestial highlights can remain in covered water. The source limitation is confirmed; its appearance in actual Minecraft scenes is unverified. Waterfall and hand/item visual outcomes, transparency composition, loader transformation and game FPS remain unverified. Historical Phase 7 Fabric 26.1.2/Iris evidence does not qualify this final artifact. OptiFine is unsupported. Other Minecraft version families and GPU vendors carry no runtime compatibility guarantee.
 
 ## Profiles
 
@@ -22,13 +22,13 @@ Balanced is the default. Selecting a profile applies its full baseline; the grou
 
 ## Install
 
-1. Use an isolated disposable 1.20.1 Iris or Oculus instance.
-2. For the frozen release, copy `Zepholume-Shaders-1.0.4.zip` into `shaderpacks`; use the current V1.0.5 development ZIP only in separately provisioned disposable test instances.
-3. Select Zepholume and choose Balanced, then use the Profile menu for other baselines. Confirm the selected ZIP name and hash before collecting test evidence.
-4. Retain complete `latest.log` and patched shaders after every loader test.
+1. Use a Minecraft Java instance with a matching Iris installation. Oculus uses the legacy compatibility path but remains unqualified for this release; see the compatibility notes for the exact evidence boundary.
+2. Copy `Zepholume-Shaders-1.0.6.zip` directly into that instance's `shaderpacks` directory; keep the ZIP intact.
+3. Select the pack in the shader menu and choose Balanced, the recommended default. Potato, Low, High and Ultra are available through the Profile control.
+4. If checking a rendering problem, retain the exact ZIP hash, `latest.log` and loader-patched shader output. Installation and pack selection alone do not establish visual correctness.
 
 ## Rendering boundary
 
-The pack has 24 program pairs and writes only `gl_FragData[0]`. Potato, Low, and Balanced remain a direct one-colour-target route; High/Ultra only raise analytical quality within that same architecture. There are no shadows, SSR, SSAO, bloom, volumetrics, ray tracing, temporal history, compute, geometry/tessellation stages, images, or SSBOs. Water uses a tuned fourth-power grazing response through Balanced; High and Ultra intentionally use a fifth-power Fresnel-Schlick-shaped curve. Neither is a physically based water model.
+The pack has 14 root program pairs, with complete wrappers for three dimensions, and writes only `gl_FragData[0]`. Potato, Low, and Balanced remain a direct one-colour-target route; High/Ultra only raise analytical quality within that same architecture. There are no shadows, SSR, SSAO, bloom, volumetrics, ray tracing, temporal history, compute, geometry/tessellation stages, images, or SSBOs. Water uses a tuned fourth-power grazing response through Balanced; High and Ultra intentionally use a fifth-power Fresnel-Schlick-shaped curve. Neither is a physically based water model.
 
 Standalone GLSL compilation supports an explicit trusted native backend, a configurable Kali/WSL backend, and a controlled Linux CI backend using distribution-maintained `glslang-tools`. It compiles generated profile/dimension/loader-model variants in OpenGL GLSL mode, records supported vertex/fragment link checks, and rejects warnings. This does not emulate Iris/Oculus patched sources or establish loader, visual, or performance compatibility. See the [Phase 7 development report](docs/PHASE7_REPORT.md), [architecture](docs/ARCHITECTURE.md), [profile guide](docs/PROFILE_GUIDE.md), [benchmark protocol](docs/BENCHMARK_PROTOCOL.md), and [visual regression protocol](docs/VISUAL_REGRESSION.md).
