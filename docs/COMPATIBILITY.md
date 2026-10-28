@@ -1,100 +1,50 @@
-# Compatibility
+# Compatibility and evidence — V1.0.6
 
-Zepholume Shaders targets **Minecraft Java Edition** and requires a compatible shader loader.
+Zepholume targets **Minecraft Java Edition** and requires a separate shader loader. **Game-version tags, static compiler coverage and a final-named ZIP are not runtime compatibility tests.**
 
-## V1.0.5 compatibility boundary
+## Final V1.0.6 qualification
 
-V1.0.5 has several test lanes, but they do **not** all have equal evidence.
+The [final ZIP](../Releases/Zepholume-Shaders-1.0.6.zip) was released with source and offline validation **without full Minecraft qualification**. The packaging decision was deliberate; it does not turn unperformed tests into passes.
 
-| Loader path | Prepared/target environment | Current evidence |
+| Environment / evidence | Final V1.0.6 status | Scope |
 | --- | --- | --- |
-| **Iris / Fabric** | Minecraft 1.20.1, Iris 1.7.6, Sodium 0.5.13, Java 17 | **STAGED ONLY** — static validation passes and the local environment/package is staged; no completed real launch/render qualification |
-| **Oculus / Forge** | Minecraft 1.20.1, Forge 47.4.22, Oculus 1.8.0, Embeddium 0.3.31, Java 17 | **STAGED ONLY** — static validation passes and the local environment/package is staged; no completed real launch/render qualification |
-| **Iris / Fabric** | Minecraft 26.2, Iris 1.11.2+26.2-fabric | **STATIC ONLY** — intended target lane; runtime not yet qualified |
-| **Iris / NeoForge** | Minecraft 26.2, Iris 1.11.2+26.2-neoforge | **STATIC ONLY** — intended target lane; runtime not yet qualified |
-| **Oculus Community Port / Forge** | Minecraft 26.2, Forge 65.1.0, Oculus Community Port 0.3.0-beta.1 | **EXPERIMENTAL / PARTIAL** — static validation passes, but shader activation/world rendering are currently blocked by the port's declared partial program subset |
-| **OptiFine** | — | Not supported or tested |
+| Standalone GLSL, profile/dimension and mocked loader/vendor matrix | **OFFLINE PASS** | Compilation, linking and regression fixtures; no real Minecraft loader |
+| Native Intel UHD 730 standalone fixtures | **GPU HARNESS PASS** | Synthetic water, hand and camera draws on one physical GPU |
+| Minecraft 26.1.2 / Fabric 0.19.3 / Iris 1.10.9 / Sodium 0.8.12 | **FINAL ZIP NOT TESTED** | Historical Phase 7 gameplay activity and Phase 8 ZIP installation only |
+| Minecraft 1.20.1 / Fabric / Iris 1.7.6 / Sodium 0.5.13 / Java 17 | **FINAL ZIP NOT TESTED** | Previously staged lane |
+| Minecraft 1.20.1 / Forge / Oculus 1.8.0 / Embeddium 0.3.31 / Java 17 | **FINAL ZIP NOT TESTED** | Previously staged lane |
+| Minecraft 26.2 Iris Fabric / NeoForge | **FINAL ZIP NOT TESTED** | Historical static target lanes |
+| Minecraft 26.2 experimental Oculus Community Port | **UNQUALIFIED / EXPERIMENTAL** | Earlier partial world-program coverage prevented reliable qualification |
+| Other Minecraft 1.20–26.3 combinations, GPUs and custom dimensions | **NOT TESTED** | No universal support claim |
+| OptiFine | **UNSUPPORTED / NOT TESTED** | Not a maintained target |
 
-Zepholume does not include a shader loader. Install the appropriate loader separately.
+Historical environment details and loader contracts: [V1.0.6 source compatibility audit](../Zepholume-Shaders/docs/V1.0.6_FINAL_COMPATIBILITY.md). Historical activity must not be relabeled as a final-archive runtime test.
 
-## What is actually verified
+## What passed offline
 
-The V1.0.5 Phase 10 pipeline validates profile/dimension behaviour, standalone GLSL compilation, architectural constraints, and numerical regressions. Local validation reported **272/272 stages, 420/420 links, and 630/630 mocked portability cases**. Its first hosted run passed Linux regression/compiler/portability/packaging but **failed Windows source validation** with `Invalid profile assignment in Potato`. A checkout-line-ending fix is pending confirmation by a later hosted run; CI is not yet green. Neither a failed Windows parser check nor a passing standalone compiler establishes actual in-game profile visibility.
+The [final verification report](../Zepholume-Shaders/docs/V1.0.6_FINAL_RELEASE.md) records **272/272 GLSL stages, 420/420 links and 630/630 mocked portability cases**. Native fixtures passed **63 hand, 52 water and 24 camera draws**, alongside source-bound profile/dimension regressions. The portability matrix does not represent 630 real computers or shader-loader runs.
 
-That is useful evidence for source correctness, preprocessing, interfaces, profile isolation, and numerical behaviour. It does **not** prove:
+**Hosted CI is separate:** GitHub Actions' latest main-branch aggregate is failing a clean-tree check. Do not describe hosted CI as passing solely because the final local source suite passed.
 
-- Iris/Oculus-patched shader compilation
-- shader activation in a real game session
-- real GPU driver behaviour
-- visual correctness
-- profile switching in-game
-- shader reload/dimension-transition behaviour
-- FPS or frame-time results
-- NVIDIA/AMD/Intel runtime parity
+## Known visual and runtime limitations
 
-Static validation is not a graphics card with excellent self-confidence.
+- Triangle-diagonal interpolation errors were corrected in source/GPU fixtures. The original waterfall Minecraft scene has **not** been retested using the final ZIP.
+- Hand lightmap configuration was corrected in all four hand wrappers. Actual hand, held-item, translucent/emissive-item behaviour is **unverified** in game.
+- Analytical sky reflections and celestial water highlights lack a reliable local **directional skylight-occlusion** signal. Covered/nighttime water may look too bright; actual severity is unverified.
+- Loader-patched GLSL, transparency/depth composition, option-menu visibility, shader reloads, dimension transitions and real gameplay frame times remain **unverified**.
 
-## Minecraft 26.2 notes
+Do not claim FPS benefits from synthetic timings or assume the shader has passed all supported-version checks.
 
-Minecraft 26.2 introduces a more complicated rendering compatibility picture than 1.20.1.
+## Loader and graphics guidance
 
-- The current Iris 26.2 lanes are **static targets only** until Zepholume is actually launched, activated, rendered, and visually checked in disposable Fabric/NeoForge instances.
-- Zepholume qualification on Minecraft 26.2 should use OpenGL while the Vulkan path remains outside the current evidence boundary.
-- The Oculus Community Port 0.3.0-beta.1 lane is experimental. Its declared partial support does not cover the ordinary `gbuffers_*` world-program set Zepholume relies on, so shader activation/world rendering are currently blocked rather than merely untested.
+Zepholume uses **GLSL 330 compatibility-profile** source and Iris-style interfaces and fallback routes. Existing Oculus paths remain conservative but unqualified for this final release. OptiFine is not a tested target. Earlier 26.2 notes targeted OpenGL rather than Vulkan; Vulkan behaviour remains outside the evidence boundary.
 
-Do not flatten those states into a generic “supports 26.2” badge. Evidence has levels for a reason.
+Results may vary with the specific Iris/Oculus build, graphics API, GPU driver, Java, rendering mods and resource packs. Intel standalone GPU fixtures do not establish NVIDIA/AMD parity.
 
-## Graphics hardware
+For a modpack issue, first reproduce it in an isolated minimal instance. Then reintroduce rendering/resource-pack mods in small groups.
 
-Zepholume is designed around broadly portable GLSL rather than vendor-specific features. The project avoids requiring compute shaders, geometry/tessellation stages, SSBO/image pipelines, ray tracing, or vendor-specific extensions.
+## Reporting issues
 
-Current hardware evidence remains limited. Do not interpret the architecture as a claim that every NVIDIA, AMD, or Intel GPU/driver combination has been tested.
+Include Minecraft version, Java, Fabric/Forge/NeoForge version, Iris/Oculus and Sodium/Embeddium versions, GPU/driver, chosen profile, full `latest.log`, steps to reproduce and a screenshot or video for visual problems.
 
-Runtime behaviour can vary with:
-
-- GPU model and driver version
-- operating system and Java runtime
-- Iris/Oculus release
-- Sodium/Embeddium version
-- Minecraft graphics settings
-- resource packs
-- rendering-related mods
-- modpack composition
-
-## Modpack compatibility
-
-Zepholume can be used in modded Minecraft, but large rendering stacks can create interactions that do not exist in a clean instance.
-
-When diagnosing a problem, first reproduce it with the smallest practical setup using one of the documented target lanes. For the strongest current baseline, use:
-
-- Minecraft 1.20.1
-- Fabric + Iris + Sodium, or Forge + Oculus + Embeddium
-- Zepholume Shaders V1.0.5
-
-Then reintroduce rendering/resource-pack mods until the conflict appears.
-
-## Version policy
-
-For **V1.0.5**, Minecraft **1.20.1** is the strongest staged evidence baseline.
-
-Minecraft **26.2** has explicit static/experimental target lanes, but those are not equivalent to completed runtime support. Do not infer that every Minecraft version between 1.20.1 and 26.2 is validated merely because the endpoints appear in project metadata.
-
-Older or intermediate versions may work, but they are not guaranteed by this release unless separately tested and documented.
-
-## Reporting a compatibility problem
-
-Include:
-
-- Minecraft version
-- Iris or Oculus version
-- Fabric/Forge/NeoForge version
-- Sodium/Embeddium version when applicable
-- GPU model
-- GPU driver version
-- Java version
-- Zepholume version/profile
-- complete `latest.log`
-- whether the issue reproduces in a minimal instance
-- screenshot or short capture when the problem is visual
-
-See [Troubleshooting](TROUBLESHOOTING.md) for a practical isolation process.
+See [Installation](INSTALLATION.md), [Troubleshooting](TROUBLESHOOTING.md) and [final release notes](../Zepholume-Shaders/docs/V1.0.6_RELEASE_NOTES.md).
