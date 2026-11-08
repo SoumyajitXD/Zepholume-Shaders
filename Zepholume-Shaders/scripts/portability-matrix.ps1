@@ -10,13 +10,14 @@ param(
     [ValidateRange(1, 756)]
     [int]$ProgressEvery = 36
 )
+. (Join-Path $PSScriptRoot 'output-safety.ps1')
 function Invoke-PortabilityMatrixWorker {
 $ErrorActionPreference = 'Stop'
 $Root = (Resolve-Path -LiteralPath $Root).Path
 $shaderRoot = Join-Path $Root 'shaders'
 . (Join-Path $PSScriptRoot 'profile-config.ps1')
 $output = if ($OutputRoot) { $OutputRoot } else { Join-Path $Root 'artifacts/portability-matrix' }
-if (Test-Path -LiteralPath $output) { Remove-Item -LiteralPath $output -Recurse -Force }
+$output = Assert-ZephFreshOutputPath -Path $output -ProjectRoot $Root -SourceRoot $shaderRoot
 New-Item -ItemType Directory -Path $output | Out-Null
 $stopwatch = [Diagnostics.Stopwatch]::StartNew()
 
@@ -121,12 +122,12 @@ if ($Worker) {
 }
 
 # Run the CPU-bound corpus in a child process so timeout handling can terminate
-# the complete worker tree.  The worker writes only to a sibling staging path;
-# the previous published result is left untouched until its completion contract
-# and manifest have both been parsed and checked below.
+# the complete worker tree. The worker writes to a fresh sibling staging path;
+# publication occurs only after its completion contract has been checked.
 $ErrorActionPreference = 'Stop'
 $Root = (Resolve-Path -LiteralPath $Root).Path
-$publishedOutput = if ($OutputRoot) { [IO.Path]::GetFullPath($OutputRoot) } else { Join-Path $Root 'artifacts/portability-matrix' }
+$publishedOutput = if ($OutputRoot) { $OutputRoot } else { Join-Path $Root 'artifacts/portability-matrix' }
+$publishedOutput = Assert-ZephFreshOutputPath -Path $publishedOutput -ProjectRoot $Root -SourceRoot (Join-Path $Root 'shaders')
 $stagingOutput = "$publishedOutput.staging-$([guid]::NewGuid().ToString('N'))"
 $stdout = "$stagingOutput.stdout.txt"
 $stderr = "$stagingOutput.stderr.txt"
@@ -162,15 +163,7 @@ $completion = Get-Content -LiteralPath $completionPath -Raw | ConvertFrom-Json
 $publishedManifest = @(Get-Content -LiteralPath $manifestPath -Raw | ConvertFrom-Json)
 if ($completion.schemaVersion -ne 2 -or $completion.status -ne 'completed' -or -not $completion.completed -or $completion.cases -ne $completion.expectedCases -or $completion.cases -ne $publishedManifest.Count) { throw "Portability matrix completion contract failed. Staging output retained for diagnosis: $stagingOutput" }
 if (@($publishedManifest | Where-Object { @($_.stages).Count -ne $completion.stagesPerCase }).Count -ne 0) { throw "Portability matrix manifest is partial. Staging output retained for diagnosis: $stagingOutput" }
-$previousOutput = $null
-if (Test-Path -LiteralPath $publishedOutput) {
-    $previousOutput = "$publishedOutput.previous-$([guid]::NewGuid().ToString('N'))"
-    Move-Item -LiteralPath $publishedOutput -Destination $previousOutput
-}
-try {
-    Move-Item -LiteralPath $stagingOutput -Destination $publishedOutput
-} catch {
-    if ($previousOutput -and -not (Test-Path -LiteralPath $publishedOutput) -and (Test-Path -LiteralPath $previousOutput)) { Move-Item -LiteralPath $previousOutput -Destination $publishedOutput }
-    throw
-}
+# A collision at publication is an error; never replace a path another process
+# created while the worker was running.
+[IO.Directory]::Move($stagingOutput, $publishedOutput)
 Write-Host "Portability matrix completed and published: $publishedOutput"

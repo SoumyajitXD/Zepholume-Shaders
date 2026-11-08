@@ -1,0 +1,691 @@
+{
+  "schemaVersion": 1,
+  "reviewDate": "2026-10-25",
+  "releaseReady": false,
+  "candidate": "Zepholume-Shaders-1.0.6-dev-phase3.zip",
+  "candidateSha256": "8BC997B1CDBCB17ABF5D583E76B09B2E427873B2A24CA1B30D593EEBF5CB85B5",
+  "statusVocabulary": [
+    "VERIFIED",
+    "STATIC ONLY",
+    "SYNTHETIC ONLY",
+    "NOT TESTED",
+    "BLOCKED",
+    "FAILED",
+    "UNSUPPORTED"
+  ],
+  "evidencePolicy": "VERIFIED applies only to the explicitly named scope; dependency publication never establishes shader-pack runtime support. Historical Phase 6 validation is labeled historical, not rerun here.",
+  "sourceSnapshot": "artifacts/phase7-compatibility/modrinth-versions.json",
+  "lanes": [
+    {
+      "minecraft": "1.20.1",
+      "modLoader": "Fabric",
+      "loaderVersion": "0.19.3",
+      "loaderVersionMeaning": "existing staging declaration; not runtime observed",
+      "loaderSource": "https://meta.fabricmc.net/v2/versions/loader/1.20.1",
+      "shaderLoader": {
+        "version": "1.7.6+1.20.1",
+        "versionId": "s5eFLITc",
+        "source": "https://api.modrinth.com/v2/version/s5eFLITc",
+        "gameVersions": [
+          "1.20.1"
+        ],
+        "loaders": [
+          "fabric",
+          "quilt"
+        ],
+        "files": [
+          {
+            "filename": "iris-1.7.6+mc1.20.1.jar",
+            "url": "https://cdn.modrinth.com/data/YL57xq9U/versions/s5eFLITc/iris-1.7.6%2Bmc1.20.1.jar",
+            "hashes": {
+              "sha512": "f1337b0441c31269bd3bfcb28647d521326a83e73128c1ac8d065615f8a5a4ca1e8c96a468b356584236ece5b164ec8d8a52b1878064f4e391ecf4f32885e301",
+              "sha1": "880c0b9ce38bb4997645793407c1801df83f4233"
+            }
+          }
+        ],
+        "dependencyIds": [
+          {
+            "version_id": "ryOMVRuG",
+            "project_id": "AANobbMI",
+            "file_name": null,
+            "dependency_type": "required"
+          }
+        ]
+      },
+      "requiredDependencies": [
+        {
+          "version": "mc1.20.1-0.5.12-beta.2-fabric",
+          "versionId": "ryOMVRuG",
+          "source": "https://api.modrinth.com/v2/version/ryOMVRuG",
+          "gameVersions": [
+            "1.20.1"
+          ],
+          "loaders": [
+            "fabric",
+            "quilt"
+          ],
+          "files": [
+            {
+              "filename": "sodium-fabric-0.5.12-beta.2+mc1.20.1.jar",
+              "url": "https://cdn.modrinth.com/data/AANobbMI/versions/ryOMVRuG/sodium-fabric-0.5.12-beta.2%2Bmc1.20.1.jar",
+              "hashes": {
+                "sha1": "8f6bdf3c1fe2737f819fd4f186f5d89ad68d2e51",
+                "sha512": "e6906b77e709c17bfe445d065353010853cad58a65252f70f9e7e06113156f21c85e91a71e5ccebb4ea0f0168280737bb12ae407e115a9f1df3b5e8d21b87ec5"
+              }
+            }
+          ],
+          "dependencyIds": []
+        }
+      ],
+      "java": {
+        "requiredMajor": 17,
+        "source": "https://piston-meta.mojang.com/v1/packages/38d412af3b247e485c7f7e50ac25febc4e79ab1d/1.20.1.json",
+        "runtimeObserved": false
+      },
+      "runtimeAvailability": "BLOCKED",
+      "runtimeAvailabilityReason": "Isolated directory exists; authenticated operator launch and evidence required.",
+      "staticCompilation": {
+        "status": "STATIC ONLY",
+        "scope": "Phase 6 generic standalone GLSL macro models; no version-specific Iris/Oculus transformed source",
+        "evidence": "docs/V1.0.6_PHASE6_DEVELOPMENT.md#7-fresh-glsl-portability-and-regression-runs"
+      },
+      "syntheticGpu": {
+        "status": "SYNTHETIC ONLY",
+        "scope": "Phase 6 source-derived Intel UHD 730 WGL fixtures; version-unbound",
+        "evidence": "artifacts/phase6-gpu/compare-v105-v106/comparisons.json"
+      },
+      "realMinecraftLoad": "NOT TESTED",
+      "rendering": "NOT TESTED",
+      "profileMenu": "NOT TESTED",
+      "profilePersistence": "NOT TESTED",
+      "minecraftPerformance": "NOT TESTED",
+      "patchedShaderCompilation": "NOT TESTED",
+      "stagedDirectory": "runtime/v106-phase2/iris-1.20.1",
+      "stagedJarHashes": [
+        {
+          "file": "iris-1.7.6+mc1.20.1.jar",
+          "sha256": "9EB15E563E0C9AE6EFF15B7863F8432DD290CF9F724C7373E9B15B14AA829ED5"
+        },
+        {
+          "file": "sodium-fabric-0.5.13+mc1.20.1.jar",
+          "sha256": "688C26029CE69F0B1F7CF936866656CA6723228AC46C4AEF5B5F793B1E6ABD22"
+        }
+      ],
+      "evidenceLocations": [
+        "artifacts/phase7-compatibility/modrinth-versions.json",
+        "docs/V1.0.6_PHASE6_DEVELOPMENT.md"
+      ],
+      "knownLimitations": [
+        "Published loader/mod availability is not Zepholume support. No real Minecraft launch, patched compilation, rendered world, profile switching, or performance measurement is established by this matrix.",
+        "Modrinth pins Sodium 0.5.12-beta.2, but the staged Iris JAR declares sodium 0.5.x; staged Sodium 0.5.13 declares iris <1.7.6 incompatible, accepting 1.7.6. Required Fabric API modules are nested in the Sodium JAR. No dependency change justified."
+      ]
+    },
+    {
+      "minecraft": "1.20.1",
+      "modLoader": "Forge",
+      "loaderVersion": "47.4.22",
+      "loaderVersionMeaning": "existing staging declaration; not runtime observed",
+      "loaderSource": "https://files.minecraftforge.net/net/minecraftforge/forge/index_1.20.1.html",
+      "shaderLoader": {
+        "version": "1.8.0",
+        "source": "https://www.curseforge.com/minecraft/mc-mods/oculus/files/6020952",
+        "gameVersions": [
+          "1.20.1"
+        ],
+        "loaders": [
+          "forge",
+          "neoforge"
+        ]
+      },
+      "requiredDependencies": [
+        {
+          "version": "0.3.31+mc1.20.1",
+          "name": "Embeddium",
+          "evidence": "runtime/v106-phase2/oculus-1.20.1/mods/embeddium-0.3.31+mc1.20.1.jar!META-INF/mods.toml"
+        }
+      ],
+      "java": {
+        "requiredMajor": 17,
+        "source": "https://piston-meta.mojang.com/v1/packages/38d412af3b247e485c7f7e50ac25febc4e79ab1d/1.20.1.json",
+        "runtimeObserved": false
+      },
+      "runtimeAvailability": "BLOCKED",
+      "runtimeAvailabilityReason": "Isolated directory exists; authenticated operator launch and evidence required.",
+      "staticCompilation": {
+        "status": "STATIC ONLY",
+        "scope": "Phase 6 generic standalone GLSL macro models; no version-specific Iris/Oculus transformed source",
+        "evidence": "docs/V1.0.6_PHASE6_DEVELOPMENT.md#7-fresh-glsl-portability-and-regression-runs"
+      },
+      "syntheticGpu": {
+        "status": "SYNTHETIC ONLY",
+        "scope": "Phase 6 source-derived Intel UHD 730 WGL fixtures; version-unbound",
+        "evidence": "artifacts/phase6-gpu/compare-v105-v106/comparisons.json"
+      },
+      "realMinecraftLoad": "NOT TESTED",
+      "rendering": "NOT TESTED",
+      "profileMenu": "NOT TESTED",
+      "profilePersistence": "NOT TESTED",
+      "minecraftPerformance": "NOT TESTED",
+      "patchedShaderCompilation": "NOT TESTED",
+      "stagedDirectory": "runtime/v106-phase2/oculus-1.20.1",
+      "stagedJarHashes": [
+        {
+          "file": "embeddium-0.3.31+mc1.20.1.jar",
+          "sha256": "EED3D1325F2ACC2FD4E69BB495E5CCB91D962126AC5330F0582EBC2A3DAF47FB"
+        },
+        {
+          "file": "oculus-mc1.20.1-1.8.0.jar",
+          "sha256": "0945DF0CBA0F62B3901DD80C3268E5311B770ECE78C78037A45DB12AC0425FEF"
+        }
+      ],
+      "evidenceLocations": [
+        "artifacts/phase7-compatibility/modrinth-versions.json",
+        "docs/V1.0.6_PHASE6_DEVELOPMENT.md"
+      ],
+      "knownLimitations": [
+        "Published loader/mod availability is not Zepholume support. No real Minecraft launch, patched compilation, rendered world, profile switching, or performance measurement is established by this matrix."
+      ]
+    },
+    {
+      "minecraft": "1.21.11",
+      "modLoader": "Fabric",
+      "loaderVersion": "0.20.1",
+      "loaderVersionMeaning": "published candidate; not installed",
+      "loaderSource": "https://meta.fabricmc.net/v2/versions/loader/1.21.11",
+      "shaderLoader": {
+        "version": "1.10.8+1.21.11-fabric",
+        "versionId": "ka9PDlsN",
+        "source": "https://api.modrinth.com/v2/version/ka9PDlsN",
+        "gameVersions": [
+          "1.21.11"
+        ],
+        "loaders": [
+          "fabric"
+        ],
+        "files": [
+          {
+            "filename": "iris-fabric-1.10.8+mc1.21.11.jar",
+            "url": "https://cdn.modrinth.com/data/YL57xq9U/versions/ka9PDlsN/iris-fabric-1.10.8%2Bmc1.21.11.jar",
+            "hashes": {
+              "sha1": "acfbe6d065b6c35d85c14da04d35e073363f3acf",
+              "sha512": "f0cad4b6af593b6fc25738c4ef5a2b346125f9693d25a0d486858e54798d2ea87b24d1497e1bb4391729d7d9e490f42771f7fb468d4e1420e372d8643f9e2055"
+            }
+          }
+        ],
+        "dependencyIds": [
+          {
+            "version_id": "rkdTcxoT",
+            "project_id": "AANobbMI",
+            "file_name": null,
+            "dependency_type": "required"
+          }
+        ]
+      },
+      "requiredDependencies": [
+        {
+          "version": "mc1.21.11-0.8.14-fabric",
+          "versionId": "rkdTcxoT",
+          "source": "https://api.modrinth.com/v2/version/rkdTcxoT",
+          "gameVersions": [
+            "1.21.11"
+          ],
+          "loaders": [
+            "fabric"
+          ],
+          "files": [
+            {
+              "filename": "sodium-fabric-0.8.14+mc1.21.11.jar",
+              "url": "https://cdn.modrinth.com/data/AANobbMI/versions/rkdTcxoT/sodium-fabric-0.8.14%2Bmc1.21.11.jar",
+              "hashes": {
+                "sha1": "4a8733fe544168068d12fa94b2ab03e6c0c7bf91",
+                "sha512": "04c43f9e8534b87a52c42ffd51b0e344d4ef92dc9cc52da33d13af6a18bf74b05380d2027f1e0db982698d0aff274c42741c1e21b313b0cd75ed3af005fc98d9"
+              }
+            }
+          ],
+          "dependencyIds": []
+        }
+      ],
+      "java": {
+        "requiredMajor": 21,
+        "source": "https://piston-meta.mojang.com/v1/packages/240f9560a4a6bc07faf42a7032a96b225f76e658/1.21.11.json",
+        "runtimeObserved": false
+      },
+      "runtimeAvailability": "NOT TESTED",
+      "runtimeAvailabilityReason": "No isolated modern lane has been staged or launched.",
+      "staticCompilation": {
+        "status": "STATIC ONLY",
+        "scope": "Phase 6 generic standalone GLSL macro models; no version-specific Iris/Oculus transformed source",
+        "evidence": "docs/V1.0.6_PHASE6_DEVELOPMENT.md#7-fresh-glsl-portability-and-regression-runs"
+      },
+      "syntheticGpu": {
+        "status": "SYNTHETIC ONLY",
+        "scope": "Phase 6 source-derived Intel UHD 730 WGL fixtures; version-unbound",
+        "evidence": "artifacts/phase6-gpu/compare-v105-v106/comparisons.json"
+      },
+      "realMinecraftLoad": "NOT TESTED",
+      "rendering": "NOT TESTED",
+      "profileMenu": "NOT TESTED",
+      "profilePersistence": "NOT TESTED",
+      "minecraftPerformance": "NOT TESTED",
+      "patchedShaderCompilation": "NOT TESTED",
+      "stagedDirectory": null,
+      "stagedJarHashes": [],
+      "evidenceLocations": [
+        "artifacts/phase7-compatibility/modrinth-versions.json",
+        "docs/V1.0.6_PHASE6_DEVELOPMENT.md"
+      ],
+      "knownLimitations": [
+        "Published loader/mod availability is not Zepholume support. No real Minecraft launch, patched compilation, rendered world, profile switching, or performance measurement is established by this matrix.",
+        "Loader version is a published research candidate, not an installed or tested instance. Verify embedded Iris/Sodium loader constraints before staging. Modern NeoForge JAR metadata retrieval did not complete; no metadata acceptance is asserted."
+      ]
+    },
+    {
+      "minecraft": "1.21.11",
+      "modLoader": "NeoForge",
+      "loaderVersion": "21.11.48",
+      "loaderVersionMeaning": "published candidate; not installed",
+      "loaderSource": "https://maven.neoforged.net/releases/net/neoforged/neoforge/maven-metadata.xml",
+      "shaderLoader": {
+        "version": "1.10.8+1.21.11-neoforge",
+        "versionId": "6zJsI0eO",
+        "source": "https://api.modrinth.com/v2/version/6zJsI0eO",
+        "gameVersions": [
+          "1.21.11"
+        ],
+        "loaders": [
+          "neoforge"
+        ],
+        "files": [
+          {
+            "filename": "iris-neoforge-1.10.8+mc1.21.11.jar",
+            "url": "https://cdn.modrinth.com/data/YL57xq9U/versions/6zJsI0eO/iris-neoforge-1.10.8%2Bmc1.21.11.jar",
+            "hashes": {
+              "sha1": "c9a291081c4fba35397e1b30d9b77fc2bffc198c",
+              "sha512": "980500d0d35f61efd9c061f7503924c4ddc9667d9ae97eb8f14b250341fd9e58b54a3a4999d8cbaa79cb5929b926e8c515731f809ad7c618f497c1a72ee95309"
+            }
+          }
+        ],
+        "dependencyIds": [
+          {
+            "version_id": "sC6wj32u",
+            "project_id": "AANobbMI",
+            "file_name": null,
+            "dependency_type": "required"
+          }
+        ]
+      },
+      "requiredDependencies": [
+        {
+          "version": "mc1.21.11-0.8.14-neoforge",
+          "versionId": "sC6wj32u",
+          "source": "https://api.modrinth.com/v2/version/sC6wj32u",
+          "gameVersions": [
+            "1.21.11"
+          ],
+          "loaders": [
+            "neoforge"
+          ],
+          "files": [
+            {
+              "filename": "sodium-neoforge-0.8.14+mc1.21.11.jar",
+              "url": "https://cdn.modrinth.com/data/AANobbMI/versions/sC6wj32u/sodium-neoforge-0.8.14%2Bmc1.21.11.jar",
+              "hashes": {
+                "sha1": "de0cd8d51567dc64ccce584ab43e59db6116679e",
+                "sha512": "1699874a8df3da8475fb372306a948690bb76e95221a617c73f6e81d7b70b6fb43ed7b9e8fefc75c5a1607eba33acca56eed374f8a8b753a8397670b43598e35"
+              }
+            }
+          ],
+          "dependencyIds": []
+        }
+      ],
+      "java": {
+        "requiredMajor": 21,
+        "source": "https://piston-meta.mojang.com/v1/packages/240f9560a4a6bc07faf42a7032a96b225f76e658/1.21.11.json",
+        "runtimeObserved": false
+      },
+      "runtimeAvailability": "NOT TESTED",
+      "runtimeAvailabilityReason": "No isolated modern lane has been staged or launched.",
+      "staticCompilation": {
+        "status": "STATIC ONLY",
+        "scope": "Phase 6 generic standalone GLSL macro models; no version-specific Iris/Oculus transformed source",
+        "evidence": "docs/V1.0.6_PHASE6_DEVELOPMENT.md#7-fresh-glsl-portability-and-regression-runs"
+      },
+      "syntheticGpu": {
+        "status": "SYNTHETIC ONLY",
+        "scope": "Phase 6 source-derived Intel UHD 730 WGL fixtures; version-unbound",
+        "evidence": "artifacts/phase6-gpu/compare-v105-v106/comparisons.json"
+      },
+      "realMinecraftLoad": "NOT TESTED",
+      "rendering": "NOT TESTED",
+      "profileMenu": "NOT TESTED",
+      "profilePersistence": "NOT TESTED",
+      "minecraftPerformance": "NOT TESTED",
+      "patchedShaderCompilation": "NOT TESTED",
+      "stagedDirectory": null,
+      "stagedJarHashes": [],
+      "evidenceLocations": [
+        "artifacts/phase7-compatibility/modrinth-versions.json",
+        "docs/V1.0.6_PHASE6_DEVELOPMENT.md"
+      ],
+      "knownLimitations": [
+        "Published loader/mod availability is not Zepholume support. No real Minecraft launch, patched compilation, rendered world, profile switching, or performance measurement is established by this matrix.",
+        "Loader version is a published research candidate, not an installed or tested instance. Verify embedded Iris/Sodium loader constraints before staging. Modern NeoForge JAR metadata retrieval did not complete; no metadata acceptance is asserted."
+      ]
+    },
+    {
+      "minecraft": "26.3",
+      "modLoader": "Fabric",
+      "loaderVersion": "0.20.1",
+      "loaderVersionMeaning": "published candidate; not installed",
+      "loaderSource": "https://meta.fabricmc.net/v2/versions/loader/26.3",
+      "shaderLoader": {
+        "version": "1.11.7+26.3-fabric",
+        "versionId": "vTN4NRGW",
+        "source": "https://api.modrinth.com/v2/version/vTN4NRGW",
+        "gameVersions": [
+          "26.3"
+        ],
+        "loaders": [
+          "fabric"
+        ],
+        "files": [
+          {
+            "filename": "iris-fabric-1.11.7+mc26.3.jar",
+            "url": "https://cdn.modrinth.com/data/YL57xq9U/versions/vTN4NRGW/iris-fabric-1.11.7%2Bmc26.3.jar",
+            "hashes": {
+              "sha512": "d8d3312f77fc52a48e4a6cd836fda33669bdebcb4de0b8c0d30adc808b287330a533e0baef355cc1ce6336a26851d9775369a802a4666b7b7a6266af20088f42",
+              "sha1": "fa03640ba1e4ef2f7ae3619c6373a06e46d0ba2c"
+            }
+          }
+        ],
+        "dependencyIds": [
+          {
+            "version_id": "bAZQdGpg",
+            "project_id": "AANobbMI",
+            "file_name": null,
+            "dependency_type": "required"
+          }
+        ]
+      },
+      "requiredDependencies": [
+        {
+          "version": "mc26.3-0.9.2-fabric",
+          "versionId": "bAZQdGpg",
+          "source": "https://api.modrinth.com/v2/version/bAZQdGpg",
+          "gameVersions": [
+            "26.3"
+          ],
+          "loaders": [
+            "fabric"
+          ],
+          "files": [
+            {
+              "filename": "sodium-fabric-0.9.2+mc26.3.jar",
+              "url": "https://cdn.modrinth.com/data/AANobbMI/versions/bAZQdGpg/sodium-fabric-0.9.2%2Bmc26.3.jar",
+              "hashes": {
+                "sha1": "9acfe851e36f4fb27d7c5baa224e8bd4e0334283",
+                "sha512": "f3f260f204b8ce5e8777c2c73f537956755ec61f3817b0b78b5e5568e8aa40f14891f146475075109747665c7c88a45ca0ca9a8df3c68d79c58ecdaa8d8c4b93"
+              }
+            }
+          ],
+          "dependencyIds": []
+        }
+      ],
+      "java": {
+        "requiredMajor": 25,
+        "source": "https://piston-meta.mojang.com/v1/packages/61fff1316bd50312624a858bbb5eb18fa45208ed/26.3.json",
+        "runtimeObserved": false
+      },
+      "runtimeAvailability": "NOT TESTED",
+      "runtimeAvailabilityReason": "No isolated modern lane has been staged or launched.",
+      "staticCompilation": {
+        "status": "STATIC ONLY",
+        "scope": "Phase 6 generic standalone GLSL macro models; no version-specific Iris/Oculus transformed source",
+        "evidence": "docs/V1.0.6_PHASE6_DEVELOPMENT.md#7-fresh-glsl-portability-and-regression-runs"
+      },
+      "syntheticGpu": {
+        "status": "SYNTHETIC ONLY",
+        "scope": "Phase 6 source-derived Intel UHD 730 WGL fixtures; version-unbound",
+        "evidence": "artifacts/phase6-gpu/compare-v105-v106/comparisons.json"
+      },
+      "realMinecraftLoad": "NOT TESTED",
+      "rendering": "NOT TESTED",
+      "profileMenu": "NOT TESTED",
+      "profilePersistence": "NOT TESTED",
+      "minecraftPerformance": "NOT TESTED",
+      "patchedShaderCompilation": "NOT TESTED",
+      "stagedDirectory": null,
+      "stagedJarHashes": [],
+      "evidenceLocations": [
+        "artifacts/phase7-compatibility/modrinth-versions.json",
+        "docs/V1.0.6_PHASE6_DEVELOPMENT.md"
+      ],
+      "knownLimitations": [
+        "Published loader/mod availability is not Zepholume support. No real Minecraft launch, patched compilation, rendered world, profile switching, or performance measurement is established by this matrix.",
+        "Loader version is a published research candidate, not an installed or tested instance. Verify embedded Iris/Sodium loader constraints before staging. Modern NeoForge JAR metadata retrieval did not complete; no metadata acceptance is asserted."
+      ]
+    },
+    {
+      "minecraft": "26.3",
+      "modLoader": "NeoForge",
+      "loaderVersion": "26.3.0.99",
+      "loaderVersionMeaning": "published candidate; not installed",
+      "loaderSource": "https://maven.neoforged.net/releases/net/neoforged/neoforge/maven-metadata.xml",
+      "shaderLoader": {
+        "version": "1.11.7+26.3-neoforge",
+        "versionId": "Ag5S66CF",
+        "source": "https://api.modrinth.com/v2/version/Ag5S66CF",
+        "gameVersions": [
+          "26.3"
+        ],
+        "loaders": [
+          "neoforge"
+        ],
+        "files": [
+          {
+            "filename": "iris-neoforge-1.11.7+mc26.3.jar",
+            "url": "https://cdn.modrinth.com/data/YL57xq9U/versions/Ag5S66CF/iris-neoforge-1.11.7%2Bmc26.3.jar",
+            "hashes": {
+              "sha1": "57cbbd1f58b6226c633520541c1a3ae57c019373",
+              "sha512": "302659f09e50d02a6cd96075be93aade2a2f9d709afe21d56465228fb7d7f4717566e3702a7872479df2fff9b7a5ff5b1b6047cc95e09ee6120fad5ea5857eec"
+            }
+          }
+        ],
+        "dependencyIds": [
+          {
+            "version_id": "VHtnT9Q4",
+            "project_id": "AANobbMI",
+            "file_name": null,
+            "dependency_type": "required"
+          }
+        ]
+      },
+      "requiredDependencies": [
+        {
+          "version": "mc26.3-0.9.2-neoforge",
+          "versionId": "VHtnT9Q4",
+          "source": "https://api.modrinth.com/v2/version/VHtnT9Q4",
+          "gameVersions": [
+            "26.3"
+          ],
+          "loaders": [
+            "neoforge"
+          ],
+          "files": [
+            {
+              "filename": "sodium-neoforge-0.9.2+mc26.3.jar",
+              "url": "https://cdn.modrinth.com/data/AANobbMI/versions/VHtnT9Q4/sodium-neoforge-0.9.2%2Bmc26.3.jar",
+              "hashes": {
+                "sha1": "9015607e5ae2c5b9692ebf05113f9caca6ec41bf",
+                "sha512": "f5b62730bbee7d116a83c765b8e7cdb660da97ab7f122f180293eda3e56b5ca4d701b0bf18c36f087e9a7349f8ec113f1f8c0d462a8893c551a2f3e163bd0cb8"
+              }
+            }
+          ],
+          "dependencyIds": []
+        }
+      ],
+      "java": {
+        "requiredMajor": 25,
+        "source": "https://piston-meta.mojang.com/v1/packages/61fff1316bd50312624a858bbb5eb18fa45208ed/26.3.json",
+        "runtimeObserved": false
+      },
+      "runtimeAvailability": "NOT TESTED",
+      "runtimeAvailabilityReason": "No isolated modern lane has been staged or launched.",
+      "staticCompilation": {
+        "status": "STATIC ONLY",
+        "scope": "Phase 6 generic standalone GLSL macro models; no version-specific Iris/Oculus transformed source",
+        "evidence": "docs/V1.0.6_PHASE6_DEVELOPMENT.md#7-fresh-glsl-portability-and-regression-runs"
+      },
+      "syntheticGpu": {
+        "status": "SYNTHETIC ONLY",
+        "scope": "Phase 6 source-derived Intel UHD 730 WGL fixtures; version-unbound",
+        "evidence": "artifacts/phase6-gpu/compare-v105-v106/comparisons.json"
+      },
+      "realMinecraftLoad": "NOT TESTED",
+      "rendering": "NOT TESTED",
+      "profileMenu": "NOT TESTED",
+      "profilePersistence": "NOT TESTED",
+      "minecraftPerformance": "NOT TESTED",
+      "patchedShaderCompilation": "NOT TESTED",
+      "stagedDirectory": null,
+      "stagedJarHashes": [],
+      "evidenceLocations": [
+        "artifacts/phase7-compatibility/modrinth-versions.json",
+        "docs/V1.0.6_PHASE6_DEVELOPMENT.md"
+      ],
+      "knownLimitations": [
+        "Published loader/mod availability is not Zepholume support. No real Minecraft launch, patched compilation, rendered world, profile switching, or performance measurement is established by this matrix.",
+        "Loader version is a published research candidate, not an installed or tested instance. Verify embedded Iris/Sodium loader constraints before staging. Modern NeoForge JAR metadata retrieval did not complete; no metadata acceptance is asserted."
+      ]
+    },
+    {
+      "minecraft": "26.1.2",
+      "modLoader": "Fabric",
+      "loaderVersion": "0.19.3",
+      "loaderVersionMeaning": "Existing operator instance version JSON; runtime observation pending",
+      "loaderSource": "Fabric26.1.2/Fabric26.1.2.json libraries net.fabricmc:fabric-loader:0.19.3",
+      "shaderLoader": {
+        "version": "1.10.9+mc26.1.1",
+        "versionId": "MwcLS51S",
+        "source": "https://modrinth.com/mod/iris/version/MwcLS51S",
+        "gameVersions": [
+          "26.1",
+          "26.1.1",
+          "26.1.2"
+        ],
+        "publisherSha512Match": true,
+        "embeddedSodiumRange": "0.8.x"
+      },
+      "requiredDependencies": [
+        {
+          "name": "Sodium",
+          "version": "0.8.12+mc26.1.2",
+          "versionId": "eRJU33Hp",
+          "source": "https://api.modrinth.com/v2/version/eRJU33Hp",
+          "publisherSha512Match": true,
+          "embeddedBreaksIris": "<=1.10.8",
+          "embeddedBreaksFabricApi": "<0.145.1"
+        },
+        {
+          "name": "Fabric API",
+          "version": "0.149.1+26.1.2",
+          "embeddedJavaRange": ">=25",
+          "embeddedLoaderRange": ">=0.18.4",
+          "embeddedMinecraftRange": "~26.1-"
+        },
+        {
+          "name": "Sodium Extra",
+          "version": "0.8.7+mc26.1.1",
+          "embeddedSodiumRange": ">=0.8.7",
+          "embeddedMinecraftRange": ">=26.1"
+        }
+      ],
+      "java": {
+        "requiredMajor": 25,
+        "source": "Existing version JSON javaVersion and Fabric API embedded metadata",
+        "runtimeObserved": false
+      },
+      "runtimeAvailability": "NOT TESTED",
+      "runtimeAvailabilityReason": "Operator explicitly requested launch in existing offline-account instance; root agent owns UI execution and evidence updates.",
+      "staticCompilation": {
+        "status": "STATIC ONLY",
+        "scope": "Historical Phase 6 generic variants; no version-specific patched-source compilation"
+      },
+      "syntheticGpu": {
+        "status": "SYNTHETIC ONLY",
+        "scope": "Historical Phase 6 Intel source-derived fixtures; not this loader"
+      },
+      "realMinecraftLoad": "NOT TESTED",
+      "rendering": "NOT TESTED",
+      "profileMenu": "NOT TESTED",
+      "profilePersistence": "NOT TESTED",
+      "minecraftPerformance": "NOT TESTED",
+      "patchedShaderCompilation": "NOT TESTED",
+      "stagedDirectory": "C:\\Users\\acebi\\AppData\\Roaming\\.minecraft\\versions\\Fabric26.1.2",
+      "stagedJarHashes": [
+        {
+          "file": "fabric-api-0.149.1%2B26.1.2.jar",
+          "sha256": "0600D64398609E11D3566DD1335F03ED1B6905B484C8F6DD5A4B2E7319FD18E0"
+        },
+        {
+          "file": "iris-fabric-1.10.9%2Bmc26.1.1.jar",
+          "sha256": "AEA0EEFB174D19AD97A812B6DE2E304F0D3ABC50357B316908CF1035F1514B07"
+        },
+        {
+          "file": "sodium-extra-fabric-0.8.7%2Bmc26.1.1.jar",
+          "sha256": "BA7787879E9154A1D8AA2B9C1E64B718816BD133F80C11242F424D566815211C"
+        },
+        {
+          "file": "sodium-fabric-0.8.12%2Bmc26.1.2.jar",
+          "sha256": "E084C5C3C520DC0718DBAEF1DEAFEF0BA2C7C0D77C701AC34C07646F6CCB81DF"
+        }
+      ],
+      "evidenceLocations": [
+        "artifacts/phase7-compatibility/fabric2612-installed-hashes.json",
+        "artifacts/phase7-compatibility/iris2612-release.json",
+        "artifacts/phase7-compatibility/sodium2612-release.json"
+      ],
+      "knownLimitations": [
+        "Existing user instance contains additional mods and a skin/cape mod; this is not an isolated minimal qualification environment.",
+        "Iris publisher metadata points at Sodium0.8.9; actual JAR accepts0.8.x and installed0.8.12 metadata permits Iris1.10.9. Matching declared ranges does not prove loader startup or rendering.",
+        "FpsReducer2 and Sodium Extra may influence capture conditions; inspect effective settings before any performance series.",
+        "Offline-account launch cannot establish legitimate authenticated qualification. No authentication material inspected or manipulated.",
+        "New Phase7 candidate identity and actual UI/runtime outcomes must be updated by root after packaging and launch."
+      ]
+    }
+  ],
+  "graphics": [
+    {
+      "vendor": "Intel",
+      "device": "UHD Graphics 730",
+      "scope": "Phase 6 standalone OpenGL source-derived fixtures",
+      "status": "SYNTHETIC ONLY",
+      "minecraft": "NOT TESTED"
+    },
+    {
+      "vendor": "NVIDIA",
+      "device": null,
+      "scope": "GLSL 330 specification review only; no physical driver execution",
+      "status": "NOT TESTED",
+      "minecraft": "NOT TESTED"
+    },
+    {
+      "vendor": "AMD",
+      "device": null,
+      "scope": "GLSL 330 specification review only; no physical driver execution",
+      "status": "NOT TESTED",
+      "minecraft": "NOT TESTED"
+    }
+  ],
+  "unlistedVersions": {
+    "rangeObjective": "1.20 through 26.3",
+    "status": "NOT TESTED",
+    "note": "No claim that intermediate releases or unavailable loader combinations are supported."
+  },
+  "compatibilityRisks": [
+    "Iris shader transformation/preprocessor versions differ; standalone compilation cannot substitute for patched source.",
+    "Legacy gbuffers/worldN routes and mc_Entity material classification require actual loader tests, especially translucent terrain/water and custom dimensions.",
+    "Mojang core shader, texture-filtering and rendering changes do not by themselves establish shaderpack API incompatibility. Record effective game settings.",
+    "No Vulkan or other graphics backend is qualified; preserve the current GLSL 330 compatibility architecture."
+  ]
+}

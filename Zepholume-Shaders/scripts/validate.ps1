@@ -166,13 +166,16 @@ $cloudVertexLibrary = Get-Content -LiteralPath (Join-Path $shaderRoot 'lib/cloud
 foreach ($entry in @(@{Name='generic';Source=$vertexLibrary},@{Name='sky';Source=$skyVertexLibrary},@{Name='cloud';Source=$cloudVertexLibrary})) {
     if ($entry.Source -notmatch 'gl_TextureMatrix\s*\[\s*0\s*\]\s*\*\s*gl_MultiTexCoord0') { $errors.Add("$($entry.Name) texture coordinates must apply gl_TextureMatrix[0].") }
 }
+if ($vertexLibrary -notmatch '(?m)^\s*flat\s+varying\s+float\s+zephIsWater\s*;' -or $fragmentSource -notmatch '(?m)^\s*flat\s+varying\s+float\s+zephIsWater\s*;') {
+    $errors.Add('Water material classification must use flat interpolation in both shader stages.')
+}
 $blockProperties = Get-Content -LiteralPath (Join-Path $shaderRoot 'block.properties') -Raw
 if ($blockProperties -notmatch '(?m)^block\.10001\s*=\s*minecraft:water\s*$') { $errors.Add('block.properties must map pack-local material 10001 only to minecraft:water.') }
 if ($vertexLibrary -notmatch 'mc_Entity\.x\s*-\s*10001\.0' -or $vertexLibrary -notmatch 'if\s*\(\s*zephIsWater\s*>\s*0\.5\s*\)') { $errors.Add('Water vertex displacement must be gated by the classified water material.') }
 $fogLibrary = Get-Content -LiteralPath (Join-Path $shaderRoot 'lib/fog.glsl') -Raw
 if ($fogLibrary -notmatch 'isEyeInWater\s*>=\s*2' -or $fogLibrary -notmatch 'isEyeInWater\s*>=\s*1') { $errors.Add('Immersed media must preserve the loader fog colour and distance route.') }
 $skyFragmentLibrary = Get-Content -LiteralPath (Join-Path $shaderRoot 'lib/sky_fragment.glsl') -Raw
-if ($skyFragmentLibrary -notmatch 'skyDir\s*=\s*zephSafeNormalize\s*\(\s*zephSkyDirection\s*\)') { $errors.Add('Interpolated sky direction must be normalized in the fragment stage.') }
+if ($skyFragmentLibrary -notmatch 'skyDir\s*=\s*zephSafeNormalize\s*\(\s*zephSkyViewPosition\s*\)') { $errors.Add('Interpolated sky direction must be normalized in the fragment stage.') }
 
 $resolved = @{}
 foreach ($shader in $programs) {
@@ -226,12 +229,13 @@ foreach ($staleVersion in @('0.1.0-dev','0.2.0-dev')) {
         $errors.Add("Stale development version remains in release-facing metadata: $staleVersion")
     }
 }
-if ($properties -notmatch 'Zepholume 1\.0\.6 final release') { $errors.Add('Shader properties must identify the V1.0.6 final release.') }
+if ($properties -notmatch '\A# Zepholume 1\.0\.7 final release\.') { $errors.Add('Shader properties must identify V1.0.7 final release.') }
+if ($changelog -notmatch '(?m)^## 1\.0\.7 .+released') { $errors.Add('Changelog must contain the V1.0.7 released heading.') }
 if ($changelog -notmatch '(?m)^## 1\.0\.6 .+released') { $errors.Add('Changelog must contain the V1.0.6 released heading.') }
 if ($changelog -notmatch '(?m)^## 1\.0\.4 .+released') { $errors.Add('Changelog must contain the V1.0.4 released heading.') }
 if ($changelog -notmatch '(?m)^## 1\.0\.5-dev .+unreleased') { $errors.Add('Changelog must contain the V1.0.5 development heading.') }
 if ($changelog -notmatch '(?m)^## 1\.0\.6-dev-phase3 .+unreleased') { $errors.Add('Changelog must contain the V1.0.6 Phase 3 development heading.') }
-if ($readme -notmatch '(?i)V1\.0\.6 final release') { $errors.Add('README must identify the V1.0.6 final release.') }
+if ($readme -notmatch '(?i)V1\.0\.7 final release') { $errors.Add('README must identify V1.0.7 final release.') }
 $definitions = @{}
 foreach ($m in [regex]::Matches($settings, '(?m)^#define\s+(ZEPH_[A-Z_]+)\s+(\d+)\s*//\s*\[([^\]]+)\]')) { $definitions[$m.Groups[1].Value] = @($m.Groups[3].Value -split '\s+' | ForEach-Object {[int]$_}) }
 $options = @([regex]::Matches($properties, 'ZEPH_[A-Z_]+') | ForEach-Object Value | Sort-Object -Unique)

@@ -2,8 +2,7 @@
 param()
 $ErrorActionPreference = 'Stop'
 $validator = Join-Path (Split-Path -Parent $PSScriptRoot) 'validate-glsl.ps1'
-$pwsh = 'C:\Program Files\PowerShell\7\pwsh.exe'
-if (-not $IsWindows) { $pwsh = (Get-Command pwsh -ErrorAction Stop).Source }
+$pwsh = (Get-Process -Id $PID).Path
 $work = Join-Path ([IO.Path]::GetTempPath()) ('zepholume-glsl-warning-tests-' + [guid]::NewGuid().ToString('N'))
 try {
     $scripts = Join-Path $work 'scripts'

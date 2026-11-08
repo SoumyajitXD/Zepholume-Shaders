@@ -4,14 +4,13 @@
 #include "/lib/common.glsl"
 varying vec2 zephSkyTexCoord;
 varying vec4 zephSkyVertexColour;
-varying float zephSkyUp;
-varying vec3 zephSkyDirection;
+varying vec3 zephSkyViewPosition;
 
 void main() {
     vec4 viewPosition = gl_ModelViewMatrix * gl_Vertex;
-    float safeLength = max(length(viewPosition.xyz), 0.0001);
-    zephSkyUp = clamp(0.5 + 0.5 * zephWorldElevation(viewPosition.xyz), 0.0, 1.0);
-    zephSkyDirection = viewPosition.xyz / safeLength;
+    // Perspective-correct interpolation reconstructs the view-space position
+    // on the primitive; normalization is nonlinear and belongs per fragment.
+    zephSkyViewPosition = viewPosition.xyz;
     zephSkyTexCoord = (gl_TextureMatrix[0] * gl_MultiTexCoord0).xy;
     zephSkyVertexColour = gl_Color;
     gl_Position = gl_ProjectionMatrix * viewPosition;

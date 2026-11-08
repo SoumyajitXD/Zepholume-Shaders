@@ -1,5 +1,27 @@
 # Changelog
 
+## 1.0.7 — released 2026-11-07
+
+- Blended Overworld sky into horizon fog at the sky-disc boundary, eliminating the hard horizontal sunset horizon line.
+- Corrected directional fog view-ray orientation and preserved dark/black fog in the Potato profile without ambient wash.
+- Gated water celestial highlights by local skylight exposure, preventing sun and moon specular reflections on enclosed cave water.
+- Corrected water surface material classification with flat interpolation across vertex and fragment stages, eliminating waterfall diagonal interpolation artifacts.
+- Reshaped cloud coverage using layered texture-anchored block fields with weather-adaptive openings, facet lighting, and sun-facing twilight warmth.
+- Preserved per-surface lightmap irradiance for held items and hand geometry across all dimension wrappers.
+- Maintained five selectable quality profiles: Potato, Low, Balanced (default), High, and Ultra.
+- Verified standalone GLSL 330 compatibility across 320 unique shader stages and 420 program links with zero errors or warnings under glslangValidator.
+
+## 1.0.7-dev-phase4 — unreleased, 2026-10-30
+
+- Phase 4 adds offline validation and regression coverage; shader source is unchanged from Phase 3. Minecraft runtime, visuals and performance remain unqualified.
+
+## 1.0.7-dev-phase1 — unreleased, 2026-10-29
+
+- Preserve full open-air and cloud fog at the loader's endpoint while retaining weather and horizon shaping inside the range.
+- Derive cloud distance after position interpolation to remove reproduced triangle-diagonal fog differences.
+- Bound celestial water highlights by local light incidence and front-facing view; retain the existing reflection-occlusion limitation.
+- Strengthen isolated tooling regressions and deterministic development packaging. See the Phase 1 development report for actual checks; Minecraft visuals and performance remain unqualified.
+
 ## 1.0.6 — released 2026-10-28
 
 - Restored hand-program lightmap multiplication in all dimension wrappers; retained existing hand grading and alpha, including the documented translucent-hand fallback.

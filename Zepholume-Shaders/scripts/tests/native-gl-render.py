@@ -41,7 +41,12 @@ def main():
     parser.add_argument("--rain", type=float, default=0.0)
     parser.add_argument("--night-vision", type=float, default=0.0)
     parser.add_argument("--water", action="store_true")
+    parser.add_argument("--material-id", type=float, help="Synthetic mc_Entity ID (overrides --water)")
+    parser.add_argument("--block-coord", type=float, default=0.5, help="Synthetic transformed block lightmap coordinate")
+    parser.add_argument("--sky-coord", type=float, default=0.5, help="Synthetic transformed sky lightmap coordinate")
     parser.add_argument("--sun-y", type=float, default=1.0)
+    parser.add_argument("--sun-x", type=float, default=0.0, help="Horizontal sun component for twilight fixtures")
+    parser.add_argument("--sun-z", type=float, default=0.0, help="View-space depth component for synthetic highlight alignment")
     parser.add_argument("--camera-pitch", type=float, default=0.0, help="Synthetic camera basis rotation, degrees")
     parser.add_argument("--camera-yaw", type=float, default=0.0, help="Synthetic camera basis rotation, degrees")
     parser.add_argument("--quad-extent", type=float, default=1.0, help="View-space X/Y half-extent")
@@ -226,8 +231,8 @@ def main():
             else:
                 uniform_1f(location, values)
         uniforms = {"texture": 0, "lightmap": 1, "fogColor": tuple(args.fog_color), "fogStart": args.fog_start,
-                    "fogEnd": args.fog_end, "skyColor": (0.4, 0.5, 0.7), "sunPosition": rotate((0.0, args.sun_y, 0.0)),
-                    "moonPosition": rotate((0.0, -args.sun_y, 0.0)), "rainStrength": args.rain, "nightVision": args.night_vision,
+                    "fogEnd": args.fog_end, "skyColor": (0.4, 0.5, 0.7), "sunPosition": rotate((args.sun_x, args.sun_y, args.sun_z)),
+                    "moonPosition": rotate((-args.sun_x, -args.sun_y, -args.sun_z)), "rainStrength": args.rain, "nightVision": args.night_vision,
                     "isEyeInWater": args.eye_medium if args.eye_medium is not None else int(args.underwater), "frameTimeCounter": 0.0}
         for name, values in uniforms.items():
             set_uniform(name, values)
@@ -235,7 +240,7 @@ def main():
         color(1, 1, 1, 1)
         material_attribute = attrib_location(program, b"mc_Entity")
         if material_attribute >= 0:
-            vertex_attrib_1f(material_attribute, 10001.0 if args.water else 0.0)
+            vertex_attrib_1f(material_attribute, args.material_id if args.material_id is not None else (10001.0 if args.water else 0.0))
         def draw():
             corners = ((-1, -1, 0, 0), (1, -1, 1, 0), (1, 1, 1, 1), (-1, 1, 0, 1))
             indices = {"quads": (0, 1, 2, 3), "forward": (0, 1, 2, 0, 2, 3),
@@ -244,7 +249,7 @@ def main():
             for index in indices:
                 x, y, s, t = corners[index]
                 multi_tex(0x84C0, s, t)
-                multi_tex(0x84C1, 0.5, 0.5)
+                multi_tex(0x84C1, args.block_coord, args.sky_coord)
                 vertex(x * args.quad_extent + args.quad_offset_x,
                        y * args.quad_extent + args.quad_offset_y, -args.depth)
             end()
@@ -298,7 +303,7 @@ def main():
         result = {"status": "NATIVE GPU RENDER VERIFIED", "synthetic": True, "driver": driver,
                   "variant": {stage: {"source": selected[stage]["OriginalSource"], "hash": selected[stage]["ContentHash"]} for stage in selected},
                   "profile": args.profile, "dimension": args.dimension, "program": args.program,
-                  "fixture": {"albedo": args.albedo, "light": args.light, "alpha": args.alpha, "water_material": args.water, "uniforms": uniforms,
+                  "fixture": {"albedo": args.albedo, "light": args.light, "alpha": args.alpha, "water_material": args.water, "material_id": args.material_id, "block_coord": args.block_coord, "sky_coord": args.sky_coord, "uniforms": uniforms,
                               "gbufferModelView": camera_matrix,
                               "geometry": {"full_screen_quad_extent": args.quad_extent, "view_depth": args.depth,
                                            "offset": [args.quad_offset_x, args.quad_offset_y],

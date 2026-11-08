@@ -30,6 +30,7 @@ function WaterDecodeFloat32([double]$display) { $v = [single][Math]::Max(0.0, $d
 function WaterEncodeFloat32([double]$linear) { return [double][single][Math]::Sqrt([single][Math]::Max(0.0, $linear)) }
 
 $lighting = Get-Content -LiteralPath (Join-Path $projectRoot 'shaders/lib/lighting.glsl') -Raw
+$common = Get-Content -LiteralPath (Join-Path $projectRoot 'shaders/lib/common.glsl') -Raw
 $water = Get-Content -LiteralPath (Join-Path $projectRoot 'shaders/lib/water.glsl') -Raw
 $fog = Get-Content -LiteralPath (Join-Path $projectRoot 'shaders/lib/fog.glsl') -Raw
 $atmosphere = Get-Content -LiteralPath (Join-Path $projectRoot 'shaders/lib/atmosphere.glsl') -Raw
@@ -46,9 +47,14 @@ function Read-ShaderFloatConstant([string]$Name) {
     return [double]::Parse($match.Groups[1].Value, [Globalization.CultureInfo]::InvariantCulture)
 }
 
+# Bind the reference to the literal in the shared production helper, including
+# its input offset, bounded transfer, and cubic curve rather than a copied value.
+$skyExposure = [regex]::Match($common, '(?s)float\s+zephSkyExposure\s*\(float\s+skyLight\)\s*\{\s*float\s+t\s*=\s*zephSaturate\s*\(\s*\(skyLight\s*-\s*0\.04\)\s*\*\s*([0-9]+(?:\.[0-9]+)?)\s*\)\s*;\s*return\s+t\s*\*\s*t\s*\*\s*\(3\.0\s*-\s*2\.0\s*\*\s*t\)\s*;\s*\}')
+if (-not $skyExposure.Success -or $lighting -notmatch 'zephSkyExposure\s*\(\s*lightCoord\.y\s*\)') { throw 'Lighting transfer regression: shared skylight exposure helper or call missing' }
+$skyInverse = [double]::Parse($skyExposure.Groups[1].Value, [Globalization.CultureInfo]::InvariantCulture)
 $maxErrors = [ordered]@{}
 $transfers = @(
-    [ordered]@{ Name = 'skylight gate'; Edge0 = 0.04; Edge1 = 0.65; Inv = (Read-ShaderFloatConstant 'ZEPH_SKYLIGHT_INV_RANGE'); Values = @(-0.01, 0.039, 0.04, 0.10, 0.345, 0.62, 0.65, 0.651, 1.0) },
+    [ordered]@{ Name = 'skylight gate'; Edge0 = 0.04; Edge1 = 0.65; Inv = $skyInverse; Values = @(-0.01, 0.039, 0.04, 0.10, 0.345, 0.62, 0.65, 0.651, 1.0) },
     [ordered]@{ Name = 'block-light warmth'; Edge0 = 0.10; Edge1 = 0.90; Inv = (Read-ShaderFloatConstant 'ZEPH_BLOCK_LIGHT_INV_RANGE'); Values = @(-0.01, 0.099, 0.10, 0.20, 0.50, 0.80, 0.90, 0.901, 1.0) }
 )
 foreach ($transfer in $transfers) {
@@ -82,14 +88,15 @@ foreach ($elevation in @(-0.40, -0.34, -0.10, 0.06, 0.20, 0.34, 0.40)) {
     Assert-Near "twilight range at $elevation" (Clamp01 $twilight) $twilight 0.000000000001 | Out-Null
 }
 
-# Atmosphere uses the same Hermite factor for enabled profiles, then clamps
-# after bounded horizon and rain multipliers.
+# Atmosphere shapes its interior density but preserves both loader endpoints.
 foreach ($distance in @(0.0, 15.0, 16.0, 32.0, 64.0, 65.0, 128.0)) {
     $linear = Clamp01 (($distance - 16.0) / (64.0 - 16.0))
     $curved = $linear * $linear * (3.0 - 2.0 * $linear)
     foreach ($viewY in @(-1.0, 0.0, 1.0)) { foreach ($rain in @(0.0, 0.5, 1.0)) {
-        $factor = Clamp01 ($curved * (1.0 - [Math]::Abs($viewY) * 0.18) * (0.84 + $rain * 0.28))
+        $density = (1.0 - [Math]::Abs($viewY) * 0.18) * (0.84 + $rain * 0.28)
+        $factor = Clamp01 ($curved * ($density + (1.0 - $density) * $curved))
         Assert-Near "fog range at distance $distance" (Clamp01 $factor) $factor 0.000000000001 | Out-Null
+        if ($distance -ge 64.0) { Assert-Near 'open-air endpoint' $factor 1.0 0.000000000001 | Out-Null }
     }}
 }
 # Every immersed medium must reach the loader's fog endpoint. Water may reach
@@ -181,21 +188,21 @@ foreach ($surface in @(0.0, 0.0001, 0.035, 0.125, 0.50005, 0.875, 1.0, 1.5)) {
     $waterRoundTripError = [Math]::Max($waterRoundTripError, (Assert-Near "water float32 old/new path at $surface" $oldPath $surface 0.0000002))
 }
 
-foreach ($required in @('ZEPH_SKYLIGHT_INV_RANGE', 'tSky * tSky * (3.0 - 2.0 * tSky)', 'ZEPH_BLOCK_LIGHT_INV_RANGE', 'tWarmth * tWarmth * (3.0 - 2.0 * tWarmth)')) {
+foreach ($required in @('ZEPH_BLOCK_LIGHT_INV_RANGE', 'tWarmth * tWarmth * (3.0 - 2.0 * tWarmth)')) {
     if ($lighting -notmatch [regex]::Escape($required)) { throw "Lighting transfer regression: missing $required" }
 }
 if ($water -notmatch 'vec3\s+zephWaterSurfaceLinear\s*\(' -or $water -match 'zephWaterEncode\s*\(') {
     throw 'Water working-space regression: the active surface must return linear colour without an encode step.'
 }
-if ($water -notmatch 'float\s+sunWeight\s*=\s*daylight\s*\*\s*sunHorizonFade\s*;' -or $water -notmatch 'float\s+moonWeight\s*=\s*\(\s*1\.0\s*-\s*daylight\s*\)\s*\*\s*moonHorizonFade\s*;') { throw 'Water regression: celestial lobe weights must remain explicit uniform-only products.' }
-if ($water -notmatch 'if\s*\(\s*sunWeight\s*>\s*0\.0\s*\)' -or $water -notmatch 'if\s*\(\s*daylight\s*<\s*1\.0\s*\)' -or $water -notmatch 'if\s*\(\s*moonWeight\s*>\s*0\.0\s*\)') { throw 'Water regression: exact-zero celestial lobe gates are missing.' }
+if ($water -notmatch 'float\s+sunWeight\s*=\s*zephSolarIllumination\s*\(\s*sunElevation\s*,\s*storm\s*\)' -or $water -notmatch 'float\s+moonWeight\s*=\s*zephLunarIllumination\s*\(\s*sunElevation\s*,\s*zephWorldElevation\s*\(\s*moonDir\s*\)\s*,\s*storm\s*\)') { throw 'Water regression: celestial weights must use shared illumination.' }
+if ($water -notmatch 'if\s*\(\s*sunWeight\s*>\s*0\.0\s*&&\s*skyExposure\s*>\s*0\.0\s*\)' -or $water -notmatch 'if\s*\(\s*daylight\s*<\s*1\.0\s*&&\s*skyExposure\s*>\s*0\.0\s*\)' -or $water -notmatch 'if\s*\(\s*moonWeight\s*>\s*0\.0\s*\)') { throw 'Water regression: exact-zero celestial lobe gates are missing.' }
 if ($fog -match 'ZEPH_EFFECTIVE_ATMOSPHERE_QUALITY\s*>=\s*2' -or $materials -match 'ZEPH_EFFECTIVE_MATERIAL_QUALITY\s*>=\s*3') { throw 'An unreachable profile threshold returned; either expose and test it or remove it.' }
 if ($fog -notmatch 'isEyeInWater\s*>=\s*2') { throw 'Fog regression: lava and powdered snow must retain loader fog colour.' }
 if ($blockProperties -notmatch '(?m)^block\.10001\s*=\s*minecraft:water\s*$') { throw 'Water routing regression: pack-local ID 10001 must map only to minecraft:water.' }
 if ($vertex -notmatch 'mc_Entity\.x\s*-\s*10001\.0' -or $vertex -notmatch 'if\s*\(\s*zephIsWater\s*>\s*0\.5\s*\)') { throw 'Water routing regression: only classified water may be displaced.' }
 if ($fragment -notmatch 'zephIsWater\s*>\s*0\.5\s*\?\s*zephWaterSurfaceLinear') { throw 'Water routing regression: non-water translucent terrain must bypass water shading.' }
 if ($vertex -notmatch 'gl_TextureMatrix\s*\[\s*0\s*\]\s*\*\s*gl_MultiTexCoord0') { throw 'Texture-coordinate regression: generic textured programs must apply texture matrix 0.' }
-if ($skyFragment -notmatch 'skyDir\s*=\s*zephSafeNormalize\s*\(\s*zephSkyDirection\s*\)') { throw 'Sky regression: interpolated sky directions must be normalized before angular calculations.' }
+if ($skyFragment -notmatch 'skyDir\s*=\s*zephSafeNormalize\s*\(\s*zephSkyViewPosition\s*\)') { throw 'Sky regression: interpolated sky directions must be normalized before angular calculations.' }
 
 # P0 lighting invariant.  The production fragment source must consume the
 # loader-provided per-surface lightmap before decoding/scene grading.  The

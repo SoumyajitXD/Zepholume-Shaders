@@ -1,6 +1,8 @@
-"""Source-locked, independent numerical checks for the Phase 6 fog audit.
+"""Source-locked numerical fog checks with retained Phase 6 comparison data.
 
-This is a CPU reference for synthetic fixtures, not Minecraft evidence.
+The CPU air reference follows V1.0.7's endpoint-preserving curve. The 25
+historical GPU records below still validate only their original immersed
+fixtures; they are not new V1.0.7 draws or Minecraft evidence.
 """
 
 import argparse
@@ -29,7 +31,8 @@ def factor(distance, start, end, medium, profile, view_y=0.0, rain=0.0):
     if profile == "Potato":
         return linear
     curved = linear * linear * (3.0 - 2.0 * linear)
-    return sat(curved * (1.0 - abs(view_y) * 0.18) * (0.84 + rain * 0.28))
+    density = (1.0 - abs(view_y) * 0.18) * (0.84 + rain * 0.28)
+    return sat(curved * (density + (1.0 - density) * curved))
 
 
 def water_colour(base, profile, night_vision=0.0):
@@ -54,6 +57,7 @@ def check_source():
                 (fog, "factor *= 1.06;"), (fog, "return zephSaturate(factor);"),
                 (air, "float range = fogEnd - fogStart;"),
                 (air, "if (range <= 0.0) return distance >= fogStart ? 1.0 : 0.0;"),
+                (air, "curved * (density + (1.0 - density) * curved)"),
                 (fragment, "gl_FragData[0] = vec4(graded, clamp(source.a, 0.0, 1.0));"))
     for source, token in required:
         if token not in source:
@@ -84,7 +88,7 @@ def main():
                 assert all(math.isfinite(v) and 0 <= v <= 1 for v in values)
                 if end > start:
                     assert all(a <= b + 1e-12 for a, b in zip(values, values[1:]))
-                if end > start and medium:
+                if end > start:
                     close(factor(start, start, end, medium, profile), 0)
                     close(factor(end, start, end, medium, profile), 1)
                 if end <= start:

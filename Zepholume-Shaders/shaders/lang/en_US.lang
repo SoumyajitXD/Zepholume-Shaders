@@ -96,9 +96,14 @@ value.ZEPH_WEATHER_QUALITY.0=Off
 value.ZEPH_WEATHER_QUALITY.1=Low
 value.ZEPH_WEATHER_QUALITY.2=High
 value.ZEPH_WEATHER_QUALITY.3=Ultra
-option.ZEPH_WEATHER_QUALITY.comment=Controls bounded rain and thunder colour response.
+option.ZEPH_WEATHER_QUALITY.comment=Controls the strength of rain colour response; profile limits apply.
 
 option.ZEPH_WATER_WAVES=Water movement
 value.ZEPH_WATER_WAVES.0=Off
 value.ZEPH_WATER_WAVES.1=On
-option.ZEPH_WATER_WAVES.comment=Enables subtle animated water-surface movement; vegetation remains intentionally static for modded-content safety.
+option.ZEPH_WATER_WAVES.comment=Enables subtle water movement at Balanced water tier or higher; profile limits apply.
+
+option.ZEPH_UNDERWATER_QUALITY=Underwater atmosphere
+value.ZEPH_UNDERWATER_QUALITY.0=Off
+value.ZEPH_UNDERWATER_QUALITY.1=On
+option.ZEPH_UNDERWATER_QUALITY.comment=Enables a bounded underwater absorption and fog approximation.

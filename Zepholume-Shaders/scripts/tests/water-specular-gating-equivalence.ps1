@@ -1,54 +1,47 @@
 [CmdletBinding()]
 param()
-
 $ErrorActionPreference = 'Stop'
-$projectRoot = Split-Path -Parent (Split-Path -Parent $PSScriptRoot)
-$water = Get-Content -LiteralPath (Join-Path $projectRoot 'shaders/lib/water.glsl') -Raw
+$root = Split-Path -Parent (Split-Path -Parent $PSScriptRoot)
+$water = Get-Content -LiteralPath (Join-Path $root 'shaders/lib/water.glsl') -Raw
+$common = Get-Content -LiteralPath (Join-Path $root 'shaders/lib/common.glsl') -Raw
 
-# The branch predicates must be constructed from the exact clamped uniform
-# values used by the original product. The guarded bodies retain the former
-# weight values, so a skipped finite lobe is exactly its former zero.
-foreach ($required in @(
-    'float sunWeight = daylight * sunHorizonFade;',
-    'if (sunWeight > 0.0)',
-    'float sunSpecFactor = zephSpecularLobe(sunNdotH) * sunWeight;',
-    'if (daylight < 1.0)',
-    'float moonWeight = (1.0 - daylight) * moonHorizonFade;',
-    'if (moonWeight > 0.0)',
-    'float moonSpecFactor = zephSpecularLobe(moonNdotH) * moonWeight;'
-)) {
-    if ($water -notmatch [regex]::Escape($required)) { throw "Water gating source lock failed: missing $required" }
-}
+# These locks bind the numeric properties below to the actual helper and its
+# call sites. They are not evidence that the GPU executed the GLSL; native
+# source-execution tests separately cover output and enclosed skylight.
+foreach ($pair in @(
+    @($water, 'float sunWeight = zephSolarIllumination(sunElevation, storm);'),
+    @($water, 'float moonWeight = zephLunarIllumination(sunElevation, zephWorldElevation(moonDir), storm);'),
+    @($water, 'if (sunWeight > 0.0 && skyExposure > 0.0)'),
+    @($water, 'if (daylight < 1.0 && skyExposure > 0.0)'),
+    @($water, 'if (moonWeight > 0.0)'),
+    @($water, 'celestialSpecular *= skyExposure;'),
+    @($common, 'zephSaturate(sunElevation * 6.0 + 0.1) * (1.0 - 0.85 * zephSaturate(weather))'),
+    @($common, 'zephSaturate(moonElevation * 6.0 + 0.1) * (1.0 - 0.85 * zephSaturate(weather))')
+)) { if (-not $pair[0].Contains($pair[1])) { throw "Water gating source contract missing: $($pair[1])" } }
 
-function F([double]$value) { [single]$value }
-function Clamp01([double]$value) { F ([Math]::Min(1.0, [Math]::Max(0.0, $value))) }
-function Daylight([double]$elevation) {
-    $t = Clamp01 ((F ($elevation - -0.16)) / (F 0.34))
-    F ((F ($t * $t)) * (F (3.0 - (F (2.0 * $t)))) )
-}
-function HorizonFade([double]$elevation) { Clamp01 (F ((F ($elevation * 6.0)) + 0.1)) }
-
-$elevations = @(-1.0, -0.34, -0.16, -0.159999, -0.05, -0.016667, 0.0, 0.016667, 0.179999, 0.18, 0.34, 1.0)
-$cases = 0; $skippedLobes = 0; $maximum = 0.0
-foreach ($profile in @(0, 1, 2, 3, 4)) {
-    foreach ($fluid in @('air', 'water')) {
-        foreach ($sunY in $elevations) {
-            foreach ($moonY in $elevations) {
-                $daylight = Daylight $sunY
-                $sunWeight = F ($daylight * (HorizonFade $sunY))
-                $moonWeight = F ((F (1.0 - $daylight)) * (HorizonFade $moonY))
-                if ($sunWeight -eq 0.0) { $skippedLobes++ }
-                if ($moonWeight -eq 0.0) { $skippedLobes++ }
-                # For finite lobe values, x * 0.0 is exactly 0.0 in the GLSL
-                # expression whose factors are source-locked above. Existing
-                # safe normalisation bounds the lobe input, so skipping does
-                # not introduce NaN/Inf behaviour.
-                if ($sunWeight -eq 0.0) { $maximum = [Math]::Max($maximum, [Math]::Abs((F (0.0 * $sunWeight)))) }
-                if ($moonWeight -eq 0.0) { $maximum = [Math]::Max($maximum, [Math]::Abs((F (0.0 * $moonWeight)))) }
-                $cases++
-            }
+function Clamp01([double]$x) { [Math]::Max(0.0, [Math]::Min(1.0, $x)) }
+function Day([double]$y) { $t = Clamp01 (($y + 0.16) / 0.34); $t * $t * (3.0 - 2.0 * $t) }
+$elevations = @(-1.0, -0.16, -0.016667, 0.0, 0.05, 0.179999, 0.18, 1.0)
+$cases = 0; $skips = 0
+foreach ($sun in $elevations) { foreach ($moon in $elevations) {
+    foreach ($rain in @(0.0, 0.5, 1.0)) { foreach ($exposure in @(0.0, 0.25, 1.0)) {
+        $day = Day $sun
+        $weather = 1.0 - 0.85 * (Clamp01 $rain)
+        $sw = $day * (Clamp01 ($sun * 6.0 + 0.1)) * $weather
+        $mw = (1.0 - $day) * (Clamp01 ($moon * 6.0 + 0.1)) * $weather
+        foreach ($lobe in @(0.0, 0.0001, 0.25, 1.0)) {
+            # The ungated expression is the independent behavioral oracle:
+            # exact-zero branch elimination must preserve finite contributions.
+            $expectedSun = $lobe * $sw * $exposure
+            $expectedMoon = $lobe * $mw * $exposure
+            $actualSun = if ($sw -gt 0 -and $exposure -gt 0) { $lobe * $sw * $exposure } else { 0.0 }
+            $actualMoon = if ($day -lt 1 -and $exposure -gt 0 -and $mw -gt 0) { $lobe * $mw * $exposure } else { 0.0 }
+            if ($actualSun -ne $expectedSun -or $actualMoon -ne $expectedMoon) { throw 'Water exact-zero gate changed a finite contribution.' }
+            if ($sw -eq 0 -or $mw -eq 0 -or $exposure -eq 0) { $skips++ }
+            if ($sw -lt 0 -or $sw -gt 1 -or $mw -lt 0 -or $mw -gt 1) { throw 'Illumination out of bounds.' }
+            $cases++
         }
-    }
-}
-if ($maximum -ne 0.0) { throw "Water specular gating equivalence failed: maximum absolute error $maximum" }
-Write-Host "Water specular gating equivalence passed: $cases float32 predicate cases; $skippedLobes exact-zero lobes; maximum absolute error = 0.0. Covers five profiles, air/water, day/noon/sunrise/sunset/twilight/night/midnight boundaries and celestial elevations."
+    }}
+}}
+if ($skips -eq 0) { throw 'No zero-gate controls exercised.' }
+Write-Host "Water gating contract passed: $cases numeric cases, $skips zero controls; native rendering tested separately."

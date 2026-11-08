@@ -8,10 +8,14 @@ param(
 
 $ErrorActionPreference = 'Stop'
 $sourceRoot = (Resolve-Path -LiteralPath $SourceRoot).Path
+# Never clear a caller-supplied directory: it may contain source or user data.
+# Choose a new output directory for each run, or remove a known generated
+# directory explicitly after inspecting it.
+. (Join-Path $PSScriptRoot 'output-safety.ps1')
+$OutputRoot = Assert-ZephFreshOutputPath -Path $OutputRoot -ProjectRoot (Split-Path -Parent $PSScriptRoot) -SourceRoot $sourceRoot
 . (Join-Path $PSScriptRoot 'validator-backend.ps1')
 $validatorBackend = Resolve-ZephValidatorBackend -ValidatorMode $ValidatorMode -Validator $Validator -WslDistribution $WslDistribution
-Remove-Item -LiteralPath $OutputRoot -Recurse -Force -ErrorAction SilentlyContinue
-New-Item -ItemType Directory -Path $OutputRoot -Force | Out-Null
+New-Item -ItemType Directory -Path $OutputRoot -ErrorAction Stop | Out-Null
 
 $sourceFiles = @(Get-ChildItem -LiteralPath $sourceRoot -Recurse -File | Where-Object { $_.Extension -in '.vsh','.fsh','.glsl','.properties','.lang' } | Sort-Object FullName)
 $sourceManifest = [ordered]@{

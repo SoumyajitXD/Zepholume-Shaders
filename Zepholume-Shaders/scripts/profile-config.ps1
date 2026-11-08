@@ -30,7 +30,12 @@ function Get-ZephProfiles {
     $propertiesPath = Join-Path $ShaderRoot 'shaders.properties'
     $profiles = [System.Collections.Generic.List[object]]::new()
     $names = [System.Collections.Generic.HashSet[string]]::new([System.StringComparer]::OrdinalIgnoreCase)
-    foreach ($match in [regex]::Matches((Get-Content -LiteralPath $propertiesPath -Raw), '(?m)^profile\.([^\s=]+)\s*=\s*([^\r\n]*)')) {
+    # Inspect every profile-prefixed line, including malformed declarations,
+    # rather than silently omitting them from the generated test matrix.
+    $properties = Get-Content -LiteralPath $propertiesPath -Raw
+    foreach ($line in [regex]::Matches($properties, '(?m)^[ \t]*profile\.[^\r\n]*')) {
+        $match = [regex]::Match($line.Value, '^[ \t]*profile\.([^\s=]+)[ \t]*=[ \t]*([^\r\n]*)$')
+        if (-not $match.Success) { throw "Malformed profile declaration: $($line.Value)" }
         if (-not $names.Add($match.Groups[1].Value)) { throw "Duplicate profile definition: $($match.Groups[1].Value)" }
         $values = [ordered]@{}
         foreach ($assignment in $match.Groups[2].Value.Trim() -split '\s+') {

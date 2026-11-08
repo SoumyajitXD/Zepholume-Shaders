@@ -65,6 +65,21 @@ foreach ($option in $options.Keys) {
 
 $potato = $profilesByName['Potato']
 $low = $profilesByName['Low']
+if ($low['ZEPH_WATER_WAVES'] -ne 0 -or $profilesByName['Balanced']['ZEPH_WATER_WAVES'] -ne 1) {
+    throw 'Low must report water movement off; Balanced must enable its supported movement path.'
+}
+# The water movement implementation is only compiled from tier 2 upwards.
+$waterSource = Get-Content -LiteralPath (Join-Path $shaderRoot 'lib/water.glsl') -Raw
+if ($waterSource -notmatch '(?m)^#if ZEPH_EFFECTIVE_WATER_TIER >= 2 && ZEPH_EFFECTIVE_WATER_WAVES == 1\s*$') {
+    throw 'Water movement gate changed; recheck profile defaults and labels.'
+}
+$weatherSource = Get-Content -LiteralPath (Join-Path $shaderRoot 'lib/weather.glsl') -Raw
+$weatherBranches = [regex]::Match($weatherSource, '(?s)#if ZEPH_EFFECTIVE_WEATHER_QUALITY == 1\s+const float weatherBlend = ([0-9.]+);\s+#elif ZEPH_EFFECTIVE_WEATHER_QUALITY == 2\s+const float weatherBlend = ([0-9.]+);\s+#else\s+const float weatherBlend = ([0-9.]+);')
+if (-not $weatherBranches.Success) { throw 'Weather levels no longer define their expected compile-time blend strengths.' }
+$weatherStrengths = @(1..3 | ForEach-Object { [double]::Parse($weatherBranches.Groups[$_].Value, [Globalization.CultureInfo]::InvariantCulture) })
+if ($weatherStrengths[0] -ne 0.22 -or $weatherStrengths[0] -ge $weatherStrengths[1] -or $weatherStrengths[1] -ge $weatherStrengths[2] -or $weatherStrengths[2] -gt 1) {
+    throw 'Weather strengths must preserve Balanced, increase by tier, and stay bounded.'
+}
 foreach ($option in @('ZEPH_PROFILE_TIER','ZEPH_FACE_LIGHTING_QUALITY','ZEPH_CLOUD_QUALITY','ZEPH_WATER_QUALITY','ZEPH_WEATHER_QUALITY')) {
     if ($potato[$option] -ge $low[$option]) { throw "Potato must reduce $option below Low." }
 }
@@ -121,13 +136,16 @@ try {
         }
     }
 
-    [IO.File]::WriteAllText((Join-Path $fixture 'shaders.properties'), ($canonical.Replace("`n", "`r`n") + "`r`nprofile.Low = ZEPH_UNKNOWN:1`r`n"), [Text.UTF8Encoding]::new($false))
+    $invalidCrlf = $canonical.Replace('ZEPH_PROFILE_TIER:0', 'ZEPH_UNKNOWN:0').Replace("`n", "`r`n") + "`r`n"
+    [IO.File]::WriteAllText((Join-Path $fixture 'shaders.properties'), $invalidCrlf, [Text.UTF8Encoding]::new($false))
     $rejectedInvalid = $false
-    try { Get-ZephProfiles -ShaderRoot $fixture | Out-Null } catch { $rejectedInvalid = $true }
-    if (-not $rejectedInvalid) { throw 'Profile parser accepted an invalid CRLF assignment.' }
+    try { Get-ZephProfiles -ShaderRoot $fixture | Out-Null } catch { $rejectedInvalid = $_.Exception.Message -match 'undefined option: ZEPH_UNKNOWN' }
+    if (-not $rejectedInvalid) { throw 'Profile parser did not report the intended undefined option in a CRLF assignment.' }
 
 
     $badCases = @(
+        @{ Text=$properties.Replace('profile.Potato =', 'profile.Potato :'); Error='Malformed profile declaration' },
+        @{ Text=$properties.Replace('profile.Potato =', 'profile. ='); Error='Malformed profile declaration' },
         @{ Text=$properties.Replace('ZEPH_PROFILE_TIER:0', 'ZEPH_UNKNOWN:0'); Error='undefined option' },
         @{ Text=$properties.Replace('ZEPH_PROFILE_TIER:0', 'ZEPH_PROFILE_TIER:9'); Error='outside declared range' },
         @{ Text=$properties.Replace('ZEPH_PROFILE_TIER:0', 'ZEPH_PROFILE_TIER:0 ZEPH_PROFILE_TIER:0'); Error='more than once' }

@@ -12,7 +12,17 @@ float zephDaylightFromSun() {
     return zephDaylightFromDirection(sunPosition);
 }
 
-float zephFaceLight(vec3 normal, vec2 lightCoord, float storm) {
+// Bounded proxy for how strongly outdoor colour should affect a surface.
+// The lightmap remains authoritative; this cannot resolve occlusion. Reducing
+// the weight for block-lit surfaces avoids tinting local light as if it were
+// entirely sky illumination. No additive light is introduced.
+float zephSceneSkyWeight(vec2 lightCoord) {
+    float sky = zephSkyExposure(lightCoord.y);
+    float blockProtection = 1.0 - 0.55 * zephSaturate(lightCoord.x) *
+        (1.0 - 0.5 * zephSaturate(lightCoord.y));
+    return sky * blockProtection;
+}
+float zephFaceLight(vec3 normal, vec2 lightCoord, float storm, vec3 sunDir, float daylight) {
 #if ZEPH_EFFECTIVE_FACE_LIGHTING_QUALITY == 0
     return 1.0;
 #elif defined(ZEPH_DIM_NETHER)
@@ -25,47 +35,36 @@ float zephFaceLight(vec3 normal, vec2 lightCoord, float storm) {
     float upward = max(zephWorldElevation(normal), 0.0);
     return mix(0.88, 1.02, upward * 0.6 + 0.4);
 #else
-    vec3 sunDir = zephSafeNormalize(sunPosition);
     vec3 moonDir = zephSafeNormalize(moonPosition);
-    float daylight = zephDaylightFromDirection(sunDir);
 
-    // The lightmap and vertex colour already carry the main scene lighting.
-    // Use celestial direction only for bounded face shape, not a second deep
-    // attenuation of valid skylight or block light.
-    float sunDirect = max(dot(normal, sunDir), 0.0);
-    float dayFace = mix(0.72, 1.0, sunDirect);
-
-    // Night directional moonlight with grounded non-facing ambient
-    float moonDirect = max(dot(normal, moonDir), 0.0);
-    float nightFace = mix(0.72, 0.88, moonDirect * 0.55 + 0.45);
+    // The lightmap already supplies illumination. This is a bounded face-shape
+    // response, not a visibility test or a second shadowing system. A wrapped
+    // lobe keeps block faces readable while preserving a clear solar direction.
+    float sunDirect = zephSaturate(dot(normal, sunDir) * 0.5 + 0.5);
+    float moonDirect = zephSaturate(dot(normal, moonDir) * 0.5 + 0.5);
+    float dayFace = mix(0.84, 1.06, sunDirect);
+    float nightFace = mix(0.91, 1.00, moonDirect);
 
 #if ZEPH_EFFECTIVE_FACE_LIGHTING_QUALITY >= 3
-    // High and Ultra apply softened wrap curve for smoother facet transitions
-    dayFace = mix(dayFace, sqrt(max(dayFace, 0.0)), 0.22);
-    nightFace = mix(nightFace, sqrt(max(nightFace, 0.0)), 0.15);
+    // A smoother terminator on upper tiers keeps large block faces from
+    // switching abruptly as the sun crosses the horizon.
+    float smoothSun = sunDirect * sunDirect * (3.0 - 2.0 * sunDirect);
+    dayFace = mix(dayFace, mix(0.84, 1.06, smoothSun), 0.35);
 #endif
-
-    // Soften directional contrast during overcast storms
-    dayFace = mix(dayFace, 0.78, storm * 0.45);
-    nightFace = mix(nightFace, 0.80, storm * 0.30);
-
+    // Clouds scatter directional contrast. Keep the response neutral when
+    // overcast rather than darkening the whole world a second time.
+    dayFace = mix(dayFace, 0.97, zephSaturate(storm) * 0.65);
+    nightFace = mix(nightFace, 0.96, zephSaturate(storm) * 0.55);
     float rawCelestial = mix(nightFace, dayFace, daylight);
 
-    // Ground directional contrast using skylight (lightCoord.y).
-    // Deep caves and interiors (skyLight -> 0) transition to isotropic ambient (1.0),
-    // preventing outdoor sun/moon directional contrast from penetrating underground.
-    float skyLight = lightCoord.y;
-    // Exact smoothstep shape with a compile-time reciprocal range.  The
-    // reciprocal form is algebraically equivalent to the normalized input;
-    // no GPU performance claim is implied without target-driver evidence.
-    const float ZEPH_SKYLIGHT_INV_RANGE = 1.639344262295082;
-    float tSky = clamp((skyLight - 0.04) * ZEPH_SKYLIGHT_INV_RANGE, 0.0, 1.0);
-    float celestialWeight = tSky * tSky * (3.0 - 2.0 * tSky);
-    return mix(1.0, rawCelestial, celestialWeight);
+    // Lightmap coordinates are proxies, never geometric visibility. Reduce
+    // celestial shaping when local block light dominates, including a torch
+    // against an otherwise skylit face; black sampled light remains black.
+    return mix(1.0, rawCelestial, zephSceneSkyWeight(lightCoord));
 #endif
 }
 
-vec3 zephBlockLightWarmth(vec3 linearColour, vec2 lightCoord) {
+vec3 zephBlockLightWarmth(vec3 linearColour, vec2 lightCoord, float daylight, float storm) {
 #if ZEPH_EFFECTIVE_FACE_LIGHTING_QUALITY == 0
     return linearColour;
 #else
@@ -76,7 +75,15 @@ vec3 zephBlockLightWarmth(vec3 linearColour, vec2 lightCoord) {
     // and caves richly incandescent without clipping or destroying cool material chroma.
     float blockLight = lightCoord.x;
     float skyLight = lightCoord.y;
-    float dominance = blockLight / max(blockLight + skyLight * 0.75 + 0.001, 0.001);
+    // The sky lightmap channel describes exposure, not incident solar energy.
+    // At night or in rain, an exposed torch still contributes warm light.
+    // Keep a night floor to avoid discontinuous tint changes around twilight.
+#if !defined(ZEPH_DIM_NETHER) && !defined(ZEPH_DIM_END)
+    float effectiveSky = skyLight * mix(0.25, 1.0, daylight) * (1.0 - zephSaturate(storm) * 0.25);
+#else
+    float effectiveSky = skyLight;
+#endif
+    float dominance = blockLight / max(blockLight + effectiveSky * 0.75 + 0.001, 0.001);
     // Exact smoothstep shape with a compile-time reciprocal range.
     const float ZEPH_BLOCK_LIGHT_INV_RANGE = 1.25;
     float tWarmth = clamp((blockLight - 0.10) * ZEPH_BLOCK_LIGHT_INV_RANGE, 0.0, 1.0);
@@ -99,7 +106,17 @@ vec3 zephApplySceneLighting(vec3 linearColour, vec3 normal, vec2 lightCoord, flo
 #if ZEPH_EFFECTIVE_FACE_LIGHTING_QUALITY == 0
     return linearColour;
 #else
-    vec3 lit = linearColour * zephFaceLight(normal, lightCoord, storm);
+#if !defined(ZEPH_DIM_NETHER) && !defined(ZEPH_DIM_END)
+    // Share the normalized solar direction and day weight between direct and
+    // ambient lighting. The former was normalized twice per fragment.
+    vec3 sunDir = zephSafeNormalize(sunPosition);
+    float sunElevation = dot(sunDir, zephWorldUpView());
+    float daylight = zephDaylightFromElevation(sunElevation);
+#else
+    vec3 sunDir = vec3(0.0);
+    float daylight = 0.0;
+#endif
+    vec3 lit = linearColour * zephFaceLight(normal, lightCoord, storm, sunDir, daylight);
 #if ZEPH_EFFECTIVE_FACE_LIGHTING_QUALITY >= 3 && !defined(ZEPH_DIM_NETHER) && !defined(ZEPH_DIM_END)
     // High & Ultra dual-hemisphere ambient irradiance: upward surfaces receive subtle cool sky fill,
     // downward surfaces receive subtle warm ground bounce.
@@ -107,9 +124,32 @@ vec3 zephApplySceneLighting(vec3 linearColour, vec3 normal, vec2 lightCoord, flo
     vec3 skyHemisphere = vec3(0.96, 0.98, 1.04);
     vec3 groundBounce = vec3(1.02, 0.99, 0.96);
     vec3 domeFill = mix(groundBounce, skyHemisphere, up);
-    lit *= mix(vec3(1.0), domeFill, lightCoord.y * 0.12);
+    lit *= mix(vec3(1.0), domeFill, zephSceneSkyWeight(lightCoord) * 0.12);
 #endif
-    return zephBlockLightWarmth(lit, lightCoord);
+    lit = zephBlockLightWarmth(lit, lightCoord, daylight, storm);
+#if ZEPH_EFFECTIVE_FACE_LIGHTING_QUALITY >= 2
+    // Artistic ambient colour is strictly multiplicative: black lightmap results
+    // remain black, and celestial tint cannot leak into unlit caves.  Storms
+    // suppress the coloured component rather than adding a brightness floor.
+#if defined(ZEPH_DIM_NETHER)
+    vec3 ambientTint = vec3(1.035, 0.985, 0.955);
+    float ambientWeight = 0.35;
+#elif defined(ZEPH_DIM_END)
+    vec3 ambientTint = vec3(0.975, 0.975, 1.04);
+    float ambientWeight = 0.35;
+#else
+    float duskTint = zephClearTwilight(sunElevation, storm);
+    vec3 ambientTint = mix(vec3(0.94, 0.97, 1.06), vec3(1.015, 1.005, 0.985), daylight);
+    // Twilight warms sun-facing surfaces and cools their shaded sides. This
+    // modulates the sampled lightmap, so an unlit cave cannot gain light.
+    float facing = zephSaturate(dot(normal, sunDir) * 0.5 + 0.5);
+    vec3 duskColour = zephTwilightSurfaceTint(facing);
+    ambientTint = mix(ambientTint, duskColour, duskTint * 0.65);
+    float ambientWeight = zephSceneSkyWeight(lightCoord) * 0.55;
+#endif
+    lit *= mix(vec3(1.0), ambientTint, ambientWeight);
+#endif
+    return lit;
 #endif
 }
 
