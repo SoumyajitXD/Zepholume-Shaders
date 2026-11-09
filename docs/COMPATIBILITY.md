@@ -1,4 +1,27 @@
-# Compatibility and evidence — V1.0.6
+# Compatibility and evidence — V1.0.7
+
+**Current release:** [Zepholume-Shaders-1.0.7.zip](../Releases/Zepholume-Shaders-1.0.7.zip) is present in the GitHub Releases directory. A final-named ZIP and offline compiler passes do not prove all Minecraft versions, GPUs or shader loaders are supported.
+
+## V1.0.7 qualification summary
+
+| Environment / evidence | Current status | Limit |
+| --- | --- | --- |
+| Final ZIP / deterministic archive | **EXPORTED; INTEGRITY CHECKS REPORTED PASS** | 67,750 bytes, 137 entries; SHA-256 `79CF6F63E7BA609D734FE653A34321BB79DC5EBAFCC80C1FD5A190471EC5BEB8` recorded by release engineer |
+| Standalone GLSL 330 | **OFFLINE PASS (reported)** | 320 stages / 420 links; 5,040 logical configurations; not loader-patched compilation |
+| Minecraft 26.1.2 / Fabric 0.19.3 / Iris 1.10.9 / Sodium 0.8.12 / Intel UHD 730 | **LOCAL RELEASE-CANDIDATE RUNTIME EVIDENCE** | Ultra pipeline and sunset/night horizon comparison; inspected log reported no GLSL/OpenGL errors |
+| Final distributable ZIP in Minecraft | **INSTALLED; FULL EXACT-ZIP MATRIX NOT VERIFIED** | Copying the exported ZIP to shaderpacks does not independently prove all profile/scene/dimension outcomes |
+| NVIDIA / AMD, Forge / Oculus, other game versions | **UNQUALIFIED FOR V1.0.7** | Historical lanes, mocked GPU labels and cross-compilation are not real runtime acceptance |
+| OptiFine | **UNSUPPORTED** | Not a target loader |
+
+V1.0.7 gates celestial water glints by **local skylight exposure**, reducing enclosed-cave leaks; its analytical model is not full raytraced directional terrain occlusion. Other known limitations include specialized short-range fog and extreme cloud-viewing geometries. **No official V1.0.7 FPS improvement is established.**
+
+See [V1.0.7 release notes](../Zepholume-Shaders/docs/V1.0.7_RELEASE_NOTES.md), [final release report](../Zepholume-Shaders/docs/V1.0.7_FINAL_RELEASE.md), [Installation](INSTALLATION.md) and [Troubleshooting](TROUBLESHOOTING.md).
+
+---
+
+## Historical V1.0.6 qualification (archived for reference)
+
+The remainder of this document describes the **previous V1.0.6 release**, not the current V1.0.7 build. Statements that the V1.0.6 final ZIP was not runtime-tested must not be applied to the V1.0.7 release-candidate evidence.
 
 Zepholume targets **Minecraft Java Edition** and requires a separate shader loader. **Game-version tags, static compiler coverage and a final-named ZIP are not runtime compatibility tests.**
 

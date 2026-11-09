@@ -1,12 +1,14 @@
 # Troubleshooting
 
+**Current version: V1.0.7.** Download the [GitHub ZIP](../Releases/Zepholume-Shaders-1.0.7.zip) or an actually listed [CurseForge file](https://www.curseforge.com/minecraft/shaders/zepholume-shaders/files). The local Iris/Intel candidate was tested, but full final-ZIP, cross-loader and GPU-vendor compatibility is unqualified. See [Compatibility](COMPATIBILITY.md).
+
 This guide covers the fastest way to isolate common Zepholume problems without turning debugging into random checkbox roulette.
 
 ## Shader pack does not appear
 
 Check that:
 
-- a valid `Zepholume-Shaders-1.0.6.zip` from the [GitHub archive](../Releases/Zepholume-Shaders-1.0.6.zip), or a version actually listed on [CurseForge Files](https://www.curseforge.com/minecraft/shaders/zepholume-shaders/files), is inside the correct instance's `shaderpacks` folder
+- a valid `Zepholume-Shaders-1.0.7.zip` from the [GitHub archive](../Releases/Zepholume-Shaders-1.0.7.zip), or a version actually listed on [CurseForge Files](https://www.curseforge.com/minecraft/shaders/zepholume-shaders/files), is inside the correct instance's `shaderpacks` folder
 - the release archive has not been placed inside another ZIP
 - you are launching the same Minecraft instance whose folder you edited
 - the intended shader loader is actually installed and loading
@@ -16,7 +18,7 @@ Check that:
 1. Confirm the exact Minecraft version and compare it with the documented compatibility lane.
 2. Confirm the exact Iris/Oculus version.
 3. Confirm required loader dependencies are present.
-4. Confirm you are testing `Zepholume-Shaders-1.0.6.zip` rather than an older archive.
+4. Confirm you are testing `Zepholume-Shaders-1.0.7.zip` rather than an older archive.
 5. Try the same release in a minimal clean instance.
 6. Read the complete `latest.log` and search for shader compilation/preprocessor errors.
 7. If the loader exposes patched shader output, preserve it for diagnosis.
@@ -53,7 +55,7 @@ Then reproduce in a minimal instance. If the problem disappears there, reintrodu
 
 ## Cave/interior lighting looks wrong
 
-V1.0.5 corrected generic lit-path lightmapping. V1.0.6 additionally repairs hand lightmap routing, camera-space world-up handling and short fog ranges in source and offline fixtures. **Actual final-ZIP Minecraft lighting recovery remains unverified.**
+V1.0.5 corrected generic lightmapping and V1.0.6 repaired hand lightmap routing and camera-space handling. V1.0.7 retains those corrections, protects Potato dark fog and gates celestial water glints by local skylight. The tested Ultra horizon scene does not establish all hand/lighting combinations.
 
 If a cave or enclosed room still looks strongly sunlit, moonlit, uniformly orange, or strangely flat:
 
@@ -67,7 +69,7 @@ High and Ultra also add bounded dual-hemisphere ambient irradiance. If the issue
 
 ## Water or underwater rendering looks wrong
 
-V1.0.6 retains classified-water-only analytical effects and the earlier exact-zero celestial-specular gate. It also corrects ray and per-fragment distance interpolation that reproduced triangle-diagonal differences in GPU fixtures. **The original Minecraft waterfall triangles have not been retested with the final ZIP.**
+V1.0.7 retains water-only effects and prior interpolation fixes, adds flat water-material classification and gates celestial glints by local skylight exposure. These fixes need matched real-world scene retests on the exact final ZIP before claiming every artifact is gone.
 
 Water behaviour is profile-dependent:
 
@@ -89,7 +91,7 @@ That profile split matters. A High-only reflection issue is a much better report
 
 ## First-person hand or held item is too bright
 
-V1.0.6 fixes a missing hand lightmap flag in source and passes synthetic dark/partial/full irradiance tests, but real Minecraft hand/item variants remain unverified.
+V1.0.7 retains the corrected hand lightmap route and offline irradiance checks. Real hand/item variants still need scene-specific Minecraft comparison.
 
 - Compare an empty hand and ordinary held item in darkness, torchlight and daylight in the **same** scene.
 - Check opaque, translucent and emissive held items separately if the defect depends on item type.
@@ -100,14 +102,14 @@ V1.0.6 fixes a missing hand lightmap flag in source and passes synthetic dark/pa
 
 Two distinct problems require different comparisons:
 
-1. **Triangle-diagonal seams:** V1.0.6 corrected ray/distance interpolation in offline GPU tests; retest a real waterfall with matched shader-on/off conditions.
-2. **Overbright sky reflections under cover:** analytical water highlights lack reliable local directional skylight occlusion. Compare open-sky and covered water at the same time/profile; a global brightness slider is not a root-cause test.
+1. **Triangle-diagonal seams:** V1.0.7 adds flat water-material classification on top of earlier interpolation corrections; retest with matched shader-on/off conditions.
+2. **Overbright sky reflections under cover:** V1.0.7 gates celestial highlights by local skylight exposure but does not raytrace every blocking surface. Compare open-sky and covered water at the same time/profile; a global brightness slider is not a root-cause test.
 
 For transparency errors, compare still and flowing water, camera angles and adjacent non-water translucent materials. Synthetic draws do not model Minecraft's complete fluid meshes, blending or sorting.
 
 ## Clouds look wrong
 
-High and Ultra retain top-facet solar rim highlighting in V1.0.6. If a cloud artefact appears only on those profiles, capture the time of day, weather, camera direction, and whether the issue disappears on Balanced.
+High and Ultra retain directional cloud facet lighting in V1.0.7. If a cloud artefact appears only on those profiles, capture the time of day, weather, camera direction, and whether the issue disappears on Balanced.
 
 ## Low FPS
 
@@ -127,7 +129,7 @@ Also inspect:
 
 A profile comparison is only meaningful when the scene and settings stay fixed.
 
-V1.0.6 does not currently have a completed controlled real-loader A/B benchmark, so do not compare your result against invented official FPS numbers—there are none.
+V1.0.7 does not currently have a completed controlled real-loader A/B benchmark, so do not compare your result against invented official FPS numbers—there are none.
 
 ## Stutter or bad frame pacing
 
@@ -183,6 +185,6 @@ Screenshot/video attached: yes/no
 
 ## Support boundary
 
-For **Zepholume V1.0.6**, the final ZIP has **no completed Minecraft runtime qualification**. Historical staged 1.20.1 lanes, a previous 26.1.2 Fabric/Iris session with the Phase 8 development ZIP installed, and static/experimental 26.2 lanes must not be represented as final-ZIP support. Intermediate versions through 26.3 are not automatically validated.
+For **Zepholume V1.0.7**, there is limited Minecraft 26.1.2 Fabric/Iris/Intel release-candidate and Ultra horizon evidence. The final ZIP was copied into shaderpacks, but a comprehensive exact-archive profile/dimension or cross-vendor matrix has not been verified. Historical 1.20.1 and experimental 26.2 lanes are not automatically final V1.0.7 compatibility evidence, nor are intermediate versions through 26.3.
 
 OptiFine is not a supported Zepholume target. Broad GPU, driver, loader, or performance claims require completed real runtime evidence rather than static validation alone.

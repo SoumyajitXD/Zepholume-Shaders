@@ -1,5 +1,7 @@
 # Architecture Overview
 
+**Current release: V1.0.7.** The GLSL 330 direct-path, single-colour-target renderer remains. The later V1.0.7 improvements add smooth sky/horizon fog blending, corrected directional fog, Potato darkness preservation, layered block clouds, local skylight-gated water glints and flat waterfall material classification. V1.0.6 sections below describe the historical baseline; see [V1.0.7 release notes](../Zepholume-Shaders/docs/V1.0.7_RELEASE_NOTES.md).
+
 Zepholume is designed as a lightweight, direct-path Minecraft Java shader pack. Its architecture favours predictable rendering cost, portability, and maintainability over stacking expensive effects simply because they exist.
 
 ## Core rendering boundary
@@ -24,7 +26,7 @@ The project intentionally avoids heavyweight renderer subsystems such as:
 
 This boundary is a product decision, not an unfinished shopping list.
 
-V1.0.6 keeps that boundary intact. It preserves V1.0.5's scene lightmap, skylight, material, dimension and settings corrections, and adds verified source-level repairs for first-person hand lightmap routing, affine view-ray/fragment-local distance interpolation, camera-space world-up handling, and short positive fog ranges. The exact-zero water celestial-specular gate from V1.0.4 is retained.
+The V1.0.6 baseline kept that boundary intact and preserved V1.0.5's scene lightmap, skylight, material, dimension and settings corrections, and adds verified source-level repairs for first-person hand lightmap routing, affine view-ray/fragment-local distance interpolation, camera-space world-up handling, and short positive fog ranges. The exact-zero water celestial-specular gate from V1.0.4 is retained.
 
 ## Shared shader design
 
@@ -107,7 +109,7 @@ Water/scene view rays now interpolate affine information and calculate distance 
 
 Camera-space world-up computations align with normals and directions in view space. Fog preserves small, valid positive loader ranges and defines safe equal/reversed-endpoint behavior. No new pass, buffer or speculative global exposure correction was added.
 
-**Known model limitation:** analytical water sky reflections and celestial highlights have no dependable local directional skylight-occlusion input. Covered/nighttime water can receive such terms even when blocked from the sky; severity in the final Minecraft build remains unverified. See [V1.0.6 release evidence](../Zepholume-Shaders/docs/V1.0.6_FINAL_RELEASE.md).
+**Current V1.0.7 model limitation:** celestial water highlights are gated by local skylight exposure, reducing cave glints. Directional terrain occlusion remains analytical rather than raytraced, so this does not guarantee physically accurate reflections under all cover. See [V1.0.7 release evidence](../Zepholume-Shaders/docs/V1.0.7_FINAL_RELEASE.md).
 
 ## Underwater fog
 
@@ -146,7 +148,7 @@ See [Quality Profiles](PROFILES.md).
 
 Structural validation covers shader stages, recursive includes, guards, pair interfaces, profile matrices, option ranges, and the one-colour-output policy. Generated source is evaluated across declared profiles, dimensions, and loader macro models before standalone `glslangValidator` compilation.
 
-V1.0.6 retains mathematical/source regressions. Its final offline validation reported 272 standalone GLSL stages, 420 links and 630 mocked portability cases, with native Intel GPU fixture draws for hand, water and camera. The latest hosted V1.0.6 main-branch CI runs are **red**: the regression clean-tree check detects test-driven modifications to three tracked shader-subtree files. Other jobs passed, but the required aggregate did not. No runtime compatibility or FPS claim follows from the offline checks.
+V1.0.6 retains mathematical/source regressions. Its final offline validation reported 272 standalone GLSL stages, 420 links and 630 mocked portability cases, with native Intel GPU fixture draws for hand, water and camera. Those V1.0.6 hosted failures were historical clean-tree test side effects. Check the current [Actions dashboard](https://github.com/SoumyajitXD/Zepholume-Shaders/actions) rather than treating old run status as current. Standalone checks do not establish GPU/loader or FPS results.
 
 Those checks can catch source, preprocessing, and numerical regressions. They cannot prove:
 
@@ -157,7 +159,7 @@ Those checks can catch source, preprocessing, and numerical regressions. They ca
 - gameplay performance
 - cross-vendor parity
 
-V1.0.6 still requires real loader/runtime visual qualification and controlled benchmarking before those claims are justified.
+V1.0.7 has limited Iris/Intel release-candidate visual/runtime evidence; it still needs broader GPU/loader/gameplay verification and controlled benchmarking before those wider claims are justified.
 
 ## Performance philosophy
 

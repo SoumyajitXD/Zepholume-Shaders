@@ -8,7 +8,7 @@ Use **Balanced** first. It is the intended general-gameplay baseline, not a disg
 
 The selected profile caps which capability tiers are allowed to compile. Lower overrides can reduce work, but they cannot silently enable features above the chosen baseline.
 
-| Profile | Intended use | V1.0.6 baseline |
+| Profile | Intended use | V1.0.7 baseline |
 | --- | --- | --- |
 | **Potato** | Weak/integrated GPUs and compatibility triage | Direct scene grade and loader sky/fog only; analytical face/material/cloud/water/weather/underwater-colour work compiled out |
 | **Low** | Lower-end hardware | Directional face/cloud response, bounded analytical water/weather, and subtle underwater fog tint |
@@ -18,20 +18,17 @@ The selected profile caps which capability tiers are allowed to compile. Lower o
 
 `Ultra Lite` remains a **deprecated compatibility alias for Low** so older selections remain meaningful.
 
-## V1.0.6 profile behaviour
+## V1.0.7 profile behaviour
 
-The final V1.0.6 shader configuration declares **exactly five** selectable profiles: Potato, Low, Balanced, High, and Ultra, with 15 source-validated assignments each. Balanced remains the default; in-game menu visibility and switching on the final ZIP remain unverified.
+The final V1.0.7 configuration retains **exactly five selectable profiles**: Potato, Low, Balanced (default), High and Ultra. Source-level configuration checks passed, and local Iris profile switching was smoke-tested. Full cross-profile visual qualification on all GPUs and loaders remains incomplete.
 
-- Potato compiles out the optional analytical work; whether the preset is visible in a real loader's menu still requires verification.
-- Low keeps the lighter face/cloud/weather/water path.
-- Balanced retains the regular atmospheric and animated-water baseline.
-- High and Ultra increase bounded analytical quality **without forcing extra contrast or saturation**.
+- Potato retains the direct grade/loader sky and preserves dark/black fog without the earlier additive wash.
+- Low keeps a lightweight face/cloud/weather/water path without vertex water movement.
+- Balanced is the default atmospheric/material baseline and includes subtle animated water.
+- High and Ultra increase bounded analytical quality without requiring additional framebuffer passes.
 - `Ultra Lite` remains a deprecated Low compatibility alias, not a sixth selectable profile.
-- The exact-zero water celestial-specular gate introduced in V1.0.4 is retained; no FPS uplift is claimed.
 
-V1.0.5 corrected Iris tooltip syntax. V1.0.6 preserves that correction and adds final profile/default/option validation, but none of those tests establishes working in-game profile selection or visual correctness. See the [final compatibility audit](../Zepholume-Shaders/docs/V1.0.6_FINAL_COMPATIBILITY.md).
-
-**Important for V1.0.6:** Final source/GPU regressions passed, but water triangles, hand lighting, covered-water reflections and real frame-time effects remain unverified in Minecraft. Profile selection does not fix a loader compatibility problem.
+V1.0.7 also refines sky-to-horizon blending, block cloud coverage, cave-water skylight gating and waterfall classification. Profile selection does not fix an incompatible loader. See [V1.0.7 final release evidence](../Zepholume-Shaders/docs/V1.0.7_FINAL_RELEASE.md).
 
 ## What profiles do not do
 
@@ -87,4 +84,4 @@ If you are losing FPS or frame-time consistency:
 
 When comparing profiles, keep the world, position, camera direction, weather, time, render distance, resolution, and FPS/VSync settings fixed. Otherwise the comparison is mostly decorative statistics.
 
-Zepholume does not publish profile-specific FPS percentages without controlled runtime measurements. V1.0.6 has not completed a controlled real-loader A/B benchmark pass, so no profile performance delta should be invented from static source metrics or mathematical regression tests.
+Zepholume does not publish profile-specific FPS percentages without controlled runtime measurements. V1.0.7 has not completed a controlled real-loader A/B benchmark pass, so no profile performance delta should be invented from static source metrics or mathematical regression tests.
