@@ -61,7 +61,10 @@ function Invoke-Invalid([string]$Name, [scriptblock]$Mutation) {
         & $pwsh -NoLogo -NoProfile -File $validator -Root $fixture *> $capture
         $code = $LASTEXITCODE
         $output = Get-Content -LiteralPath $capture -Raw
-        if ($code -eq 0 -or -not $output.Contains($isolatedRules[$Name])) { throw "Expected '$($isolatedRules[$Name])' rejection for $Name; exit=$code; output=$output" }
+        # PowerShell can wrap an error across lines and insert a diagnostic
+        # gutter ("|"). Match the message, not the host's display layout.
+        $messageText = ($output -replace '\\s+\\|\\s+', ' ') -replace '\\s+', ' '
+        if ($code -eq 0 -or -not $messageText.Contains($isolatedRules[$Name])) { throw "Expected '$($isolatedRules[$Name])' rejection for $Name; exit=$code; output=$output" }
         if ($output -match 'Dimension wrapper (differs|topology)') { throw "Unrelated wrapper failure masked $Name" }
         Write-Host "Isolated rejection: $Name; expected and actual: $($isolatedRules[$Name]); wrapper checks passed."
     } else {
