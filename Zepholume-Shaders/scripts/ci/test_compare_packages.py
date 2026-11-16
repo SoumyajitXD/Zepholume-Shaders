@@ -2,6 +2,7 @@
 """Positive and negative fixtures for independent ZIP content parity."""
 from __future__ import annotations
 
+import stat
 import tempfile
 import unittest
 import zipfile
@@ -49,7 +50,26 @@ class PackageParityTests(unittest.TestCase):
         with zipfile.ZipFile(self.right, "w") as archive:
             archive.writestr("shaders/shaders.properties", b"a")
             archive.writestr("shaders/shaders.properties", b"b")
-        with self.assertRaisesRegex(ValueError, "Duplicate ZIP entry"):
+        with self.assertRaisesRegex(ValueError, "Duplicate"):
+            inventory(self.right)
+
+    def test_case_colliding_entry_fails(self):
+        self.make_zip(self.right, {
+            "shaders/shaders.properties": b"screen=1\n",
+            "shaders/example.fsh": b"first",
+            "shaders/EXAMPLE.fsh": b"second",
+        })
+        with self.assertRaisesRegex(ValueError, "case-colliding"):
+            inventory(self.right)
+
+    def test_symlink_entry_fails(self):
+        info = zipfile.ZipInfo("shaders/example.fsh")
+        info.create_system = 3
+        info.external_attr = (stat.S_IFLNK | 0o777) << 16
+        with zipfile.ZipFile(self.right, "w") as archive:
+            archive.writestr("shaders/shaders.properties", b"screen=1\n")
+            archive.writestr(info, b"../elsewhere")
+        with self.assertRaisesRegex(ValueError, "Symlink"):
             inventory(self.right)
 
 
