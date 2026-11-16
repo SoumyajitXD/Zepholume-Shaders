@@ -1,18 +1,22 @@
-# Known issues
+# Known issues and test gaps
 
-## Runtime verification blockers
+This page tracks **V1.0.7**. Older development notes that said the pack had never been loaded in Minecraft no longer describe the current release.
 
-- Iris and Oculus have not loaded the final Zepholume package in this stage, so all rendering-matrix items and profile switching remain untested.
-- The local Oculus stack is a normal saved modpack and must not be repurposed without explicit approval or a disposable clone.
-- No safe authenticated launcher command was available locally; launcher credentials and account files were intentionally not inspected.
+## What has not been fully checked
 
-## Corrected before runtime testing
+- The V1.0.7 release candidate was tested locally with Fabric 26.1.2, Iris 1.10.9 and Intel UHD Graphics 730. The exported final ZIP has **not** been put through a complete scene, dimension and profile test matrix.
+- Oculus/Forge, other game versions and other GPU vendors still need direct testing. Standalone GLSL checks do not establish loader compatibility.
+- There is no controlled real-game FPS or frame-time benchmark for V1.0.7. Performance improvements should not be assumed.
 
-- Both `gbuffers_skybasic` wrappers contained `#define #define ZEPH_NO_FOG`, a malformed preprocessor directive. It is fixed and structurally guarded.
-- Sky/cloud generic-terrain processing and second vertex-colour lighting were removed at source level. Visual acceptance, Fast/Fancy/off cloud behavior, stage macro behavior, and loader parity remain manual-test items.
-## V1.0.1-dev status
+## Visual cases worth retesting
 
-- No real Iris or Oculus launch, shader compilation, render, screenshot, or benchmark has been recorded for this development line. Static checks and standalone GLSL compilation are not substitutes.
-- Animated water uses the common `frameTimeCounter` uniform. Its loader/runtime behaviour is pending Iris and Oculus verification.
-- Vegetation is intentionally static: a cross-loader, mod-safe material/plant identification path has not been established, so Zepholume does not guess from texture colour or magic IDs.
-- Mod/resource-pack custom core shaders may be bypassed by shader loaders; this is a loader-level compatibility limitation, not something Zepholume can guarantee away.
+- **Covered water at night:** local skylight gating reduces celestial highlights, but it is not full directional occlusion.
+- **Flowing water and waterfalls:** the source includes flat water-material classification; compare real fluid meshes at several viewing angles before calling every diagonal artifact fixed.
+- **Hands and held items:** lightmap routing was corrected, but dark interiors, emissive items and translucent items need matched in-game checks.
+- **Clouds and fog:** check profile changes, weather transitions, low-angle views and dimension transitions on the exact release ZIP.
+
+Include the shader profile, loader versions, GPU/driver, full `latest.log` and a reproducible screenshot or scene when reporting one of these cases. See [Troubleshooting](../../docs/TROUBLESHOOTING.md) and [Compatibility](../../docs/COMPATIBILITY.md).
+
+## Older development notes
+
+During the V1.0.1 development line, both `gbuffers_skybasic` wrappers had a malformed `#define #define ZEPH_NO_FOG` directive. It was fixed before later releases. Earlier launcher-access and profile-testing blockers were specific to that stage and should not be reported as current V1.0.7 failures.
