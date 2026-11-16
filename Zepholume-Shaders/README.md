@@ -1,10 +1,10 @@
 # Zepholume Shaders
 
-Zepholume is an original, direct-path Minecraft Java shader pack for clean survival play. It focuses on controlled exposure, atmospheric depth, and stable frame pacing—not heavyweight cinematic effects.
+Zepholume is a Minecraft Java shader pack with a small, direct rendering path. It focuses on atmospheric lighting, fog and water without adding shadow maps or a multi-pass post-processing pipeline.
 
 ## Status and supported evidence
 
-**V1.0.7 final release.** This release incorporates the validated horizon seam blend, directional fog ray correction, Potato dark fog preservation, cave/enclosed water skylight gating, flat waterfall classification, block cloud layering, and hand lightmap lighting. The final production ZIP is `Zepholume-Shaders-1.0.7.zip`. It is exported under the user's explicit decision to finalize V1.0.7 with the strongest available, technically defensible implementation. Horizon blend, pipeline loading, and profile smoke testing are verified in local Fabric 26.1.2 / Iris 1.10.9; broad multi-loader, multi-vendor, and extended gameplay performance remain limited. See [release notes](docs/V1.0.7_RELEASE_NOTES.md) and [final release report](docs/V1.0.7_FINAL_RELEASE.md).
+**V1.0.7** is packaged as `Zepholume-Shaders-1.0.7.zip`. The release includes horizon blending, corrected fog direction, dark Potato fog, skylight-gated water highlights, flat waterfall classification, layered clouds and hand lightmap fixes. Local Fabric 26.1.2 / Iris 1.10.9 testing covered the release candidate's horizon and profile loading. The final ZIP has not had a full cross-loader, cross-GPU or gameplay performance test. See the [release notes](docs/V1.0.7_RELEASE_NOTES.md), [final release report](docs/V1.0.7_FINAL_RELEASE.md) and [known test gaps](docs/KNOWN_ISSUES.md).
 
 The analytical water reflection model has been gated by local skylight exposure to suppress celestial highlights in caves and enclosed areas. Waterfall interpolation is flat-gated to eliminate diagonal shearing. OptiFine is unsupported. Other Minecraft version families and GPU vendors carry no runtime compatibility guarantee.
 
