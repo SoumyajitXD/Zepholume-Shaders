@@ -1,8 +1,13 @@
-# Future work
+# Next checks
 
-## V1.0.5 candidates
+The next useful work is targeted validation, not another speculative rendering feature.
 
-- Revisit fog endpoint hoisting only after a qualified rendered visual matrix, loader-patched shader inspection, a demonstrated relevant bottleneck, and replicated V1.0.3 CONTROL versus V1.0.4 benchmarks.
-- Consider narrowly scoped common-subexpression elimination only where driver or loader-generated output demonstrates surviving duplicate work and a correctness-preserving change can be measured.
+1. **Test the exact release ZIP.** On a clean Iris instance, cover all five profiles, all three dimensions, reloads, water, darkness and first-person items. Keep the log and matched screenshots.
+2. **Check the Oculus path separately.** Record Minecraft, Forge, Oculus, Embeddium and GPU versions. Do not infer compatibility from the Iris results.
+3. **Revisit water under cover.** Compare exposed and enclosed water at the same time, weather, camera angle and profile. Local skylight gating is not terrain-aware reflection occlusion.
+4. **Measure before optimising.** Record repeatable frame-time results against a shader-off control and determine the noise floor before changing shader hot paths.
+5. **Keep the profile contract intact.** Changes to Low or Potato should be checked for new visual work or shader stages they were intended to avoid.
 
-These are deferred ideas, not V1.0.4 production work.
+Fog endpoint hoisting and common-subexpression rewrites were previously proposed but remain deferred. Reopen them only if compiler output shows duplicate work and a controlled benchmark supports a change.
+
+For the current evidence boundary, see [V1.0.7 final release](V1.0.7_FINAL_RELEASE.md) and [Compatibility](../../docs/COMPATIBILITY.md).
