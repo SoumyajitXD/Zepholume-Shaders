@@ -8,6 +8,7 @@ from __future__ import annotations
 
 import hashlib
 import json
+import stat
 import sys
 import zipfile
 from pathlib import Path
@@ -21,6 +22,7 @@ def inventory(path: Path) -> dict[str, str]:
     if not path.is_file():
         raise ValueError(f"Archive missing: {path}")
     entries: dict[str, str] = {}
+    names_seen: set[str] = set()
     with zipfile.ZipFile(path) as archive:
         for info in archive.infolist():
             name = info.filename
@@ -28,8 +30,15 @@ def inventory(path: Path) -> dict[str, str]:
                     or any(part in ("", ".", "..") for part in name.split("/"))
                     or ":" in name.split("/")[0]):
                 raise ValueError(f"Invalid ZIP entry path: {name}")
-            if name in entries:
-                raise ValueError(f"Duplicate ZIP entry: {name}")
+            # File names that differ only in case collide on common Windows setups.
+            folded = name.casefold()
+            if folded in names_seen:
+                raise ValueError(f"Duplicate or case-colliding ZIP entry: {name}")
+            names_seen.add(folded)
+            if info.flag_bits & 1:
+                raise ValueError(f"Encrypted ZIP entry: {name}")
+            if info.create_system == 3 and stat.S_ISLNK(info.external_attr >> 16):
+                raise ValueError(f"Symlink ZIP entry: {name}")
             entries[name] = digest(archive.read(info))
     if "shaders/shaders.properties" not in entries:
         raise ValueError("ZIP does not expose shader pack root")
