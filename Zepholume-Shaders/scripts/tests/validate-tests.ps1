@@ -130,7 +130,7 @@ try {
     Invoke-Invalid 'non-flat-water-classification' { param($root) foreach ($file in @('vertex.glsl','fragment.glsl')) { $p=Join-Path $root "shaders/lib/$file"; (Get-Content -LiteralPath $p -Raw).Replace('flat varying float zephIsWater;', 'varying float zephIsWater;') | Set-Content -LiteralPath $p -Encoding utf8NoBOM } }
     Invoke-Invalid 'stale-release-metadata' { param($root) Set-FixtureReplacement (Join-Path $root 'README.md') 'V1.0.7 final release' '0.2.0-dev' }
     Invoke-Invalid 'final-release-identification' { param($root) Set-FixtureReplacement (Join-Path $root 'shaders/shaders.properties') 'Zepholume 1.0.7 final release' 'Zepholume 1.0.7 development build' }
-    Invoke-Invalid 'missing-development-heading' { param($root) $p=Join-Path $root 'CHANGELOG.md'; (Get-Content -LiteralPath $p -Raw) -replace '(?m)^## 1\.0\.7-dev-phase1[^\r\n]*', '## candidate' | Set-Content -LiteralPath $p -Encoding utf8NoBOM }
+    Invoke-Invalid 'missing-development-heading' { param($root) Set-FixtureReplacement (Join-Path $root 'CHANGELOG.md') '## 1.0.6-dev-phase3 — unreleased' '## candidate' }
     $badZip = Join-Path $work 'backslash-paths.zip'
     Add-Type -AssemblyName System.IO.Compression.FileSystem
     $zip = [IO.Compression.ZipFile]::Open($badZip, [IO.Compression.ZipArchiveMode]::Create)
