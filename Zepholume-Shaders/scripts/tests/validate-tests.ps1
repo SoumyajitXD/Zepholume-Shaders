@@ -17,6 +17,12 @@ function Invoke-Validator([string]$Root, [string]$PackagePath) {
     return $LASTEXITCODE
 }
 
+function Set-FixtureReplacement([string]$Path, [string]$Old, [string]$New) {
+    $source = Get-Content -LiteralPath $Path -Raw
+    if (-not $source.Contains($Old)) { throw "Fixture anchor missing in $Path : $Old" }
+    Set-Content -LiteralPath $Path -Value $source.Replace($Old, $New) -Encoding utf8NoBOM -NoNewline
+}
+
 function Invoke-Valid([string]$Root, [string]$PackagePath) {
     if ((Invoke-Validator $Root $PackagePath) -ne 0) { throw "Expected validation to pass: $Root" }
 }
@@ -122,8 +128,8 @@ try {
     Invoke-Invalid 'corrupted-dimension-wrapper' { param($root) Add-Content -LiteralPath (Join-Path $root 'shaders/world-1/gbuffers_basic.vsh') -Value "`n// fixture wrapper drift" }
     Invoke-Invalid 'non-water-material-mapping' { param($root) $p=Join-Path $root 'shaders/block.properties'; (Get-Content -LiteralPath $p -Raw).Replace('block.10001=minecraft:water', 'block.10001=minecraft:water minecraft:glass') | Set-Content -LiteralPath $p -Encoding utf8NoBOM }
     Invoke-Invalid 'non-flat-water-classification' { param($root) foreach ($file in @('vertex.glsl','fragment.glsl')) { $p=Join-Path $root "shaders/lib/$file"; (Get-Content -LiteralPath $p -Raw).Replace('flat varying float zephIsWater;', 'varying float zephIsWater;') | Set-Content -LiteralPath $p -Encoding utf8NoBOM } }
-    Invoke-Invalid 'stale-release-metadata' { param($root) $p=Join-Path $root 'README.md'; (Get-Content -LiteralPath $p -Raw).Replace('V1.0.7 Phase 1 development', '0.2.0-dev') | Set-Content -LiteralPath $p -Encoding utf8NoBOM }
-    Invoke-Invalid 'final-release-identification' { param($root) $p=Join-Path $root 'shaders/shaders.properties'; (Get-Content -LiteralPath $p -Raw).Replace('Zepholume 1.0.7 Phase 1 development', 'Zepholume 1.0.7 final release') | Set-Content -LiteralPath $p -Encoding utf8NoBOM }
+    Invoke-Invalid 'stale-release-metadata' { param($root) Set-FixtureReplacement (Join-Path $root 'README.md') 'V1.0.7 final release' '0.2.0-dev' }
+    Invoke-Invalid 'final-release-identification' { param($root) Set-FixtureReplacement (Join-Path $root 'shaders/shaders.properties') 'Zepholume 1.0.7 final release' 'Zepholume 1.0.7 development build' }
     Invoke-Invalid 'missing-development-heading' { param($root) $p=Join-Path $root 'CHANGELOG.md'; (Get-Content -LiteralPath $p -Raw) -replace '(?m)^## 1\.0\.7-dev-phase1[^\r\n]*', '## candidate' | Set-Content -LiteralPath $p -Encoding utf8NoBOM }
     $badZip = Join-Path $work 'backslash-paths.zip'
     Add-Type -AssemblyName System.IO.Compression.FileSystem
