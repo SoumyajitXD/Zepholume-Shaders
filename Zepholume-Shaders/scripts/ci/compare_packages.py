@@ -8,10 +8,27 @@ from __future__ import annotations
 
 import hashlib
 import json
+import re
 import stat
 import sys
 import zipfile
 from pathlib import Path
+
+
+WINDOWS_RESERVED = re.compile(r"(?:con|prn|aux|nul|com[1-9]|lpt[1-9])(?:\..*)?", re.I)
+WINDOWS_FORBIDDEN = set('<>:"|?*')
+
+
+def unsafe_member_name(name: str) -> bool:
+    parts = name.split("/")
+    return (
+        name.startswith("/")
+        or "\\" in name
+        or any(part in ("", ".", "..") for part in parts)
+        or any(part.endswith((" ", ".")) for part in parts)
+        or any(WINDOWS_RESERVED.fullmatch(part) for part in parts)
+        or any(any(ord(ch) < 32 or ch in WINDOWS_FORBIDDEN for ch in part) for part in parts)
+    )
 
 
 def digest(data: bytes) -> str:
@@ -26,9 +43,7 @@ def inventory(path: Path) -> dict[str, str]:
     with zipfile.ZipFile(path) as archive:
         for info in archive.infolist():
             name = info.filename
-            if (info.is_dir() or name.startswith("/") or "\\" in name
-                    or any(part in ("", ".", "..") for part in name.split("/"))
-                    or ":" in name.split("/")[0]):
+            if info.is_dir() or unsafe_member_name(name):
                 raise ValueError(f"Invalid ZIP entry path: {name}")
             # File names that differ only in case collide on common Windows setups.
             folded = name.casefold()

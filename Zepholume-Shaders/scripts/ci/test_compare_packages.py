@@ -62,6 +62,24 @@ class PackageParityTests(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, "case-colliding"):
             inventory(self.right)
 
+    def test_nested_windows_ads_path_fails(self):
+        self.make_zip(self.right, {"shaders/shaders.properties": b"screen=1\n",
+                                   "shaders/cache:stream.fsh": b"x"})
+        with self.assertRaisesRegex(ValueError, "Invalid ZIP entry"):
+            inventory(self.right)
+
+    def test_windows_device_name_fails(self):
+        self.make_zip(self.right, {"shaders/shaders.properties": b"screen=1\n",
+                                   "shaders/CON.txt": b"x"})
+        with self.assertRaisesRegex(ValueError, "Invalid ZIP entry"):
+            inventory(self.right)
+
+    def test_trailing_dot_path_fails(self):
+        self.make_zip(self.right, {"shaders/shaders.properties": b"screen=1\n",
+                                   "shaders/example.fsh.": b"x"})
+        with self.assertRaisesRegex(ValueError, "Invalid ZIP entry"):
+            inventory(self.right)
+
     def test_symlink_entry_fails(self):
         info = zipfile.ZipInfo("shaders/example.fsh")
         info.create_system = 3
