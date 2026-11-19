@@ -6,6 +6,7 @@ import stat
 import tempfile
 import unittest
 import zipfile
+from unittest import mock
 from pathlib import Path
 
 from compare_packages import compare, inventory
@@ -40,6 +41,21 @@ class PackageParityTests(unittest.TestCase):
         self.make_zip(self.right, {"shaders/shaders.properties": b"screen=1\n"})
         with self.assertRaisesRegex(ValueError, "mismatch"):
             compare(self.left, self.right)
+
+    def test_entry_count_limit(self):
+        with mock.patch("compare_packages.MAX_ENTRIES", 1):
+            with self.assertRaisesRegex(ValueError, "too many entries"):
+                inventory(self.right)
+
+    def test_expanded_size_limit(self):
+        with mock.patch("compare_packages.MAX_EXPANDED_BYTES", 1):
+            with self.assertRaisesRegex(ValueError, "expanded size"):
+                inventory(self.right)
+
+    def test_member_size_limit(self):
+        with mock.patch("compare_packages.MAX_MEMBER_BYTES", 1):
+            with self.assertRaisesRegex(ValueError, "member exceeds"):
+                inventory(self.right)
 
     def test_archive_traversal_fails(self):
         self.make_zip(self.right, {"shaders/shaders.properties": b"screen=1\n", "../evil.txt": b"x"})

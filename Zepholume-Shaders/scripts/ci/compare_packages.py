@@ -17,6 +17,9 @@ from pathlib import Path
 
 WINDOWS_RESERVED = re.compile(r"(?:con|prn|aux|nul|com[1-9]|lpt[1-9])(?:\..*)?", re.I)
 WINDOWS_FORBIDDEN = set('<>:"|?*')
+MAX_ENTRIES = 8192
+MAX_MEMBER_BYTES = 32 * 1024 * 1024
+MAX_EXPANDED_BYTES = 256 * 1024 * 1024
 
 
 def unsafe_member_name(name: str) -> bool:
@@ -41,7 +44,14 @@ def inventory(path: Path) -> dict[str, str]:
     entries: dict[str, str] = {}
     names_seen: set[str] = set()
     with zipfile.ZipFile(path) as archive:
-        for info in archive.infolist():
+        infos = archive.infolist()
+        if len(infos) > MAX_ENTRIES:
+            raise ValueError(f"ZIP has too many entries: {len(infos)}")
+        if sum(info.file_size for info in infos) > MAX_EXPANDED_BYTES:
+            raise ValueError("ZIP expanded size exceeds shader-pack limit")
+        for info in infos:
+            if info.file_size > MAX_MEMBER_BYTES:
+                raise ValueError(f"ZIP member exceeds size limit: {info.filename}")
             name = info.filename
             if info.is_dir() or unsafe_member_name(name):
                 raise ValueError(f"Invalid ZIP entry path: {name}")
