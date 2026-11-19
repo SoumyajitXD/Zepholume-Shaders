@@ -43,9 +43,13 @@ def verify(root: Path, manifest_name: str, candidate: str) -> dict:
     root = root.resolve()
     require(bool(COMMIT.fullmatch(candidate)), "Candidate must be a full Git commit SHA")
     manifest = json.loads(grounded(root, manifest_name, "qualification-evidence").read_text(encoding="utf-8-sig"))
+    require(isinstance(manifest, dict), "Evidence manifest must be an object")
     require(manifest.get("schemaVersion") == 1, "Unsupported evidence schema")
-    require(manifest.get("candidateCommit", "").lower() == candidate.lower(), "Candidate SHA differs from evidence")
-    package = manifest.get("package", {})
+    manifest_commit = manifest.get("candidateCommit")
+    require(isinstance(manifest_commit, str) and manifest_commit.lower() == candidate.lower(),
+            "Candidate SHA differs from evidence")
+    package = manifest.get("package")
+    require(isinstance(package, dict), "Evidence package must be an object")
     archive = grounded(root, package.get("path"), "Releases")
     require(archive.suffix.lower() == ".zip", "Candidate must be a ZIP")
     verify_file(archive, package.get("sha256"))
@@ -88,9 +92,12 @@ def verify(root: Path, manifest_name: str, candidate: str) -> dict:
                         f"Invalid/duplicate screenshot mapping: {combo}")
                 screenshots.add(combo)
             if kind == "frame-times":
-                require(file.suffix.lower() == ".csv" and
-                        "frameTimeMs" in file.read_text(encoding="utf-8-sig").splitlines()[0],
+                lines = file.read_text(encoding="utf-8-sig").splitlines()
+                require(file.suffix.lower() == ".csv" and bool(lines) and
+                        "frameTimeMs" in (field.strip() for field in lines[0].split(",")),
                         f"Missing frameTimeMs CSV field: {file}")
+                require(any(line.strip() for line in lines[1:]),
+                        f"Frame-time CSV contains no data rows: {file}")
         require({"latest-log", "patched-glsl", "frame-times"} <= kinds,
                 f"Missing required loader log/patch/benchmark evidence: {key}")
         missing = {(p, d) for p in PROFILES for d in DIMENSIONS} - screenshots

@@ -81,6 +81,35 @@ class RuntimeEvidenceTests(unittest.TestCase):
         self.assertFalse(result["releaseReady"])
         self.assertEqual(result["files"], 36)
 
+    def test_manifest_must_be_an_object(self):
+        (self.root / "qualification-evidence/manifest.json").write_text("[]", encoding="utf-8")
+        with self.assertRaisesRegex(ValueError, "manifest must be an object"):
+            self.run_gate()
+
+    def test_package_must_be_an_object(self):
+        self.data["package"] = []
+        self.save()
+        with self.assertRaisesRegex(ValueError, "package must be an object"):
+            self.run_gate()
+
+    def test_frame_time_csv_must_have_a_real_column(self):
+        artifact = self.data["lanes"][0]["artifacts"][2]
+        payload = b"notframeTimeMs\n16.7\n"
+        (self.root / artifact["path"]).write_bytes(payload)
+        artifact["sha256"] = digest(payload)
+        self.save()
+        with self.assertRaisesRegex(ValueError, "Missing frameTimeMs CSV field"):
+            self.run_gate()
+
+    def test_frame_time_csv_requires_rows(self):
+        artifact = self.data["lanes"][0]["artifacts"][2]
+        payload = b"frameTimeMs\n"
+        (self.root / artifact["path"]).write_bytes(payload)
+        artifact["sha256"] = digest(payload)
+        self.save()
+        with self.assertRaisesRegex(ValueError, "contains no data rows"):
+            self.run_gate()
+
     def test_missing_screenshot(self):
         self.data["lanes"][0]["artifacts"].pop()
         self.save()
