@@ -1,8 +1,6 @@
 # Zepholume Shaders
 
-**Atmospheric lighting. Polished visuals. Practical performance.**
-
-Zepholume Shaders is a performance-conscious shader pack for **Minecraft Java Edition**. Its direct-path renderer focuses on atmospheric light, restrained colour, water and environmental detail without adding expensive shadow, reflection or post-processing pipelines.
+Zepholume Shaders is a performance-conscious shader pack for **Minecraft Java Edition**, focused on atmospheric lighting, fog, clouds and water. It uses a direct rendering path without shadow maps or expensive post-processing pipelines.
 
 ![Archived vanilla vs Zepholume comparison](Screenshots/01-vanilla-vs-zepholume.png)
 
@@ -28,7 +26,7 @@ Zepholume Shaders is a performance-conscious shader pack for **Minecraft Java Ed
 - **Lighting:** retained per-surface irradiance for first-person hands and held items, across dimension wrappers.
 - **Profiles:** Potato, Low, Balanced (default), High and Ultra remain available within the direct one-colour-target renderer.
 
-**Evidence, not marketing:** The V1.0.7 release report records 320/320 standalone shader stages and 420/420 links passing and deterministic packaging. Local Minecraft 26.1.2/Fabric/Iris testing on Intel UHD Graphics 730 covered the release-candidate Ultra horizon and pipeline. The final distributable ZIP was copied into shaderpacks, but that alone is not evidence of a separate comprehensive exact-ZIP gameplay test. Cross-vendor, Oculus/Forge, extended visuals and controlled FPS testing remain open. There is **no measured FPS improvement claim**.
+**Testing status:** The V1.0.7 release report records 320/320 standalone shader stages and 420/420 links passing and deterministic packaging. Local Minecraft 26.1.2/Fabric/Iris testing on Intel UHD Graphics 730 covered the release-candidate Ultra horizon and pipeline. The final distributable ZIP was copied into shaderpacks, but that alone is not evidence of a separate comprehensive exact-ZIP gameplay test. Cross-vendor, Oculus/Forge, extended visuals and controlled FPS testing remain open. There is **no measured FPS improvement claim**.
 
 See [Compatibility](docs/COMPATIBILITY.md) and [CI qualification](docs/CI_AND_RELEASE_QUALIFICATION.md). Release archive integrity and source validation do not establish broad loader or hardware support.
 
