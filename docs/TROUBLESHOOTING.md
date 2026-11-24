@@ -2,7 +2,7 @@
 
 **Current version: V1.0.7.** Download the [GitHub ZIP](../Releases/Zepholume-Shaders-1.0.7.zip) or an actually listed [CurseForge file](https://www.curseforge.com/minecraft/shaders/zepholume-shaders/files). The local Iris/Intel candidate was tested, but full final-ZIP, cross-loader and GPU-vendor compatibility is unqualified. See [Compatibility](COMPATIBILITY.md).
 
-This guide covers the fastest way to isolate common Zepholume problems without turning debugging into random checkbox roulette.
+Start with the checks below before changing shader settings or reinstalling the loader.
 
 ## Shader pack does not appear
 
@@ -23,7 +23,7 @@ Check that:
 6. Read the complete `latest.log` and search for shader compilation/preprocessor errors.
 7. If the loader exposes patched shader output, preserve it for diagnosis.
 
-Do not diagnose a compile failure from one cropped error line if the full log contains the actual root cause twenty lines earlier.
+Copy `logs/latest.log` from the affected instance before relaunching: the next launch can replace it. Include the first shader error and its surrounding lines.
 
 ## Minecraft 26.2-specific problems
 
@@ -144,7 +144,7 @@ High average FPS does not rule out a performance problem. Watch for:
 - driver shader-cache behaviour
 - overlays or capture software
 
-If lowering Zepholume from Ultra to Potato does not materially change the stutter, the shader is probably not the primary bottleneck.
+If lowering Zepholume from Ultra to Potato does not materially change the stutter, repeat the test with shaders disabled. This helps distinguish shader cost from other rendering or chunk-loading work.
 
 ## Problems after updating GPU drivers
 
