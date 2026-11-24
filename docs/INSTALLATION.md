@@ -7,7 +7,7 @@ Zepholume is a **Minecraft Java Edition** shader pack. It does not include Minec
 - [Zepholume-Shaders-1.0.7.zip on GitHub](../Releases/Zepholume-Shaders-1.0.7.zip)
 - [CurseForge Files — check actually published versions](https://www.curseforge.com/minecraft/shaders/zepholume-shaders/files)
 
-The V1.0.7 local release record reports **67,750 bytes** with SHA-256 `79CF6F63E7BA609D734FE653A34321BB79DC5EBAFCC80C1FD5A190471EC5BEB8`. Verify the downloaded bytes before use. A GitHub archive does **not** guarantee all-version or cross-vendor runtime compatibility. Read [Compatibility](COMPATIBILITY.md).
+The V1.0.7 local release record reports **67,750 bytes** with SHA-256 `79CF6F63E7BA609D734FE653A34321BB79DC5EBAFCC80C1FD5A190471EC5BEB8`. Verify the downloaded bytes before use. On Windows, run `Get-FileHash -Algorithm SHA256 -LiteralPath './Zepholume-Shaders-1.0.7.zip'` in PowerShell from the download folder. On Linux, use `sha256sum Zepholume-Shaders-1.0.7.zip`; on macOS, use `shasum -a 256 Zepholume-Shaders-1.0.7.zip`. Compare the output with the recorded hash above. A GitHub archive does **not** guarantee all-version or cross-vendor runtime compatibility. Read [Compatibility](COMPATIBILITY.md).
 
 ## Install with Iris
 
