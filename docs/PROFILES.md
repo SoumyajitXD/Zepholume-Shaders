@@ -4,7 +4,7 @@ Zepholume exposes five quality profiles so the shader can scale across different
 
 ## Recommended default: Balanced
 
-Use **Balanced** first. It is the intended general-gameplay baseline, not a disguised High preset.
+Use **Balanced** first for normal gameplay. On weaker graphics hardware, start with Potato or Low.
 
 The selected profile caps which capability tiers are allowed to compile. Lower overrides can reduce work, but they cannot silently enable features above the chosen baseline.
 
@@ -68,7 +68,7 @@ Use High when Balanced has comfortable GPU headroom and you want the retained am
 
 ### Ultra
 
-Use Ultra only when the extra refinement is worth the additional cost on your system. “Ultra” is not a moral achievement. If Balanced looks nearly identical during actual gameplay and runs better, Balanced wins.
+Use Ultra only when the extra refinement is worth the additional cost on your system. If Balanced looks similar and runs more smoothly, keep Balanced.
 
 ## Performance tuning order
 
@@ -82,6 +82,6 @@ If you are losing FPS or frame-time consistency:
 6. Update or roll back the GPU driver if the problem began after a driver change.
 7. Test the same scene in a minimal Iris/Oculus instance.
 
-When comparing profiles, keep the world, position, camera direction, weather, time, render distance, resolution, and FPS/VSync settings fixed. Otherwise the comparison is mostly decorative statistics.
+When comparing profiles, keep the world, position, camera direction, weather, time, render distance, resolution, and FPS/VSync settings fixed. Wait for shader compilation and chunk loading to settle before recording results. Repeat each run and note both average FPS and frame-time spikes.
 
 Zepholume does not publish profile-specific FPS percentages without controlled runtime measurements. V1.0.7 has not completed a controlled real-loader A/B benchmark pass, so no profile performance delta should be invented from static source metrics or mathematical regression tests.
