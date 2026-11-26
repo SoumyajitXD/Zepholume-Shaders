@@ -4,31 +4,25 @@ Zepholume Shaders is a performance-conscious shader pack for **Minecraft Java Ed
 
 ![Archived vanilla vs Zepholume comparison](Screenshots/01-vanilla-vs-zepholume.png)
 
-> Archival visual comparison; not a verified V1.0.7 before/after capture.
+> Archived comparison illustrating the visual style; not a V1.0.8 test.
 
-## Current source release: V1.0.7
+## V1.0.8
 
-**The V1.0.7 source and final distributable ZIP are available in this GitHub repository.** The release was finalized locally on 2026-11-07 with explicit compatibility and performance limitations.
+The V1.0.8 source was finalized for local export on November 25, 2026. It is available in this repository. The latest ZIP in the repository's `Releases/` directory is still V1.0.7; check CurseForge for published downloads.
 
-- **Download:** [Zepholume-Shaders-1.0.7.zip](Releases/Zepholume-Shaders-1.0.7.zip)
-- **Release record:** 67,750 bytes, 137 archive entries
-- **Reported SHA-256:** `79CF6F63E7BA609D734FE653A34321BB79DC5EBAFCC80C1FD5A190471EC5BEB8`
-- **Shader source:** [Zepholume-Shaders/](Zepholume-Shaders/)
-- **Release notes:** [V1.0.7 release notes](Zepholume-Shaders/docs/V1.0.7_RELEASE_NOTES.md)
-- **Verification report:** [V1.0.7 final release](Zepholume-Shaders/docs/V1.0.7_FINAL_RELEASE.md)
-- **CurseForge:** [Check files actually available there](https://www.curseforge.com/minecraft/shaders/zepholume-shaders/files). A ZIP in GitHub is not proof it has been uploaded to CurseForge.
+- [CurseForge files](https://www.curseforge.com/minecraft/shaders/zepholume-shaders/files) · [GitHub ZIP archives](Releases/)
+- [V1.0.8 release and build instructions](Zepholume-Shaders/docs/V1.0.8_RELEASE.md) · [Changelog](Zepholume-Shaders/CHANGELOG.md)
+- Recorded SHA-256 of the locally exported `Zepholume-Shaders-1.0.8.zip`: `A4C733D2ACB89A7BCBD158A40BF19B114D02B8A357AA9EFA7E97AC1262E0D804`
 
-### What's new in V1.0.7
+### What's new
 
-- **Horizon and fog:** smoother Overworld sky-to-fog transition, corrected directional fog orientation and preserved dark Potato-profile fog.
-- **Clouds:** layered block-shaped fields with adaptive weather coverage and sun-facing twilight warmth.
-- **Water:** local skylight-gated celestial highlights for enclosed areas and flat water-material classification to address diagonal waterfall artifacts.
-- **Lighting:** retained per-surface irradiance for first-person hands and held items, across dimension wrappers.
-- **Profiles:** Potato, Low, Balanced (default), High and Ultra remain available within the direct one-colour-target renderer.
+- Shared Overworld horizon colours across sky, terrain fog and clouds; upper profiles add moon-directed cloud lighting and distance-faded cloud detail.
+- Calmer nighttime water, directional twilight reflections, lightmapped transmission under cover and no analytical sky reflections in the Nether.
+- Restored hurt/flash tints, refined enclosed block-light warmth and neutral distant terrain shading.
+- More stable foliage and water animation across camera-coordinate resets.
+- Cheaper Potato/Low paths, with less work before fog starts and after distant ripples fade.
 
-**Testing status:** The V1.0.7 release report records 320/320 standalone shader stages and 420/420 links passing and deterministic packaging. Local Minecraft 26.1.2/Fabric/Iris testing on Intel UHD Graphics 730 covered the release-candidate Ultra horizon and pipeline. The final distributable ZIP was copied into shaderpacks, but that alone is not evidence of a separate comprehensive exact-ZIP gameplay test. Cross-vendor, Oculus/Forge, extended visuals and controlled FPS testing remain open. There is **no measured FPS improvement claim**.
-
-See [Compatibility](docs/COMPATIBILITY.md) and [CI qualification](docs/CI_AND_RELEASE_QUALIFICATION.md). Release archive integrity and source validation do not establish broad loader or hardware support.
+V1.0.8 has offline GLSL, standalone loader-patcher and packaging evidence, not Minecraft gameplay or visual qualification. Four Iris/Oculus patcher lanes were exercised. Synthetic GPU timings are not gameplay FPS measurements. See [compatibility](docs/COMPATIBILITY.md) and [CI status](docs/CI_AND_RELEASE_QUALIFICATION.md).
 
 ## What Zepholume focuses on
 
@@ -51,17 +45,17 @@ The renderer intentionally avoids shadow maps, SSR, SSAO, bloom pipelines, tempo
 | **High** | More GPU headroom | Refined water, ambient and cloud response |
 | **Ultra** | Maximum analytical quality | Highest detail within the same direct-path renderer |
 
-`Ultra Lite` remains a deprecated alias for Low, not a sixth selectable profile. Source profile tests and local Iris switching smoke tests passed; full cross-loader/profile visual qualification remains incomplete. See [Profiles](docs/PROFILES.md).
+`Ultra Lite` remains a deprecated alias for Low, not a sixth selectable profile. The five profiles are defined in source; local Iris profile switching evidence belongs to V1.0.7, not the V1.0.8 ZIP. See [Profiles](docs/PROFILES.md).
 
 ## Installation
 
-1. Prepare a Minecraft Java instance with an appropriate **Iris** shader loader (or test the separately unqualified Oculus path).
-2. Download the [V1.0.7 ZIP from GitHub](Releases/Zepholume-Shaders-1.0.7.zip), or choose a version **actually listed** on [CurseForge Files](https://www.curseforge.com/minecraft/shaders/zepholume-shaders/files).
+1. Prepare a Minecraft Java instance with a compatible **Iris** loader, or **Oculus** where available.
+2. Choose an available ZIP from [CurseForge Files](https://www.curseforge.com/minecraft/shaders/zepholume-shaders/files) or [GitHub archives](Releases/). To build V1.0.8, follow the [release instructions](Zepholume-Shaders/docs/V1.0.8_RELEASE.md).
 3. Copy the intact ZIP to **that instance's** `shaderpacks` directory. Do **not** extract it.
 4. Select Zepholume in the shader menu and start with **Balanced**.
 5. On errors or visual corruption, keep the full `latest.log` and retest in an isolated instance.
 
-V1.0.7's release-candidate lineage has local Minecraft **26.1.2 Fabric/Iris/Intel** runtime and horizon-comparison evidence. Other version/loader/GPU combinations, including Oculus/Forge, are not qualified by that result. Final ZIP installation does not substitute for a full gameplay matrix. OptiFine is unsupported.
+The development target is Minecraft Java 1.20–26.3 with Iris and an Oculus compatibility path. This is not a tested-version list. V1.0.7 has historical Iris/Intel runtime evidence; V1.0.8 has no exact-ZIP gameplay test. OptiFine is unsupported.
 
 See [Installation](docs/INSTALLATION.md), [Compatibility](docs/COMPATIBILITY.md) and [Troubleshooting](docs/TROUBLESHOOTING.md).
 
@@ -75,8 +69,8 @@ See [Installation](docs/INSTALLATION.md), [Compatibility](docs/COMPATIBILITY.md)
 - [Known issues and test gaps](Zepholume-Shaders/docs/KNOWN_ISSUES.md)
 - [Development](docs/DEVELOPMENT.md)
 - [CI and release qualification](docs/CI_AND_RELEASE_QUALIFICATION.md)
-- [V1.0.7 release notes](Zepholume-Shaders/docs/V1.0.7_RELEASE_NOTES.md)
-- [V1.0.7 final release report](Zepholume-Shaders/docs/V1.0.7_FINAL_RELEASE.md)
+- [V1.0.8 release and validation](Zepholume-Shaders/docs/V1.0.8_RELEASE.md)
+- [Historical V1.0.7 final release report](Zepholume-Shaders/docs/V1.0.7_FINAL_RELEASE.md)
 - [Source and developer tooling](Zepholume-Shaders/)
 
 ## Repository layout
@@ -95,7 +89,7 @@ Zepholume-Shaders/
 
 ## Reporting a bug
 
-Provide Minecraft and loader versions, profile, GPU/driver, Java, rendering mods, reproduction steps and full `latest.log`. Supply matched images for visual issues when possible. Use [GitHub Issues](https://github.com/SoumyajitXD/Zepholume-Shaders/issues).
+Provide the Zepholume version and ZIP SHA-256, Minecraft and loader versions, profile, GPU/driver, Java, rendering mods, reproduction steps and sanitized `latest.log`. Supply matched images for visual issues when possible. Use [GitHub Issues](https://github.com/SoumyajitXD/Zepholume-Shaders/issues).
 
 ## License
 

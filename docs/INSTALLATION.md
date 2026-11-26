@@ -1,29 +1,41 @@
-# Zepholume Shaders V1.0.7 — Installation
+# Installing Zepholume Shaders
 
 Zepholume is a **Minecraft Java Edition** shader pack. It does not include Minecraft, Iris, Oculus, a mod loader or Java.
 
-## Download the archive
+## Download or build the archive
 
-- [Zepholume-Shaders-1.0.7.zip on GitHub](../Releases/Zepholume-Shaders-1.0.7.zip)
-- [CurseForge Files — check actually published versions](https://www.curseforge.com/minecraft/shaders/zepholume-shaders/files)
+- [CurseForge Files](https://www.curseforge.com/minecraft/shaders/zepholume-shaders/files) — choose a published file for your setup.
+- [GitHub ZIP archives](../Releases/) — V1.0.7 is the latest archived ZIP as of November 26, 2026.
+- [V1.0.8 source and build instructions](../Zepholume-Shaders/docs/V1.0.8_RELEASE.md) — the source is finalized, but its locally exported ZIP has not been added to the archive directory.
 
-The V1.0.7 local release record reports **67,750 bytes** with SHA-256 `79CF6F63E7BA609D734FE653A34321BB79DC5EBAFCC80C1FD5A190471EC5BEB8`. Verify the downloaded bytes before use. On Windows, run `Get-FileHash -Algorithm SHA256 -LiteralPath './Zepholume-Shaders-1.0.7.zip'` in PowerShell from the download folder. On Linux, use `sha256sum Zepholume-Shaders-1.0.7.zip`; on macOS, use `shasum -a 256 Zepholume-Shaders-1.0.7.zip`. Compare the output with the recorded hash above. A GitHub archive does **not** guarantee all-version or cross-vendor runtime compatibility. Read [Compatibility](COMPATIBILITY.md).
+The V1.0.8 release record gives the local ZIP SHA-256 as `A4C733D2ACB89A7BCBD158A40BF19B114D02B8A357AA9EFA7E97AC1262E0D804`.
+
+To build from a clean V1.0.8 source checkout, use PowerShell 7 from the nested `Zepholume-Shaders/` directory:
+
+```powershell
+./scripts/package.ps1 -OutputDirectory ./dist
+Get-FileHash -Algorithm SHA256 -LiteralPath ./dist/Zepholume-Shaders-1.0.8.zip
+```
+
+The packager refuses to overwrite existing output. Use an empty output directory. Compression may vary between environments; see the release record for per-entry comparison instructions. For a downloaded ZIP, use `Get-FileHash -Algorithm SHA256 -LiteralPath ./Zepholume-Shaders-1.0.8.zip` (Windows), `sha256sum` (Linux) or `shasum -a 256` (macOS). Compare against the record for the exact version, not another release.
+
+The previous V1.0.7 archive's recorded SHA-256 is `79CF6F63E7BA609D734FE653A34321BB79DC5EBAFCC80C1FD5A190471EC5BEB8`. See [Compatibility](COMPATIBILITY.md) before choosing a version.
 
 ## Install with Iris
 
 1. Create a suitable Minecraft Java instance with **Iris** and the dependencies required by the chosen version (generally Sodium).
 2. Launch the instance once to establish its game directory.
-3. Download `Zepholume-Shaders-1.0.7.zip`.
+3. Obtain the desired shaderpack ZIP using one of the options above.
 4. Copy the **intact ZIP** into the instance's `shaderpacks` directory. **Do not extract it.**
 5. Launch Minecraft, open the shader-pack menu, and select Zepholume.
 6. Start with **Balanced**. Move to Low/Potato if needed for performance.
 7. If anything looks wrong, preserve `latest.log` and retest in a minimal instance.
 
-V1.0.7's selected source candidate has local Minecraft **26.1.2 / Fabric / Iris 1.10.9 / Intel UHD 730** runtime evidence. Copying the final ZIP into shaderpacks was recorded, but no comprehensive multi-profile, multi-dimension, cross-vendor final-ZIP gameplay matrix was completed.
+V1.0.8 has standalone Iris patcher evidence, but no exact-ZIP gameplay qualification. V1.0.7's historical Minecraft 26.1.2 / Fabric / Iris 1.10.9 / Intel UHD 730 candidate testing does not transfer to V1.0.8.
 
 ## Install with Oculus (unqualified compatibility path)
 
-Create a Forge instance with compatible **Oculus**, **Embeddium** and dependencies, then copy the ZIP into its `shaderpacks` directory and select Zepholume. A staged 1.20.1 stack used Forge 47.4.22, Oculus 1.8.0, Embeddium 0.3.31 and Java 17, but **the final V1.0.7 ZIP has not completed Oculus gameplay qualification**.
+Create a Forge instance with compatible **Oculus**, **Embeddium** and dependencies, then copy the ZIP into its `shaderpacks` directory and select Zepholume. A staged 1.20.1 stack used Forge 47.4.22, Oculus 1.8.0, Embeddium 0.3.31 and Java 17, but V1.0.8 exercised the Oculus 1.8.0 standalone patcher, but **has not completed Oculus gameplay qualification**.
 
 Experimental modern Oculus ports have additional limitations. OptiFine is not supported or tested.
 
@@ -39,12 +51,12 @@ Third-party launchers and per-instance profiles can use a different game folder.
 
 ## Profiles and updating
 
-Balanced is recommended. Potato, Low, High and Ultra scale optional work. No official V1.0.7 in-game FPS improvement percentage is available.
+Balanced is recommended. Potato, Low, High and Ultra scale optional work. No controlled V1.0.8 gameplay FPS improvement is established.
 
 When updating, quit Minecraft, keep the previous ZIP as a rollback option, place the new archive in the correct instance, select it, and re-check the chosen shader profile. Existing option values can persist across updates.
 
 ## Diagnosing a failure
 
-Test in an isolated instance; record the Minecraft version, shader loader, profile, GPU/driver, full `latest.log` and screenshot. V1.0.7 includes source fixes for **waterfall interpolation, first-person irradiance and enclosed-water skylight gating**. Those fixes are not substitutes for testing the exact problem scene in the final ZIP.
+Test in an isolated instance; record the Minecraft version, shader loader, profile, GPU/driver, full `latest.log` and screenshot. V1.0.8 retains prior waterfall and hand-lightmap fixes and refines water, fog and entity overlays. Test the exact problem scene and archive before treating any source fix as a confirmed in-game fix.
 
-See [Troubleshooting](TROUBLESHOOTING.md), [Compatibility](COMPATIBILITY.md) and [V1.0.7 release notes](../Zepholume-Shaders/docs/V1.0.7_RELEASE_NOTES.md).
+See [Troubleshooting](TROUBLESHOOTING.md), [Compatibility](COMPATIBILITY.md) and [V1.0.8 release notes](../Zepholume-Shaders/docs/V1.0.8_RELEASE.md).
