@@ -26,10 +26,24 @@ try {
     Assert-Close $s.medianFrameTimeMs 2
     Assert-Close $s.p95FrameTimeMs 4
     Assert-Close $s.p99EquivalentFps 250
+    Assert-Close $s.onePercentLowFps 250
+    Assert-Close $s.slowestOnePercentFrameCount 1
+    Assert-Close $s.slowestOnePercentMeanFrameTimeMs 4
+    Assert-Close $s.slowestOnePercentFps 250
     Assert-Close $s.averageFps 400
     Assert-Close $s.frameTimeVarianceMs2 1.25
     Assert-Close $s.frameTimeStdDevMs ([Math]::Sqrt(1.25))
     Assert-Close $s.capturedFrameSeconds 0.01
+    # At 101 samples the slowest 1% rounds up to two frames; the inverse
+    # p99 is intentionally different and its legacy alias remains intact.
+    Set-Content -LiteralPath $csv -Value (@('frameTimeMs') + @('1') * 99 + @('10','30')) -Encoding utf8NoBOM
+    & (Join-Path $scripts 'benchmark-summarize.ps1') -InputCsv $csv -PackVersion 1.0.4-dev -Profile Balanced -OutputJson $summaryPath
+    $s = Get-Content -LiteralPath $summaryPath -Raw | ConvertFrom-Json
+    Assert-Close $s.slowestOnePercentFrameCount 2
+    Assert-Close $s.slowestOnePercentMeanFrameTimeMs 20
+    Assert-Close $s.slowestOnePercentFps 50
+    Assert-Close $s.p99EquivalentFps 100
+    Assert-Close $s.onePercentLowFps 100
     foreach ($bad in @('NaN','Infinity','-Infinity','1e999','0','-1','bad','1e-320')) {
         Set-Content -LiteralPath $csv -Value "frameTimeMs`n$bad" -Encoding utf8NoBOM
         Reject "sample $bad" { & (Join-Path $scripts 'benchmark-summarize.ps1') -InputCsv $csv -PackVersion 1.0.4-dev -Profile Balanced -OutputJson $summaryPath }

@@ -19,6 +19,11 @@ foreach ($row in $rows) {
 }
 $sorted = @($samples | Sort-Object)
 function Percentile([double]$p) { $index = [Math]::Min($sorted.Count - 1, [Math]::Max(0, [int][Math]::Ceiling($p * $sorted.Count) - 1)); return $sorted[$index] }
+# Select ceil(1% of frames), including at least one, and average frame times
+# before conversion to FPS. This differs from averaging per-frame FPS.
+$slowestCount = [int][Math]::Ceiling($sorted.Count * 0.01)
+$slowestMean = 0.0
+for ($i = $sorted.Count - $slowestCount; $i -lt $sorted.Count; $i++) { $slowestMean += $sorted[$i] / $slowestCount }
 $mean = ($samples | Measure-Object -Average).Average
 $variance = 0.0
 foreach ($sample in $samples) { $variance += ($sample - $mean) * ($sample - $mean) / $samples.Count }
@@ -29,11 +34,13 @@ $result = [ordered]@{
     samples = $samples.Count; meanFrameTimeMs = $mean; medianFrameTimeMs = Percentile 0.50; p95FrameTimeMs = Percentile 0.95; p99FrameTimeMs = Percentile 0.99
     averageFps = 1000.0 / $mean; onePercentLowFps = 1000.0 / (Percentile 0.99)
     p99EquivalentFps = 1000.0 / (Percentile 0.99)
+    slowestOnePercentFrameCount = $slowestCount; slowestOnePercentMeanFrameTimeMs = $slowestMean
+    slowestOnePercentFps = 1000.0 / $slowestMean
     frameTimeVarianceMs2 = $variance; frameTimeStdDevMs = [Math]::Sqrt($variance)
     capturedFrameSeconds = $mean * $samples.Count / 1000.0
-    note = 'Nearest-rank percentiles; population variance within this run. onePercentLowFps is a legacy alias of p99EquivalentFps, not the mean of the slowest 1 percent. Captured frame duration is not wall-clock validation. No GPU/CPU bottleneck, power or utilisation is inferred. Synthetic input is not runtime evidence.'
+    note = 'Nearest-rank percentiles; population variance within this run. onePercentLowFps is a legacy alias of p99EquivalentFps, not slowestOnePercentFps. The latter is 1000 divided by the mean of the slowest ceiling(1% of sample count) frame times. Captured frame duration is not wall-clock validation. No GPU/CPU bottleneck, power or utilisation is inferred. Synthetic input is not runtime evidence.'
 }
-foreach ($key in @('meanFrameTimeMs','averageFps','p99EquivalentFps','capturedFrameSeconds')) {
+foreach ($key in @('meanFrameTimeMs','averageFps','p99EquivalentFps','slowestOnePercentMeanFrameTimeMs','slowestOnePercentFps','capturedFrameSeconds')) {
     if (-not [double]::IsFinite([double]$result[$key]) -or [double]$result[$key] -le 0) { throw "Invalid derived statistic: $key" }
 }
 if (-not $OutputJson) { $OutputJson = [IO.Path]::ChangeExtension($InputCsv, '.summary.json') }
