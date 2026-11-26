@@ -22,7 +22,7 @@ def main():
     atmosphere = (ROOT / 'shaders/lib/atmosphere.glsl').read_text()
     assert lighting.count('zephSafeNormalize(sunPosition)') == 1
     assert 'float effectiveSky = skyLight * mix(0.25, 1.0, daylight)' in lighting
-    assert 'return zephHazeTint(haze' in fog
+    assert 'return zephOpenAirHaze(fogColor' in fog
     assert 'dot(colour, luma)' in atmosphere
     for c in ((0., 0., 0.), (.01, .01, .01), (.1, .3, .7), (1., 1., 1.)):
         for t in ((.72, .78, .82), (.055, .070, .105), (.82, .48, .32)):

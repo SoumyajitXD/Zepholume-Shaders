@@ -56,6 +56,7 @@ function Invoke-Invalid([string]$Name, [scriptblock]$Mutation) {
         'missing-shader-pair' = 'Missing program pair'
         'non-flat-water-classification' = 'Water material classification must use flat interpolation'
         'invalid-option-range' = 'Profile value outside declared range'
+        'duplicate-profile-assignment' = 'Duplicate profile assignment'
     }
     if ($Name -eq 'missing-shader-pair') {
         foreach ($dimension in @('world0','world-1','world1')) { Remove-Item -LiteralPath (Join-Path $fixture "shaders/$dimension/gbuffers_basic.fsh") }
@@ -67,8 +68,7 @@ function Invoke-Invalid([string]$Name, [scriptblock]$Mutation) {
         & $pwsh -NoLogo -NoProfile -File $validator -Root $fixture *> $capture
         $code = $LASTEXITCODE
         $output = Get-Content -LiteralPath $capture -Raw
-        # PowerShell can wrap an error across lines and insert a diagnostic
-        # gutter ("|"). Match the message, not the host's display layout.
+        # Normalize diagnostic wrapping and the PowerShell error gutter.
         $messageText = ($output -replace '\s+\|\s+', ' ') -replace '\s+', ' '
         if ($code -eq 0 -or -not $messageText.Contains($isolatedRules[$Name])) { throw "Expected '$($isolatedRules[$Name])' rejection for $Name; exit=$code; output=$output" }
         if ($output -match 'Dimension wrapper (differs|topology)') { throw "Unrelated wrapper failure masked $Name" }
@@ -91,12 +91,22 @@ try {
     & $pwsh -NoLogo -NoProfile -File (Join-Path $PSScriptRoot 'water-specular-gating-equivalence.ps1') | Out-Host
     if ($LASTEXITCODE -ne 0) { throw 'Water specular gating equivalence tests failed.' }
     Invoke-Valid $projectRoot $package
-    $stalePackage = Join-Path $projectRoot 'dist/Zepholume-Shaders-1.0.4.zip'
+    # The historical release is tracked in the repository's sibling Releases
+    # directory, not necessarily in this checkout's ignored dist directory.
+    # Check its identity and the intended rejection independently of fixtures.
+    $stalePackage = Join-Path (Split-Path -Parent $projectRoot) 'Releases/Zepholume-Shaders-1.0.4.zip'
     if (Test-Path -LiteralPath $stalePackage) {
-        if ((Invoke-Validator $projectRoot $stalePackage) -eq 0) { throw 'Expected the preserved V1.0.4 ZIP to fail exact current-source validation.' }
+        $historicalHash = (Get-FileHash -LiteralPath $stalePackage -Algorithm SHA256).Hash
+        $capture = Join-Path $work 'historical-package-output.txt'
+        & $pwsh -NoLogo -NoProfile -File $validator -Root $projectRoot -Package $stalePackage *> $capture
+        $code = $LASTEXITCODE
+        $output = Get-Content -LiteralPath $capture -Raw
+        if ($code -eq 0 -or $output -notmatch 'ZIP (missing expected entry|entry differs from current source|contains unexpected entry)') {
+            throw "Expected a source/package mismatch for the historical ZIP; exit=$code; output=$output"
+        }
         $rejectedFixtures++
-        Write-Host 'Rejected as expected: stale V1.0.4 package bytes'
-    } else { Write-Host 'SKIP: optional preserved V1.0.4 package is unavailable; no rejection claimed.' }
+        Write-Host "Rejected as expected: historical V1.0.4 package differs from current source; SHA-256 $historicalHash"
+    } else { Write-Host 'SKIP: optional historical V1.0.4 package is unavailable; no rejection claimed.' }
     Invoke-Invalid 'duplicated-malformed-define' { param($root) Add-Content -LiteralPath (Join-Path $root 'shaders/gbuffers_skybasic.vsh') -Value "`n#define #ZEPH_BROKEN`n#define #ZEPH_BROKEN" }
     Invoke-Invalid 'missing-main' { param($root) $p=Join-Path $root 'shaders/lib/vertex.glsl'; (Get-Content -LiteralPath $p -Raw).Replace('void main(', 'void not_main(') | Set-Content -LiteralPath $p -Encoding utf8NoBOM }
     Invoke-Invalid 'include-cycle' { param($root) $s=Join-Path $root 'shaders'; Set-Content -LiteralPath (Join-Path $s 'zz_cycle_a.glsl') '#include "/zz_cycle_b.glsl"' -Encoding utf8NoBOM; Set-Content -LiteralPath (Join-Path $s 'zz_cycle_b.glsl') '#include "/zz_cycle_a.glsl"' -Encoding utf8NoBOM; Set-Content -LiteralPath (Join-Path $s 'zz_cycle.vsh') "#version 330 compatibility`n#include `"/zz_cycle_a.glsl`"`nvoid main() { gl_Position = vec4(0.0); }" -Encoding utf8NoBOM; Set-Content -LiteralPath (Join-Path $s 'zz_cycle.fsh') "#version 330 compatibility`n#include `"/zz_cycle_a.glsl`"`nvoid main() { gl_FragData[0] = vec4(1.0); }" -Encoding utf8NoBOM }
@@ -108,6 +118,7 @@ try {
     Invoke-Invalid 'profile-matrix-drift' { param($root) $p=Join-Path $root 'shaders/shaders.properties'; (Get-Content -LiteralPath $p -Raw).Replace('profile.Low = ZEPH_PROFILE_TIER:1 ZEPH_EXPOSURE:1', 'profile.Low = ZEPH_PROFILE_TIER:1 ZEPH_EXPOSURE:2') | Set-Content -LiteralPath $p -Encoding utf8NoBOM }
     Invoke-Invalid 'obsolete-extra-profile' { param($root) Add-Content -LiteralPath (Join-Path $root 'shaders/shaders.properties') -Value 'profile.Ultra_Lite = ZEPH_PROFILE_TIER:1' }
     Invoke-Invalid 'duplicate-profile' { param($root) Add-Content -LiteralPath (Join-Path $root 'shaders/shaders.properties') -Value 'profile.Low = ZEPH_PROFILE_TIER:1' }
+    Invoke-Invalid 'duplicate-profile-assignment' { param($root) $p=Join-Path $root 'shaders/shaders.properties'; (Get-Content -LiteralPath $p -Raw).Replace('profile.Low = ZEPH_PROFILE_TIER:1', 'profile.Low = ZEPH_PROFILE_TIER:1 ZEPH_PROFILE_TIER:1') | Set-Content -LiteralPath $p -Encoding utf8NoBOM }
     Invoke-Invalid 'missing-profile-control' { param($root) $p=Join-Path $root 'shaders/shaders.properties'; (Get-Content -LiteralPath $p -Raw).Replace('screen = <profile> <empty>', 'screen = <empty> <empty>') | Set-Content -LiteralPath $p -Encoding utf8NoBOM }
     Invoke-Invalid 'additional-colour-target' { param($root) Add-Content -LiteralPath (Join-Path $root 'shaders/gbuffers_basic.fsh') -Value "`ngl_FragData[1] = vec4(0.0);" }
     Invoke-Invalid 'destroyed-output-alpha' { param($root) $p=Join-Path $root 'shaders/lib/fragment.glsl'; (Get-Content -LiteralPath $p -Raw).Replace('clamp(source.a, 0.0, 1.0)', '1.0') | Set-Content -LiteralPath $p -Encoding utf8NoBOM }
@@ -128,8 +139,10 @@ try {
     Invoke-Invalid 'corrupted-dimension-wrapper' { param($root) Add-Content -LiteralPath (Join-Path $root 'shaders/world-1/gbuffers_basic.vsh') -Value "`n// fixture wrapper drift" }
     Invoke-Invalid 'non-water-material-mapping' { param($root) $p=Join-Path $root 'shaders/block.properties'; (Get-Content -LiteralPath $p -Raw).Replace('block.10001=minecraft:water', 'block.10001=minecraft:water minecraft:glass') | Set-Content -LiteralPath $p -Encoding utf8NoBOM }
     Invoke-Invalid 'non-flat-water-classification' { param($root) foreach ($file in @('vertex.glsl','fragment.glsl')) { $p=Join-Path $root "shaders/lib/$file"; (Get-Content -LiteralPath $p -Raw).Replace('flat varying float zephIsWater;', 'varying float zephIsWater;') | Set-Content -LiteralPath $p -Encoding utf8NoBOM } }
-    Invoke-Invalid 'stale-release-metadata' { param($root) Set-FixtureReplacement (Join-Path $root 'README.md') 'V1.0.7 final release' '0.2.0-dev' }
-    Invoke-Invalid 'final-release-identification' { param($root) Set-FixtureReplacement (Join-Path $root 'shaders/shaders.properties') 'Zepholume 1.0.7 final release' 'Zepholume 1.0.7 development build' }
+    Invoke-Invalid 'stale-release-metadata' { param($root) Set-FixtureReplacement (Join-Path $root 'README.md') '**Zepholume Shaders V1.0.8.**' '**Zepholume Shaders V1.0.8.** 0.2.0-dev' }
+    Invoke-Invalid 'release-identification' { param($root) Set-FixtureReplacement (Join-Path $root 'shaders/shaders.properties') '# Zepholume Shaders V1.0.8.' '# Zepholume 1.0.8 development candidate.' }
+    Invoke-Invalid 'missing-final-heading' { param($root) Set-FixtureReplacement (Join-Path $root 'CHANGELOG.md') '## 1.0.8 — finalized for local export' '## 1.0.8 — unreleased' }
+    Invoke-Invalid 'missing-release-heading' { param($root) Set-FixtureReplacement (Join-Path $root 'CHANGELOG.md') '## 1.0.7 — released' '## 1.0.7 — candidate' }
     Invoke-Invalid 'missing-development-heading' { param($root) Set-FixtureReplacement (Join-Path $root 'CHANGELOG.md') '## 1.0.6-dev-phase3 — unreleased' '## candidate' }
     $badZip = Join-Path $work 'backslash-paths.zip'
     Add-Type -AssemblyName System.IO.Compression.FileSystem

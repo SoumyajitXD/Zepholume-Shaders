@@ -9,3 +9,10 @@ tools/glslang/
 *.tmp
 *.bak
 __pycache__/
+/.venv/
+/.pytest_cache/
+*.pyc
+*.class
+*.zip
+*.zip.sha256
+*.zip.manifest.json

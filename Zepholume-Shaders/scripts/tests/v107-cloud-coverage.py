@@ -6,7 +6,7 @@ source = (Path(__file__).resolve().parents[2] / 'shaders/lib/cloud_fragment.glsl
 # Bind the model and its specialization to production. Changes to its formula
 # must be reviewed here rather than silently testing an obsolete CPU model.
 for expression in (
-    '#if ZEPH_EFFECTIVE_CLOUD_QUALITY > 0 && ZEPH_EFFECTIVE_CLOUD_TIER >= 2',
+    '!defined(ZEPH_DIM_NETHER) && !defined(ZEPH_DIM_END) && ZEPH_EFFECTIVE_CLOUD_QUALITY > 0 && ZEPH_EFFECTIVE_CLOUD_TIER >= 2',
     'fract(vec3(cell.xyx) * vec3(0.1031, 0.1030, 0.0973))',
     'p += dot(p, p.yzx + 33.33)',
     'return fract((p.x + p.y) * p.z)',
@@ -17,8 +17,8 @@ for expression in (
     'smoothstep(threshold - edgeWidth, threshold + edgeWidth, cloudField)',
     'source.a *= mix(0.08, 1.0, coverage)',
     '#if ZEPH_EFFECTIVE_CLOUD_TIER >= 3',
-    'zephCloudBlocks(zephCloudTexCoord * 28.0 + vec2(11.3, 4.7))',
-    'cloudField * 0.72 + detailField * 0.28',
+    'zephCloudTexCoord * 28.0 + vec2(11.3, 4.7)',
+    'mix(cloudField, detailField, 0.28)',
 ):
     assert expression in source, expression
 assert 'discard;' not in source

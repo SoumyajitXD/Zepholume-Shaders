@@ -13,7 +13,7 @@ root = here.parents[1] / 'shaders' / 'lib'
 common = (root / 'common.glsl').read_text(encoding='utf-8')
 water = (root / 'water.glsl').read_text(encoding='utf-8')
 mutations = (
-    ('enclosed sky leak', 'reflectance *= skyExposure;', 'reflectance *= 1.0;'),
+    ('enclosed sky leak', 'if (skyExposure <= 0.0) return transmission;', 'skyExposure = 1.0;'),
     ('lost solar lobe', 'zephSpecularLobe(sunNdotH) * sunWeight;', 'zephSpecularLobe(sunNdotH) * 0.0;'),
 )
 case = dict(tier=2, dimension='Overworld', normal=(0., 1., 0.),

@@ -43,8 +43,15 @@ def check(variant_root, source_root, require_current_gates=False):
             continue
         seen.add(key)
         source = files[row["ContentHash"].lower()][0].read_text(encoding="utf-8-sig")
-        profile, program, stage = row["Profile"], row["Program"], row["Stage"]
+        profile, dimension, program, stage = row["Profile"], row["Dimension"], row["Program"], row["Stage"]
         counts[profile] = counts.get(profile, 0) + 1
+        if program == "gbuffers_terrain" and stage == "vsh":
+            if profile == "Potato":
+                assert "zephMoveFoliage(" not in source, "Potato foliage work leaked"
+            else:
+                foliage = body(source, "zephMoveFoliage")
+                assert ("float gust" in foliage) == (profile != "Low"), f"{profile} gust specialization incorrect"
+            checks += 1
         if program == "gbuffers_water" and stage == "vsh":
             move = body(source, "zephMoveWater")
             if profile in ("Potato", "Low"):
@@ -66,7 +73,7 @@ def check(variant_root, source_root, require_current_gates=False):
             surface = body(source, "zephWaterSurfaceLinear")
             main = body(source, "main")
             if require_current_gates:
-                if profile in ("Potato", "Low"):
+                if profile in ("Potato", "Low") or dimension == "Nether":
                     assert "zephWaterRippleNormal(" not in surface, f"{profile} ripple leaked"
                 else:
                     assert "zephWaterRippleNormal(" in surface, f"{profile} ripple disappeared"
@@ -84,16 +91,16 @@ def check(variant_root, source_root, require_current_gates=False):
             checks += 1
         if program == "gbuffers_clouds" and stage == "fsh":
             main = body(source, "main")
-            if profile == "Potato":
+            if profile == "Potato" or (require_current_gates and dimension != "Overworld"):
                 assert "sunDir" not in main and "zephDaylightFromDirection" not in main
-                assert "nightTint" not in main and "sunRim" not in main
+                assert "nightTint" not in main and "sunRim" not in main and "zephOpenAirHaze" not in main
             elif profile == "Low":
                 if require_current_gates:
                     assert "zephCloudSolar" in main and "sunDir" not in main
                     assert "zephWorldElevation(" not in main and "zephDaylightFromElevation(" not in main
                 else:
-                    assert "sunDir" in main
-                assert "sunRim" not in main and "twilight" not in main
+                    assert "zephCloudSolar" in main or "sunDir" in main
+                assert "sunRim" not in main and "twilightTint" not in main
             elif profile == "Balanced":
                 assert "twilight" in main and "sunRim" not in main
             else:
@@ -110,16 +117,22 @@ def check(variant_root, source_root, require_current_gates=False):
             if require_current_gates:
                 assert "zephWorldElevation(" not in main and "zephCloudNormalUp" not in source
                 checks += 1
-        if program == "gbuffers_clouds" and stage == "vsh" and profile == "Low" and require_current_gates:
+        if program == "gbuffers_clouds" and stage == "vsh" and profile == "Low" and require_current_gates and dimension == "Overworld":
             main = body(source, "main")
             assert "zephCloudSolar" in main and "zephDaylightFromElevation(" in main
-            assert "zephWorldElevation(" in main
+            assert "dot(zephSafeNormalize(sunPosition), worldUp)" in main
             checks += 1
         if program == "gbuffers_clouds" and stage == "fsh" and profile == "Potato" and require_current_gates:
             assert "zephCloudNormalUp" not in source
             checks += 1
         if program == "gbuffers_clouds" and profile != "Potato" and require_current_gates:
-            assert "zephCloudNormalUp" in source
+            assert ("zephCloudNormalUp" in source) == (dimension == "Overworld")
+            checks += 1
+        if program in ("gbuffers_skybasic", "gbuffers_skytextured") and stage == "fsh" and require_current_gates:
+            main = body(source, "main")
+            analytical = program == "gbuffers_skybasic" and dimension == "Overworld" and profile != "Potato"
+            assert ("zephAnalyticSky(" in main) == analytical
+            assert ("zephSolarIllumination(" in main) == (analytical and profile != "Low")
             checks += 1
         if program == "gbuffers_terrain" and stage == "fsh" and profile == "Potato":
             main = body(source, "main")

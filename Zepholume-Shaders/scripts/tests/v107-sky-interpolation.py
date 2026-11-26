@@ -23,7 +23,7 @@ def validate(v, f):
     assert 'zephSkyViewPosition = viewPosition.xyz;' in v
     assert 'varying vec3 zephSkyViewPosition;' in v and 'varying vec3 zephSkyViewPosition;' in f
     assert 'skyDir = zephSafeNormalize(zephSkyViewPosition);' in f
-    assert 'dot(skyDir, zephWorldUpView())' in f
+    assert 'float elevation = dot(skyDir, worldUp);' in f
     assert 'zephSkyDirection' not in v+f and 'zephSkyUp' not in v+f
 
 v = (ROOT / 'shaders/lib/sky_vertex.glsl').read_text(encoding='utf-8')

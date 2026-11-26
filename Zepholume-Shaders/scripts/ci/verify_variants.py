@@ -31,6 +31,13 @@ def validate(variant_root: Path, shader_root: Path) -> dict:
         pairs.setdefault(path.stem, set()).add(path.suffix.lstrip("."))
     if any(stages != set(STAGES) for stages in pairs.values()):
         raise ValueError("Root shader program pairs are incomplete")
+    # A manifest can name an absent wrapper while retaining a complete set of
+    # logical keys. Verify its source inventory independently of the index.
+    for dimension, directory in DIMENSIONS.items():
+        for program in root_programs:
+            wrapper = shader_root / directory / program.name
+            if not wrapper.is_file():
+                raise ValueError(f"Missing {dimension} shader wrapper: {wrapper}")
     expected = {
         (profile, dimension, loader, path.stem, path.suffix.lstrip("."), gpu)
         for profile in PROFILES

@@ -30,9 +30,10 @@ def factor(distance, start, end, medium, profile, view_y=0.0, rain=0.0):
         return sat(linear * (STRENGTH[profile] if medium == 1 else 1.0))
     if profile == "Potato":
         return linear
-    curved = linear * linear * (3.0 - 2.0 * linear)
-    density = (1.0 - abs(view_y) * 0.18) * (0.84 + rain * 0.28)
-    return sat(curved * (density + (1.0 - density) * curved))
+    clear = linear * linear
+    overcast = linear * (2.0 - linear)
+    weight = sat(rain) * 0.50 + (1.0 - sat(abs(view_y))) * 0.20
+    return clear * (1.0 - weight) + overcast * weight
 
 
 def water_colour(base, profile, night_vision=0.0):
@@ -57,7 +58,7 @@ def check_source():
                 (fog, "factor *= 1.06;"), (fog, "return zephSaturate(factor);"),
                 (air, "float range = fogEnd - fogStart;"),
                 (air, "if (range <= 0.0) return distance >= fogStart ? 1.0 : 0.0;"),
-                (air, "curved * (density + (1.0 - density) * curved)"),
+                (air, "return mix(clearExtinction, overcastExtinction, weather * 0.50 + horizon * 0.20);"),
                 (fragment, "gl_FragData[0] = vec4(graded, clamp(source.a, 0.0, 1.0));"))
     for source, token in required:
         if token not in source:

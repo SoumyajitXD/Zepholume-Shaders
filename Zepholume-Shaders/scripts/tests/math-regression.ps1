@@ -5,6 +5,9 @@ $ErrorActionPreference = 'Stop'
 $projectRoot = Split-Path -Parent (Split-Path -Parent $PSScriptRoot)
 
 function Assert-Near([string]$Name, [double]$Actual, [double]$Expected, [double]$Tolerance) {
+    if (-not [double]::IsFinite($Actual) -or -not [double]::IsFinite($Expected)) {
+        throw "${Name}: expected finite values, got $Actual and $Expected"
+    }
     $error = [Math]::Abs($Actual - $Expected)
     if ($error -gt $Tolerance) { throw "${Name}: expected $Expected, got $Actual (absolute error $error; tolerance $Tolerance)" }
     return $error
@@ -24,6 +27,12 @@ function SmoothReciprocalFloat32([double]$x, [double]$edge0, [double]$inverseRan
 }
 function Daylight([double]$elevation) { return SmoothReference $elevation -0.16 0.18 }
 function Twilight([double]$elevation) { return 1.0 - (SmoothReference ([Math]::Abs($elevation)) 0.06 0.34) }
+function OpenAirFog([double]$Linear, [double]$ViewY, [double]$Rain) {
+    $clearExtinction = $Linear * $Linear
+    $overcastExtinction = $Linear * (2.0 - $Linear)
+    $weight = (Clamp01 $Rain) * 0.50 + (1.0 - (Clamp01 ([Math]::Abs($ViewY)))) * 0.20
+    return $clearExtinction * (1.0 - $weight) + $overcastExtinction * $weight
+}
 function WaterDecode([double]$display) { $v = [Math]::Max(0.0, $display); return $v * $v }
 function WaterEncode([double]$linear) { return [Math]::Sqrt([Math]::Max(0.0, $linear)) }
 function WaterDecodeFloat32([double]$display) { $v = [single][Math]::Max(0.0, $display); return [double][single]($v * $v) }
@@ -50,7 +59,24 @@ function Read-ShaderFloatConstant([string]$Name) {
 # Bind the reference to the literal in the shared production helper, including
 # its input offset, bounded transfer, and cubic curve rather than a copied value.
 $skyExposure = [regex]::Match($common, '(?s)float\s+zephSkyExposure\s*\(float\s+skyLight\)\s*\{\s*float\s+t\s*=\s*zephSaturate\s*\(\s*\(skyLight\s*-\s*0\.04\)\s*\*\s*([0-9]+(?:\.[0-9]+)?)\s*\)\s*;\s*return\s+t\s*\*\s*t\s*\*\s*\(3\.0\s*-\s*2\.0\s*\*\s*t\)\s*;\s*\}')
-if (-not $skyExposure.Success -or $lighting -notmatch 'zephSkyExposure\s*\(\s*lightCoord\.y\s*\)') { throw 'Lighting transfer regression: shared skylight exposure helper or call missing' }
+if (-not $skyExposure.Success -or
+    $lighting -notmatch 'vec2\s+levels\s*=\s*zephLightingLevels\s*\(\s*lightCoord\s*\)\s*;\s*float\s+sky\s*=\s*zephSkyExposure\s*\(\s*levels\.y\s*\)' -or
+    $fragment -notmatch 'zephSkyExposure\s*\(\s*zephLightingLevels\s*\(\s*zephLightCoord\s*\)\.y\s*\)') {
+    throw 'Lighting transfer regression: scene and water exposure must use normalized lightmap levels.'
+}
+$lightLevelHelper = [regex]::Match($lighting, '(?s)vec2\s+zephLightingLevels\s*\(vec2\s+lightCoord\)\s*\{\s*return\s+clamp\s*\(\s*\(lightCoord\s*-\s*vec2\((\d+\.\d+)\s*/\s*(\d+\.\d+)\)\)\s*\*\s*\((\d+\.\d+)\s*/\s*(\d+\.\d+)\)\s*,\s*0\.0\s*,\s*1\.0\s*\);\s*\}')
+if (-not $lightLevelHelper.Success) { throw 'Lighting transfer regression: bounded texel-center conversion missing.' }
+$levelCoefficients = @(1..4 | ForEach-Object {
+    [double]::Parse($lightLevelHelper.Groups[$_].Value, [Globalization.CultureInfo]::InvariantCulture)
+})
+$texelOffset = $levelCoefficients[0] / $levelCoefficients[1]
+$texelScale = $levelCoefficients[2] / $levelCoefficients[3]
+foreach ($level in 0..15) {
+    $center = ($level + 0.5) / 16.0
+    Assert-Near "lightmap texel level $level" (Clamp01 (($center - $texelOffset) * $texelScale)) ($level / 15.0) 1e-12 | Out-Null
+}
+Assert-Near 'lightmap lower clamp' (Clamp01 ((0.0 - $texelOffset) * $texelScale)) 0.0 0.0 | Out-Null
+Assert-Near 'lightmap upper clamp' (Clamp01 ((1.0 - $texelOffset) * $texelScale)) 1.0 0.0 | Out-Null
 $skyInverse = [double]::Parse($skyExposure.Groups[1].Value, [Globalization.CultureInfo]::InvariantCulture)
 $maxErrors = [ordered]@{}
 $transfers = @(
@@ -88,17 +114,34 @@ foreach ($elevation in @(-0.40, -0.34, -0.10, 0.06, 0.20, 0.34, 0.40)) {
     Assert-Near "twilight range at $elevation" (Clamp01 $twilight) $twilight 0.000000000001 | Out-Null
 }
 
-# Atmosphere shapes its interior density but preserves both loader endpoints.
-foreach ($distance in @(0.0, 15.0, 16.0, 32.0, 64.0, 65.0, 128.0)) {
-    $linear = Clamp01 (($distance - 16.0) / (64.0 - 16.0))
-    $curved = $linear * $linear * (3.0 - 2.0 * $linear)
-    foreach ($viewY in @(-1.0, 0.0, 1.0)) { foreach ($rain in @(0.0, 0.5, 1.0)) {
-        $density = (1.0 - [Math]::Abs($viewY) * 0.18) * (0.84 + $rain * 0.28)
-        $factor = Clamp01 ($curved * ($density + (1.0 - $density) * $curved))
-        Assert-Near "fog range at distance $distance" (Clamp01 $factor) $factor 0.000000000001 | Out-Null
-        if ($distance -ge 64.0) { Assert-Near 'open-air endpoint' $factor 1.0 0.000000000001 | Out-Null }
-    }}
+# Clear/overcast extinction shapes the interior while preserving the loader
+# endpoints. Rain saturates and vertical views contribute less horizon haze.
+if ($atmosphere -notmatch 'clearExtinction\s*=\s*linear\s*\*\s*linear;' -or
+    $atmosphere -notmatch 'overcastExtinction\s*=\s*linear\s*\*\s*\(2\.0\s*-\s*linear\);' -or
+    $atmosphere -notmatch 'horizon\s*=\s*1\.0\s*-\s*zephSaturate\(abs\(viewDirectionY\)\);' -or
+    $atmosphere -notmatch 'weather\s*=\s*zephSaturate\(rain\);' -or
+    $atmosphere -notmatch 'return\s+mix\(clearExtinction,\s*overcastExtinction,\s*weather\s*\*\s*0\.50\s*\+\s*horizon\s*\*\s*0\.20\);') {
+    throw 'Fog regression: open-air extinction must use its bounded weather and horizon controls.'
 }
+foreach ($viewY in @(-1.0, -0.5, 0.0, 0.5, 1.0)) {
+    foreach ($rain in @(-2.0, 0.0, 0.5, 1.0, 2.0)) {
+        $previous = 0.0
+        foreach ($distance in @(0.0, 15.0, 16.0, 22.0, 32.0, 40.0, 56.0, 64.0, 65.0, 128.0)) {
+            $linear = Clamp01 (($distance - 16.0) / 48.0)
+            $factor = OpenAirFog $linear $viewY $rain
+            Assert-Near "fog range at distance $distance" (Clamp01 $factor) $factor 1e-12 | Out-Null
+            if ($factor -lt $previous - 1e-12) { throw "Fog fell with distance at view $viewY rain $rain" }
+            if ($distance -le 16.0) { Assert-Near 'open-air start' $factor 0.0 1e-12 | Out-Null }
+            if ($distance -ge 64.0) { Assert-Near 'open-air endpoint' $factor 1.0 1e-12 | Out-Null }
+            Assert-Near 'vertical symmetry' $factor (OpenAirFog $linear (-$viewY) $rain) 1e-12 | Out-Null
+            $previous = $factor
+        }
+    }
+}
+Assert-Near 'overcast horizon midpoint' (OpenAirFog 0.5 0.0 1.0) 0.60 1e-12 | Out-Null
+Assert-Near 'clear vertical midpoint' (OpenAirFog 0.5 1.0 0.0) 0.25 1e-12 | Out-Null
+Assert-Near 'excess rain saturates' (OpenAirFog 0.5 0.0 2.0) (OpenAirFog 0.5 0.0 1.0) 1e-12 | Out-Null
+Assert-Near 'negative rain saturates' (OpenAirFog 0.5 0.0 -2.0) (OpenAirFog 0.5 0.0 0.0) 1e-12 | Out-Null
 # Every immersed medium must reach the loader's fog endpoint. Water may reach
 # it slightly earlier by profile, but rain and view angle must not weaken it.
 $fogFactorSource = [regex]::Match($fog, '(?s)float\s+zephFogFactor\s*\([^)]*\)\s*\{.*?\n\}').Value
@@ -156,7 +199,7 @@ foreach ($range in @(@(0.0, 0.5), @(0.0, 0.000001), @(-0.5, 0.5))) {
     $start = $range[0]; $end = $range[1]
     $midpoint = ($start + $end) / 2.0
     $linear = Clamp01 (($midpoint - $start) / ($end - $start))
-    Assert-Near "open-air positive midpoint $start..$end" ($linear * $linear * (3.0 - 2.0 * $linear)) 0.5 0.000000000001 | Out-Null
+    Assert-Near "open-air positive midpoint $start..$end" (OpenAirFog $linear 0.0 0.0) 0.35 0.000000000001 | Out-Null
     Assert-Near "cloud positive midpoint $start..$end" $linear 0.5 0.000000000001 | Out-Null
     Assert-Near "positive endpoint $start..$end" (Clamp01 (($end - $start) / ($end - $start))) 1.0 0.0 | Out-Null
 }
@@ -194,8 +237,18 @@ foreach ($required in @('ZEPH_BLOCK_LIGHT_INV_RANGE', 'tWarmth * tWarmth * (3.0 
 if ($water -notmatch 'vec3\s+zephWaterSurfaceLinear\s*\(' -or $water -match 'zephWaterEncode\s*\(') {
     throw 'Water working-space regression: the active surface must return linear colour without an encode step.'
 }
-if ($water -notmatch 'float\s+sunWeight\s*=\s*zephSolarIllumination\s*\(\s*sunElevation\s*,\s*storm\s*\)' -or $water -notmatch 'float\s+moonWeight\s*=\s*zephLunarIllumination\s*\(\s*sunElevation\s*,\s*zephWorldElevation\s*\(\s*moonDir\s*\)\s*,\s*storm\s*\)') { throw 'Water regression: celestial weights must use shared illumination.' }
-if ($water -notmatch 'if\s*\(\s*sunWeight\s*>\s*0\.0\s*&&\s*skyExposure\s*>\s*0\.0\s*\)' -or $water -notmatch 'if\s*\(\s*daylight\s*<\s*1\.0\s*&&\s*skyExposure\s*>\s*0\.0\s*\)' -or $water -notmatch 'if\s*\(\s*moonWeight\s*>\s*0\.0\s*\)') { throw 'Water regression: exact-zero celestial lobe gates are missing.' }
+if ($water -notmatch 'vec3\s+worldUp\s*=\s*zephWorldUpView\(\);' -or
+    $water -notmatch 'float\s+sunWeight\s*=\s*zephSolarIllumination\s*\(\s*sunElevation\s*,\s*storm\s*\)' -or
+    $water -notmatch 'float\s+moonWeight\s*=\s*zephLunarIllumination\s*\(\s*sunElevation\s*,\s*dot\s*\(\s*moonDir\s*,\s*worldUp\s*\)\s*,\s*storm\s*\)') {
+    throw 'Water regression: celestial weights must use shared world-space illumination.'
+}
+$exposureGuard = [regex]::Match($water, 'if\s*\(\s*skyExposure\s*<=\s*0\.0\s*\)\s*return\s+transmission;')
+if (-not $exposureGuard.Success -or $exposureGuard.Index -ge $water.IndexOf('float sunWeight') -or
+    $water -notmatch 'if\s*\(\s*sunWeight\s*>\s*0\.0\s*\)' -or
+    $water -notmatch 'if\s*\(\s*daylight\s*<\s*1\.0\s*\)' -or
+    $water -notmatch 'if\s*\(\s*moonWeight\s*>\s*0\.0\s*\)') {
+    throw 'Water regression: exact-zero exposure and celestial lobe gates are missing.'
+}
 if ($fog -match 'ZEPH_EFFECTIVE_ATMOSPHERE_QUALITY\s*>=\s*2' -or $materials -match 'ZEPH_EFFECTIVE_MATERIAL_QUALITY\s*>=\s*3') { throw 'An unreachable profile threshold returned; either expose and test it or remove it.' }
 if ($fog -notmatch 'isEyeInWater\s*>=\s*2') { throw 'Fog regression: lava and powdered snow must retain loader fog colour.' }
 if ($blockProperties -notmatch '(?m)^block\.10001\s*=\s*minecraft:water\s*$') { throw 'Water routing regression: pack-local ID 10001 must map only to minecraft:water.' }

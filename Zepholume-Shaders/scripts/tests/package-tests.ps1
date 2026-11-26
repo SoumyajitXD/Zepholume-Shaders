@@ -14,6 +14,7 @@ try {
     $fixture = Join-Path $work 'fixture'
     New-Item -ItemType Directory -Path (Join-Path $fixture 'scripts'),(Join-Path $fixture 'shaders') | Out-Null
     Copy-Item -LiteralPath $Packager -Destination (Join-Path $fixture 'scripts/package.ps1')
+    Copy-Item -LiteralPath (Join-Path (Split-Path -Parent $Packager) 'package-metadata.ps1') -Destination (Join-Path $fixture 'scripts')
     # This isolated validator deliberately accepts tiny payloads and injects
     # promotion conflicts. Real source/ZIP validation remains validate-tests' job.
     @'
@@ -26,19 +27,27 @@ if ($Package -and $env:ZEPH_PACKAGE_FIXTURE_CONFLICT) {
     foreach ($name in @('README.md','CHANGELOG.md','THIRD_PARTY_NOTICES.md','shaders/z.glsl','shaders/A.glsl')) {
         [IO.File]::WriteAllText((Join-Path $fixture $name), $name)
     }
+    [IO.File]::WriteAllText((Join-Path $work 'LICENSE'), "LICENSE`n")
+    [IO.File]::WriteAllText((Join-Path $work 'NOTICE'), "NOTICE`r`n")
     $builder = Join-Path $fixture 'scripts/package.ps1'
+    $defaultOutput = Join-Path $work 'default-name'
+    & $builder -OutputDirectory $defaultOutput
+    Assert-Package 'default name must identify the final release' (Test-Path -LiteralPath (Join-Path $defaultOutput 'Zepholume-Shaders-1.0.8.zip'))
     $output = Join-Path $work 'ordered'
     & $builder -OutputDirectory $output -OutputName 'fixture.zip'
     Add-Type -AssemblyName System.IO.Compression.FileSystem
     $archive = [IO.Compression.ZipFile]::OpenRead((Join-Path $output 'fixture.zip'))
     try { $actual = @($archive.Entries | ForEach-Object FullName) } finally { $archive.Dispose() }
+    Assert-Package 'ZIP must carry the repository license and notice' (($actual -ccontains 'LICENSE') -and ($actual -ccontains 'NOTICE'))
+    [IO.File]::WriteAllText((Join-Path $work 'LICENSE'), "LICENSE`r`n")
+    [IO.File]::WriteAllText((Join-Path $work 'NOTICE'), "NOTICE`n")
     [string[]]$expected = $actual.Clone()
     [Array]::Sort($expected, [StringComparer]::Ordinal)
     Assert-Package 'ZIP entries must use advertised ordinal path ordering' (($actual -join '|') -ceq ($expected -join '|'))
     $sum = (Get-FileHash -LiteralPath (Join-Path $output 'fixture.zip')).Hash
     $second = Join-Path $work 'second'
     & $builder -OutputDirectory $second -OutputName 'fixture.zip'
-    Assert-Package 'identical payloads must produce identical ZIPs' ($sum -ceq (Get-FileHash -LiteralPath (Join-Path $second 'fixture.zip')).Hash)
+    Assert-Package 'license and notice checkout line endings must not affect ZIP bytes' ($sum -ceq (Get-FileHash -LiteralPath (Join-Path $second 'fixture.zip')).Hash)
     $rejected = $false
     try { & $builder -OutputDirectory $output -OutputName 'fixture.zip' } catch { $rejected = $true }
     Assert-Package 'existing package must be rejected and preserved' ($rejected -and $sum -ceq (Get-FileHash -LiteralPath (Join-Path $output 'fixture.zip')).Hash)

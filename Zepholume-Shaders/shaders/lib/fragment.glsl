@@ -12,6 +12,9 @@ varying vec2 zephTexCoord;
 // separate from the albedo atlas: zephLightCoord is not illumination by itself.
 uniform sampler2D lightmap;
 #endif
+#ifdef ZEPH_ENTITY_PROGRAM
+uniform vec4 entityColor;
+#endif
 uniform vec3 fogColor;
 uniform float fogStart;
 uniform float fogEnd;
@@ -24,6 +27,9 @@ uniform vec3 sunPosition;
 uniform vec3 moonPosition;
 varying vec2 zephLightCoord;
 varying vec4 zephVertexColour;
+#if defined(ZEPH_TERRAIN_PROGRAM) && ZEPH_EFFECTIVE_MATERIAL_QUALITY > 0
+flat varying float zephTerrainMaterial;
+#endif
 #if !defined(ZEPH_HAND_PROGRAM) && (ZEPH_EFFECTIVE_FACE_LIGHTING_QUALITY > 0 || ZEPH_EFFECTIVE_MATERIAL_QUALITY > 0 || (defined(ZEPH_WATER_PROGRAM) && ZEPH_EFFECTIVE_WATER_TIER > 0 && ZEPH_EFFECTIVE_WATER_QUALITY > 0))
 varying vec3 zephNormalView;
 #endif
@@ -67,6 +73,10 @@ void main() {
 #else
     vec4 source = texture2D(texture, zephTexCoord) * zephVertexColour;
 #endif
+#ifdef ZEPH_ENTITY_PROGRAM
+    // Apply the loader's hurt and flash overlay to albedo before sampling light.
+    source.rgb = mix(source.rgb, entityColor.rgb, entityColor.a);
+#endif
 #ifdef ZEPH_LIGHTMAP_LIT_PROGRAM
     // The lightmap is the authoritative per-surface irradiance.  Earlier
     // versions transported zephLightCoord only for artistic modifiers and
@@ -104,7 +114,7 @@ void main() {
     // The program also carries non-water translucent terrain; keep that on
     // the ordinary scene route instead of applying water Fresnel/specular.
     vec3 linear = zephIsWater > 0.5
-        ? zephWaterSurfaceLinear(source.rgb, normal, zephViewDirection, zephDistance, zephSkyExposure(zephLightCoord.y))
+        ? zephWaterSurfaceLinear(source.rgb, normal, zephViewDirection, zephDistance, zephSkyExposure(zephLightingLevels(zephLightCoord).y))
         : zephDecodeDisplay(source.rgb);
 #else
     vec3 linear = zephDecodeDisplay(source.rgb);
@@ -112,8 +122,8 @@ void main() {
 #if ZEPH_EFFECTIVE_FACE_LIGHTING_QUALITY > 0
     linear = zephApplySceneLighting(linear, normal, zephLightCoord, rainStrength);
 #endif
-#if ZEPH_EFFECTIVE_MATERIAL_QUALITY > 0
-    linear = zephMaterialResponse(linear, normal, zephDistance, zephViewDirection, zephLightCoord);
+#if defined(ZEPH_TERRAIN_PROGRAM) && ZEPH_EFFECTIVE_MATERIAL_QUALITY > 0
+    linear = zephMaterialResponse(linear, normal, zephDistance, zephLightCoord, zephTerrainMaterial);
 #endif
 #if defined(ZEPH_WATER_PROGRAM) && ZEPH_EFFECTIVE_MATERIAL_QUALITY > 0
     linear = zephTranslucentResponse(linear, normal, zephViewDirection, zephTranslucentMaterial);
@@ -129,21 +139,18 @@ void main() {
         graded = zephUnderwater(graded, zephDistance, zephLightCoord);
     } else
 #endif
-    {
-    // The Potato atmosphere factor ignores elevation entirely. Keep the
-    // varying, because distance is still needed for the loader fog range.
-#if ZEPH_EFFECTIVE_ATMOSPHERE_QUALITY == 0
-    float fogFactor = zephFogFactor(zephDistance, 0.0);
+    if (zephDistance >= fogStart) {
+        // Before fogStart every positive range and the degenerate step give
+        // zero fog. Delay the world elevation projection until it can matter.
+#if ZEPH_EFFECTIVE_ATMOSPHERE_QUALITY == 0 || defined(ZEPH_DIM_NETHER) || defined(ZEPH_DIM_END)
+        float fogFactor = zephFogFactor(zephDistance, 0.0);
 #else
-    float fogFactor = zephFogFactor(zephDistance, zephWorldElevation(zephViewDirection));
+        float fogFactor = zephFogFactor(zephDistance, zephWorldElevation(zephViewDirection));
 #endif
-    // Zero factor is common before the fog start: the mix is exactly the
-    // original colour, so avoid evaluating the atmosphere palette there.
-    if (fogFactor > 0.0) {
-        // Fog and sky use camera-to-scene rays; the shared varying points
-        // from the surface to the camera for water and material lighting.
-        graded = mix(graded, zephFogColour(-zephViewDirection), fogFactor);
-    }
+        if (fogFactor > 0.0) {
+            // Fog consumes a camera-to-scene ray. Water consumes its inverse.
+            graded = mix(graded, zephFogColour(-zephViewDirection), fogFactor);
+        }
     }
 #endif
     gl_FragData[0] = vec4(graded, clamp(source.a, 0.0, 1.0));

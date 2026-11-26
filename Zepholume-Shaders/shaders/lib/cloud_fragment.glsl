@@ -8,12 +8,14 @@ uniform float fogStart;
 uniform float fogEnd;
 uniform float rainStrength;
 uniform vec3 sunPosition;
+uniform vec3 moonPosition;
+uniform int isEyeInWater;
 #include "/lib/atmosphere.glsl"
 
 varying vec2 zephCloudTexCoord;
 varying vec4 zephCloudVertexColour;
 varying vec3 zephCloudViewPosition;
-#if ZEPH_EFFECTIVE_CLOUD_QUALITY > 0 && ZEPH_EFFECTIVE_CLOUD_TIER >= 1
+#if !defined(ZEPH_DIM_NETHER) && !defined(ZEPH_DIM_END) && ZEPH_EFFECTIVE_CLOUD_QUALITY > 0 && ZEPH_EFFECTIVE_CLOUD_TIER >= 1
 varying float zephCloudNormalUp;
 #if ZEPH_EFFECTIVE_CLOUD_TIER == 1
 varying vec2 zephCloudSolar;
@@ -23,7 +25,7 @@ varying float zephCloudSunFacing;
 #endif
 #endif
 
-#if ZEPH_EFFECTIVE_CLOUD_QUALITY > 0 && ZEPH_EFFECTIVE_CLOUD_TIER >= 2
+#if !defined(ZEPH_DIM_NETHER) && !defined(ZEPH_DIM_END) && ZEPH_EFFECTIVE_CLOUD_QUALITY > 0 && ZEPH_EFFECTIVE_CLOUD_TIER >= 2
 // The field travels with the loader's cloud UVs. It can cut shapes from the
 // supplied mesh but cannot draw beyond it or create actual cloud volume.
 float zephCloudCell(vec2 cell) {
@@ -47,8 +49,9 @@ float zephCloudFogFactor(float distance) {
     float range = fogEnd - fogStart;
     if (range <= 0.0) return distance >= fogStart ? 1.0 : 0.0;
     float linear = clamp((distance - fogStart) / range, 0.0, 1.0);
-#if ZEPH_EFFECTIVE_FOG_QUALITY == 1
-    float density = 0.76 + 0.24 * rainStrength;
+#if ZEPH_EFFECTIVE_FOG_QUALITY == 1 && !defined(ZEPH_DIM_NETHER) && !defined(ZEPH_DIM_END)
+    if (isEyeInWater != 0) return linear;
+    float density = 0.76 + 0.24 * zephSaturate(rainStrength);
     // Weather changes interior density, never the full-fog endpoint.
     return linear * (density + (1.0 - density) * linear);
 #else
@@ -58,26 +61,26 @@ float zephCloudFogFactor(float distance) {
 
 void main() {
     vec4 source = texture2D(texture, zephCloudTexCoord) * zephCloudVertexColour;
-#if ZEPH_EFFECTIVE_CLOUD_QUALITY == 0
+    float distance = length(zephCloudViewPosition);
+#if ZEPH_EFFECTIVE_CLOUD_QUALITY == 0 || defined(ZEPH_DIM_NETHER) || defined(ZEPH_DIM_END)
     vec3 cloud = source.rgb;
 #else
 #if ZEPH_EFFECTIVE_CLOUD_TIER == 1
     float day = zephCloudSolar.x;
+    float solarElevation = zephCloudSolar.y;
 #else
+    vec3 worldUp = zephWorldUpView();
     vec3 sunDir = zephSafeNormalize(sunPosition);
-    float solarElevation = zephWorldElevation(sunDir);
+    float solarElevation = dot(sunDir, worldUp);
     float day = zephDaylightFromElevation(solarElevation);
 #endif
-    float weather = clamp(rainStrength, 0.0, 1.0);
+    float weather = zephSaturate(rainStrength);
+    float twilight = zephClearTwilight(solarElevation, weather);
     // Separate moonlit and overcast palettes before applying facet lighting.
     vec3 nightTint = vec3(0.28, 0.32, 0.42);
     vec3 cloud = mix(source.rgb * nightTint, source.rgb, day);
 #if ZEPH_EFFECTIVE_CLOUD_TIER >= 1
-#if ZEPH_EFFECTIVE_CLOUD_TIER == 1
-    float sunLift = zephCloudSolar.y;
-#else
     float sunLift = clamp(solarElevation * 0.5 + 0.5, 0.0, 1.0);
-#endif
     // Preserve the block mesh silhouette while giving its vertical faces and
     // lower surface distinct body. Storm light is diffuse, so contrast fades.
     float underside = mix(0.62, 1.04, zephCloudNormalUp);
@@ -87,7 +90,6 @@ void main() {
     cloud *= mix(vec3(1.0), vec3(0.78, 0.82, 0.90), stormBase * 0.55);
 #endif
 #if ZEPH_EFFECTIVE_CLOUD_TIER >= 2
-    float twilight = zephClearTwilight(solarElevation, weather);
     // Light existing facets without new samples or a fragment normal.
     // Neutral at night and in storms; clear daylight reveals the relief.
     float clearSky = 1.0 - weather;
@@ -109,8 +111,16 @@ void main() {
     source.a *= mix(0.08, 1.0, coverage);
     float shelf = smoothstep(0.48, 0.65, cloudField);
 #if ZEPH_EFFECTIVE_CLOUD_TIER >= 3
-    float detailField = zephCloudBlocks(zephCloudTexCoord * 28.0 + vec2(11.3, 4.7));
-    shelf = smoothstep(0.47, 0.66, cloudField * 0.72 + detailField * 0.28);
+    vec2 detailCoord = zephCloudTexCoord * 28.0 + vec2(11.3, 4.7);
+    vec2 footprint = fwidth(detailCoord);
+    float detailWeight = 1.0 - smoothstep(0.23, 0.65, max(footprint.x, footprint.y));
+    // Fine shelves no longer contribute once their narrow transitions are
+    // below a pixel. Compute derivatives before the conditional lookup.
+    if (detailWeight > 0.0) {
+        float detailField = zephCloudBlocks(detailCoord);
+        float detailShelf = smoothstep(0.47, 0.66, mix(cloudField, detailField, 0.28));
+        shelf = mix(shelf, detailShelf, detailWeight);
+    }
 #endif
     // Layered ambient occlusion and a lit top edge provide a bounded relief
     // cue. These are not physical shadows or additional geometry.
@@ -119,26 +129,26 @@ void main() {
     cloud *= mix(0.87, 1.06, zephCloudSunFacing * (1.0 - weather));
 #endif
 #if ZEPH_EFFECTIVE_CLOUD_TIER >= 3
-    // A bounded forward-scattering cue suggests a brighter cloud edge facing
-    // the sun. The view vector is safe even at the camera origin. Night uses
-    // the opposite direction as a subtle moonward cue; storms suppress both.
-    vec3 viewDir = zephSafeNormalize(zephCloudViewPosition);
-    float sunward = max(dot(viewDir, sunDir), 0.0);
-    float moonward = max(-dot(viewDir, sunDir), 0.0);
+    // Reuse the distance already needed for fog instead of taking a second
+    // inverse length. Zero and near-zero rays retain the safe-normalize bound.
+    vec3 viewDir = zephCloudViewPosition / max(distance, 0.0001);
+    float viewSunDot = dot(viewDir, sunDir);
+    vec3 moonDir = zephSafeNormalize(moonPosition);
+    float sunward = max(viewSunDot, 0.0);
+    float moonward = max(dot(viewDir, moonDir), 0.0);
     float forwardSun = sunward * sunward;
     forwardSun *= forwardSun;
     float forwardMoon = moonward * moonward;
     forwardMoon *= forwardMoon;
-    float clearLight = 1.0 - weather;
-    cloud += source.rgb * zephCloudNormalUp * clearLight *
-        (vec3(0.14, 0.11, 0.08) * forwardSun * day +
-         vec3(0.025, 0.032, 0.048) * forwardMoon * (1.0 - day));
-    // Thin sun-facing regions catch light; night uses a much smaller cool
-    // rim, while weather continuously suppresses both.
-    float thinEdge = (1.0 - coverage) * clearLight;
-    cloud += source.rgb * thinEdge * zephCloudNormalUp *
-             (vec3(0.10, 0.075, 0.05) * forwardSun * day +
-              vec3(0.012, 0.016, 0.025) * forwardMoon * (1.0 - day));
+    float sunLight = zephSolarIllumination(solarElevation, weather) * (1.0 - weather);
+    float moonLight = zephLunarIllumination(solarElevation, dot(moonDir, worldUp), weather) * (1.0 - weather);
+    // Thin sun-facing regions catch light. The weaker lunar rim uses the
+    // loader's actual moon, and neither body lights the mesh below the horizon.
+    float thinEdge = 1.0 - coverage;
+    vec3 sunRim = vec3(0.14, 0.11, 0.08) + thinEdge * vec3(0.10, 0.075, 0.05);
+    vec3 moonRim = vec3(0.025, 0.032, 0.048) + thinEdge * vec3(0.012, 0.016, 0.025);
+    cloud += source.rgb * zephCloudNormalUp * (sunRim * (forwardSun * sunLight) +
+                                              moonRim * (forwardMoon * moonLight));
 #endif
 #if ZEPH_EFFECTIVE_CLOUD_TIER >= 4
     // Reuse the already interpolated coverage field for restrained relief.
@@ -150,25 +160,38 @@ void main() {
 #endif
     cloud = mix(cloud, vec3(dot(cloud, vec3(0.2126, 0.7152, 0.0722))) * vec3(0.66, 0.69, 0.73), weather * 0.44);
 #endif
-    float cloudFog = zephCloudFogFactor(length(zephCloudViewPosition));
+    float cloudFog = zephCloudFogFactor(distance);
 #if ZEPH_EFFECTIVE_CLOUD_QUALITY > 0 && !defined(ZEPH_DIM_NETHER) && !defined(ZEPH_DIM_END)
-    // Match the surface fog's day/night and weather palette at the distant
-    // endpoint. No local skylight or invented visibility is available here.
-    vec3 cloudHaze = zephAtmosphereColour(fogColor, day, weather);
-#if ZEPH_EFFECTIVE_PROFILE_TIER >= 1
-#if ZEPH_EFFECTIVE_CLOUD_TIER == 1
-    float hazeElevation = zephCloudSolar.y * 2.0 - 1.0;
+    if (cloudFog > 0.0) {
+        vec3 haze = fogColor;
+        if (isEyeInWater == 0) {
+            float elevation = 0.0;
+            float sunDot = 0.0;
+#if ZEPH_EFFECTIVE_PROFILE_TIER >= 2
+            if (twilight > 0.0) {
+#if ZEPH_EFFECTIVE_CLOUD_TIER >= 3
+                elevation = dot(viewDir, worldUp);
+                sunDot = viewSunDot;
 #else
-    float hazeElevation = solarElevation;
+                vec3 hazeDirection = zephCloudViewPosition / max(distance, 0.0001);
+#if ZEPH_EFFECTIVE_CLOUD_TIER == 1
+                elevation = dot(hazeDirection, zephWorldUpView());
+                sunDot = dot(hazeDirection, zephSafeNormalize(sunPosition));
+#else
+                elevation = dot(hazeDirection, worldUp);
+                sunDot = dot(hazeDirection, sunDir);
 #endif
-    cloudHaze = zephHazeTint(cloudHaze, vec3(0.82, 0.48, 0.32),
-                             zephClearTwilight(hazeElevation, weather) * 0.10);
 #endif
-    cloud = mix(cloud, cloudHaze, cloudFog);
+            }
+#endif
+            haze = zephOpenAirHaze(fogColor, day, weather, twilight, elevation, sunDot);
+        }
+        cloud = mix(cloud, haze, cloudFog);
+    }
 #else
     cloud = mix(cloud, fogColor, cloudFog);
 #endif
-#if ZEPH_EFFECTIVE_CLOUD_QUALITY > 0 && ZEPH_EFFECTIVE_CLOUD_TIER >= 3
+#if !defined(ZEPH_DIM_NETHER) && !defined(ZEPH_DIM_END) && ZEPH_EFFECTIVE_CLOUD_QUALITY > 0 && ZEPH_EFFECTIVE_CLOUD_TIER >= 3
     // Gently soften distant mesh edges; retain alpha and never create geometry.
     source.a *= 1.0 - 0.20 * cloudFog * cloudFog;
 #endif

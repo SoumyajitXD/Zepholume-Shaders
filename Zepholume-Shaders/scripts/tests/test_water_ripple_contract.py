@@ -7,7 +7,7 @@ ROOT = Path(__file__).resolve().parents[2]
 
 
 def slope(x, z, t, distance, tier):
-    phase = math.tau / 256
+    phase = math.tau / 240
     time = math.tau / 3600
     a = (3*x + 2*z)*phase + t*time*300
     b = (-7*x + 11*z)*phase - t*time*390
@@ -28,9 +28,11 @@ class WaterRippleContract(unittest.TestCase):
         for tier in (2, 3, 4):
             for d in (0, 40, 120):
                 original = slope(13.2, -7.9, 41, d, tier)
-                for other in (slope(269.2, -7.9, 41, d, tier),
-                              slope(13.2, 248.1, 41, d, tier),
-                              slope(13.2, -7.9, 3641, d, tier)):
+                for other in (slope(253.2, -7.9, 41, d, tier),
+                              slope(13.2, 232.1, 41, d, tier),
+                              slope(13.2, -7.9, 3641, d, tier),
+                              slope(30013.2, -7.9, 41, d, tier),
+                              slope(13.2, -30007.9, 41, d, tier)):
                     for a, b in zip(original, other):
                         self.assertAlmostEqual(a, b, places=12)
 
@@ -45,7 +47,10 @@ class WaterRippleContract(unittest.TestCase):
     def test_source_gates(self):
         water = (ROOT/'shaders/lib/water.glsl').read_text()
         vertex = (ROOT/'shaders/lib/vertex.glsl').read_text()
+        self.assertIn('mod(cameraPosition.xz, 240.0)', water)
         self.assertIn('if (top <= 0.0) return normal;', water)
+        self.assertIn('if (distance < 110.0)', water)
+        self.assertIn('if (distance < 75.0)', water)
         self.assertIn('reflectance *= skyExposure;', water)
         self.assertIn('celestialSpecular *= skyExposure;', water)
         self.assertIn('ZEPH_EFFECTIVE_WATER_WAVES == 1', water)

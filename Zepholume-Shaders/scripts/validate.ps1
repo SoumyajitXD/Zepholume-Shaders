@@ -8,6 +8,7 @@ $Root = (Resolve-Path -LiteralPath $Root).Path
 $errors = [System.Collections.Generic.List[string]]::new()
 $packageEntries = @()
 if ($Package) {
+    . (Join-Path $PSScriptRoot 'package-metadata.ps1')
     $Package = (Resolve-Path -LiteralPath $Package).Path
     if ([System.IO.Path]::GetExtension($Package) -ne '.zip') { $errors.Add("Package is not a ZIP file: $Package") }
     else {
@@ -41,7 +42,10 @@ if ($Package) {
         @(Get-Item -LiteralPath (Join-Path $Root 'CHANGELOG.md')) +
         @(Get-Item -LiteralPath (Join-Path $Root 'THIRD_PARTY_NOTICES.md'))
     )
-    $expectedEntries = @($expectedPackageFiles | ForEach-Object { $_.FullName.Substring($Root.Length + 1).Replace('\','/') })
+    $packageSources = @{}
+    foreach ($sourceFile in $expectedPackageFiles) { $packageSources.Add($sourceFile.FullName.Substring($Root.Length + 1).Replace('\','/'), $sourceFile.FullName) }
+    foreach ($name in @('LICENSE','NOTICE')) { $packageSources.Add($name, (Join-Path (Split-Path -Parent $Root) $name)) }
+    $expectedEntries = @($packageSources.Keys)
     foreach ($missing in Compare-Object $expectedEntries $packageEntries -CaseSensitive | Where-Object SideIndicator -eq '<=' | ForEach-Object InputObject) { $errors.Add("ZIP missing expected entry: $missing") }
     foreach ($extra in Compare-Object $expectedEntries $packageEntries -CaseSensitive | Where-Object SideIndicator -eq '=>' | ForEach-Object InputObject) { $errors.Add("ZIP contains unexpected entry: $extra") }
     Add-Type -AssemblyName System.IO.Compression.FileSystem
@@ -49,10 +53,11 @@ if ($Package) {
     try {
         $entryByName = @{}
         foreach ($entry in $archive.Entries) { if (-not $entryByName.ContainsKey($entry.FullName)) { $entryByName[$entry.FullName] = $entry } }
-        foreach ($sourceFile in $expectedPackageFiles) {
-            $entryName = $sourceFile.FullName.Substring($Root.Length + 1).Replace('\','/')
+        foreach ($entryName in $expectedEntries) {
             if (-not $entryByName.ContainsKey($entryName)) { continue }
-            $sourceHash = (Get-FileHash -LiteralPath $sourceFile.FullName -Algorithm SHA256).Hash
+            $sourceHash = if ($entryName -cin @('LICENSE','NOTICE')) {
+                [Convert]::ToHexString([Security.Cryptography.SHA256]::HashData((Get-ZephPackageMetadataBytes $packageSources[$entryName])))
+            } else { (Get-FileHash -LiteralPath $packageSources[$entryName] -Algorithm SHA256).Hash }
             $entryStream = $entryByName[$entryName].Open()
             $hasher = [Security.Cryptography.SHA256]::Create()
             try { $entryHash = [Convert]::ToHexString($hasher.ComputeHash($entryStream)) }
@@ -229,13 +234,14 @@ foreach ($staleVersion in @('0.1.0-dev','0.2.0-dev')) {
         $errors.Add("Stale development version remains in release-facing metadata: $staleVersion")
     }
 }
-if ($properties -notmatch '\A# Zepholume 1\.0\.7 final release\.') { $errors.Add('Shader properties must identify V1.0.7 final release.') }
+if ($properties -cnotmatch '\A# Zepholume Shaders V1\.0\.8\.') { $errors.Add('Shader properties must identify Zepholume Shaders V1.0.8.') }
+if ($changelog -notmatch '(?m)\A# Changelog\s+## 1\.0\.8 — finalized for local export \d{4}-\d{2}-\d{2}\r?$') { $errors.Add('Changelog must lead with the finalized V1.0.8 export heading.') }
 if ($changelog -notmatch '(?m)^## 1\.0\.7 .+released') { $errors.Add('Changelog must contain the V1.0.7 released heading.') }
 if ($changelog -notmatch '(?m)^## 1\.0\.6 .+released') { $errors.Add('Changelog must contain the V1.0.6 released heading.') }
 if ($changelog -notmatch '(?m)^## 1\.0\.4 .+released') { $errors.Add('Changelog must contain the V1.0.4 released heading.') }
 if ($changelog -notmatch '(?m)^## 1\.0\.5-dev .+unreleased') { $errors.Add('Changelog must contain the V1.0.5 development heading.') }
 if ($changelog -notmatch '(?m)^## 1\.0\.6-dev-phase3 .+unreleased') { $errors.Add('Changelog must contain the V1.0.6 Phase 3 development heading.') }
-if ($readme -notmatch '(?i)V1\.0\.7 final release') { $errors.Add('README must identify V1.0.7 final release.') }
+if ($readme -cnotmatch '\*\*Zepholume Shaders V1\.0\.8\.\*\*' -or $readme -cnotmatch '`Zepholume-Shaders-1\.0\.8\.zip`' -or $readme -match 'Zepholume-Shaders-1\.0\.8[-.]dev') { $errors.Add('README must identify Zepholume Shaders V1.0.8 and its final ZIP.') }
 $definitions = @{}
 foreach ($m in [regex]::Matches($settings, '(?m)^#define\s+(ZEPH_[A-Z_]+)\s+(\d+)\s*//\s*\[([^\]]+)\]')) { $definitions[$m.Groups[1].Value] = @($m.Groups[3].Value -split '\s+' | ForEach-Object {[int]$_}) }
 $options = @([regex]::Matches($properties, 'ZEPH_[A-Z_]+') | ForEach-Object Value | Sort-Object -Unique)
@@ -252,9 +258,11 @@ if (($actualProfiles.Count -ne $requiredProfiles.Count) -or (Compare-Object $act
 }
 if ($properties -notmatch '(?m)^screen\s*=\s*[^\r\n]*<profile>(?:\s|$)') { $errors.Add('Main settings screen must expose <profile>.') }
 foreach ($profile in $profileMatches) {
+    $seenAssignments = [System.Collections.Generic.HashSet[string]]::new([StringComparer]::Ordinal)
     foreach ($assignment in $profile.Groups[2].Value.Trim() -split '\s+') {
         if ($assignment -notmatch '^(ZEPH_[A-Z_]+):(\d+)$') { $errors.Add("Invalid profile assignment in $($profile.Groups[1].Value): $assignment"); continue }
         $name,$value = $Matches[1],[int]$Matches[2]
+        if (-not $seenAssignments.Add($name)) { $errors.Add("Duplicate profile assignment in $($profile.Groups[1].Value): $name") }
         if (-not $definitions.ContainsKey($name)) { $errors.Add("Profile references unknown option: $name"); continue }
         if ($definitions[$name] -notcontains $value) { $errors.Add("Profile value outside declared range: ${name}:$value") }
     }

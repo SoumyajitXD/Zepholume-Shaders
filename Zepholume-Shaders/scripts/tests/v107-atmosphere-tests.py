@@ -36,7 +36,7 @@ def cloud_fog(d, start, end, rain, shaped=True, legacy=False):
     t = sat((d - start) / (end - start))
     if not shaped:
         return t
-    density = 0.76 + 0.24 * rain
+    density = 0.76 + 0.24 * sat(rain)
     return t * density if legacy else t * (density + (1.0 - density) * t)
 
 
@@ -54,17 +54,16 @@ def check_sources(sources):
                   "float linear = zephSaturate((distance - fogStart) / range);",
                   "float clearExtinction = linear * linear;",
                   "float overcastExtinction = linear * (2.0 - linear);",
-                  "float curved = mix(clearExtinction, overcastExtinction, weather * 0.50 + horizon * 0.20);"):
+                  "return mix(clearExtinction, overcastExtinction, weather * 0.50 + horizon * 0.20);"):
         assert token in air, f"Air reference no longer matches source: {token}"
     for token in ("float range = fogEnd - fogStart;",
                   "if (range <= 0.0) return distance >= fogStart ? 1.0 : 0.0;",
                   "float linear = clamp((distance - fogStart) / range, 0.0, 1.0);",
-                  "float density = 0.76 + 0.24 * rainStrength;"):
+                  "float density = 0.76 + 0.24 * zephSaturate(rainStrength);"):
         assert token in fragment, f"Cloud reference no longer matches source: {token}"
-    assert "curved * (density + (1.0 - density) * curved)" in air, "Open-air fog does not preserve endpoints"
     assert "linear * (density + (1.0 - density) * linear)" in fragment, "Cloud fog does not preserve endpoints"
     assert "zephCloudViewPosition = viewPosition.xyz;" in vertex, "Cloud distance must be derived after interpolation"
-    assert "zephCloudFogFactor(length(zephCloudViewPosition))" in fragment
+    assert "float distance = length(zephCloudViewPosition);" in fragment and "zephCloudFogFactor(distance)" in fragment
     assert "varying vec3 zephCloudViewPosition;" in vertex and "varying vec3 zephCloudViewPosition;" in fragment
     assert "zephCloudDistance" not in vertex + fragment, "Legacy nonlinear scalar varying returned"
 

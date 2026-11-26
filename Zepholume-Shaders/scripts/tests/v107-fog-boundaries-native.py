@@ -84,9 +84,9 @@ def exercise(source, mutation=False):
 
 
 draws, failures, driver = exercise(fog)
-marker = 'return zephSaturate(curved * (density + (1.0 - density) * curved));'
+marker = 'return mix(clearExtinction, overcastExtinction, weather * 0.50 + horizon * 0.20);'
 assert fog.count(marker) == 1
-control_draws, control_failures, _ = exercise(fog.replace(marker, 'return zephSaturate(curved * density);'), True)
+control_draws, control_failures, _ = exercise(fog.replace(marker, marker.replace('return ', 'return 0.8 * ')), True)
 print(json.dumps(dict(native_draws=draws, failures=failures, programs=15,
                       mutation_draws=control_draws, mutation_endpoint_failures=control_failures,
                       driver=driver, minecraft='NOT TESTED')))

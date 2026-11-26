@@ -1,12 +1,14 @@
 [CmdletBinding()]
 param(
     [ValidatePattern('^[A-Za-z0-9][A-Za-z0-9._-]*\.zip$')]
-    [string]$OutputName = 'Zepholume-Shaders-1.0.7.zip',
+    [string]$OutputName = 'Zepholume-Shaders-1.0.8.zip',
     [string]$OutputDirectory
 )
 
 $ErrorActionPreference = 'Stop'
 $root = Split-Path -Parent $PSScriptRoot
+$gitRoot = Split-Path -Parent $root
+. (Join-Path $PSScriptRoot 'package-metadata.ps1')
 & (Join-Path $PSScriptRoot 'validate.ps1')
 if (-not $?) { throw 'Validation failed; package was not created.' }
 
@@ -35,21 +37,27 @@ $inputs = @(
 # Use an ordinal comparer to match the manifest and every host culture.
 $byPath = [System.Collections.Generic.SortedDictionary[string,IO.FileInfo]]::new([StringComparer]::Ordinal)
 foreach ($file in $inputs) { $byPath.Add($file.FullName.Substring($root.Length + 1).Replace('\','/'), $file) }
-$files = @($byPath.Values)
+foreach ($name in @('LICENSE','NOTICE')) { $byPath.Add($name, (Get-Item -LiteralPath (Join-Path $gitRoot $name))) }
 
 try {
 Add-Type -AssemblyName System.IO.Compression.FileSystem
 $archive = [IO.Compression.ZipFile]::Open($stagingZip, [IO.Compression.ZipArchiveMode]::Create)
 try {
-    foreach ($file in $files) {
-        $entryName = $file.FullName.Substring($root.Length + 1).Replace('\','/')
-        $entry = $archive.CreateEntry($entryName, [IO.Compression.CompressionLevel]::Optimal)
+    foreach ($file in $byPath.GetEnumerator()) {
+        $entry = $archive.CreateEntry($file.Key, [IO.Compression.CompressionLevel]::Optimal)
         # Fixed epoch and sorted entries make identical source trees yield an
         # identical archive rather than inheriting filesystem timestamps.
         $entry.LastWriteTime = [DateTimeOffset]::new(1980, 1, 1, 0, 0, 0, [TimeSpan]::Zero)
-        $input = [IO.File]::OpenRead($file.FullName)
-        try { $output = $entry.Open(); try { $input.CopyTo($output) } finally { $output.Dispose() } }
-        finally { $input.Dispose() }
+        $output = $entry.Open()
+        try {
+            if ($file.Key -cin @('LICENSE','NOTICE')) {
+                $bytes = Get-ZephPackageMetadataBytes $file.Value.FullName
+                $output.Write($bytes, 0, $bytes.Length)
+            } else {
+                $input = [IO.File]::OpenRead($file.Value.FullName)
+                try { $input.CopyTo($output) } finally { $input.Dispose() }
+            }
+        } finally { $output.Dispose() }
     }
 } finally { $archive.Dispose() }
 
@@ -57,16 +65,18 @@ $sum = (Get-FileHash -LiteralPath $stagingZip -Algorithm SHA256).Hash
 Set-Content -LiteralPath $stagingHash -Value "$sum  $OutputName" -Encoding utf8NoBOM
     & (Join-Path $PSScriptRoot 'validate.ps1') -Package $stagingZip
     if (-not $?) { throw 'Created ZIP did not pass package validation.' }
-    $gitRoot = Split-Path -Parent $root
     $revision = (& git -C $gitRoot rev-parse HEAD 2>$null)
     $sourceState = if ($LASTEXITCODE -eq 0) { if (@(& git -C $gitRoot status --porcelain).Count -eq 0) { 'clean' } else { 'dirty' } } else { 'git-unavailable' }
-    $entryHashes = @($files | ForEach-Object {
-        [ordered]@{ path=$_.FullName.Substring($root.Length + 1).Replace('\','/'); sha256=(Get-FileHash -LiteralPath $_.FullName -Algorithm SHA256).Hash }
+    $entryHashes = @($byPath.GetEnumerator() | ForEach-Object {
+        $entryHash = if ($_.Key -cin @('LICENSE','NOTICE')) {
+            [Convert]::ToHexString([Security.Cryptography.SHA256]::HashData((Get-ZephPackageMetadataBytes $_.Value.FullName)))
+        } else { (Get-FileHash -LiteralPath $_.Value.FullName -Algorithm SHA256).Hash }
+        [ordered]@{ path=$_.Key; sha256=$entryHash }
     })
     $buildManifest = [ordered]@{
         schemaVersion=1; archive=$OutputName; archiveSha256=$sum; commit=if ($revision) { "$revision".Trim() } else { $null }
         sourceState=$sourceState; validator='scripts/validate.ps1 and scripts/validate.ps1 -Package passed'
-        buildConfiguration=[ordered]@{ compression='Optimal'; entryTimestampUtc='1980-01-01T00:00:00Z'; ordering='ordinal source path' }
+        buildConfiguration=[ordered]@{ compression='Optimal'; entryTimestampUtc='1980-01-01T00:00:00Z'; ordering='ordinal source path'; rootLicenseAndNoticeLineEnding='CRLF' }
         entries=$entryHashes
     }
     $buildManifest | ConvertTo-Json -Depth 6 | Set-Content -LiteralPath $stagingManifest -Encoding utf8NoBOM
@@ -86,4 +96,4 @@ Set-Content -LiteralPath $stagingHash -Value "$sum  $OutputName" -Encoding utf8N
 }
 Write-Host "Created: $zip"
 Write-Host "SHA-256: $sum"
-Write-Host "ZIP entries: $($files.Count)"
+Write-Host "ZIP entries: $($byPath.Count)"

@@ -10,10 +10,10 @@ root = Path(__file__).resolve().parents[2]
 source = (root / 'shaders/lib/lighting.glsl').read_text()
 common = (root / 'shaders/lib/common.glsl').read_text()
 assert '#if ZEPH_EFFECTIVE_FACE_LIGHTING_QUALITY >= 2' in source
-assert 'zephSceneSkyWeight(lightCoord) * 0.55' in source
-assert 'zephClearTwilight(sunElevation, storm)' in source
+assert 'float skyWeight = zephSceneSkyWeight(lightCoord)' in source
+assert 'zephClearTwilight(sunElevation, weather)' in source
 assert 'zephTwilightSurfaceTint(facing)' in source
-assert 'lit *= mix(vec3(1.0), ambientTint, ambientWeight)' in source
+assert 'lit *= mix(vec3(1.0), ambientTint, skyWeight * 0.55)' in source
 assert 'return t * t * (3.0 - 2.0 * t)' in common
 
 
@@ -40,7 +40,8 @@ def tint(e, sky, storm, facing):
     base = [mix(a, b, day) for a, b in zip(night, daylight)]
     twilight = [mix(a, b, clamp(facing)) for a, b in zip(shade, sun)]
     ambient = [mix(a, b, dusk * .65) for a, b in zip(base, twilight)]
-    weight = smooth(.04, .65, sky) * .55
+    level = clamp((sky - 1 / 32) * (16 / 15))
+    weight = smooth(.04, .65, level) * .55
     return [mix(1, x, weight) for x in ambient]
 
 

@@ -25,6 +25,10 @@ class VariantCoverageTests(unittest.TestCase):
         for stage in ("vsh", "fsh"):
             (self.shaders / f"example.{stage}").write_bytes(self.text)
             (self.variants / "unique" / f"{self.hash}.{stage}").write_bytes(self.text)
+        for directory in DIMENSIONS.values():
+            (self.shaders / directory).mkdir()
+            for stage in ("vsh", "fsh"):
+                (self.shaders / directory / f"example.{stage}").write_bytes(self.text)
         self.rows = []
         for profile in PROFILES:
             for dimension, directory in DIMENSIONS.items():
@@ -72,6 +76,11 @@ class VariantCoverageTests(unittest.TestCase):
     def test_corrupted_stage_rejected(self):
         (self.variants / "unique" / f"{self.hash}.vsh").write_bytes(b"corrupt")
         with self.assertRaisesRegex(ValueError, "Tampered"):
+            validate(self.variants, self.shaders)
+
+    def test_missing_wrapper_rejected_even_with_complete_manifest(self):
+        (self.shaders / "world1" / "example.fsh").unlink()
+        with self.assertRaisesRegex(ValueError, "Missing End shader wrapper"):
             validate(self.variants, self.shaders)
 
 

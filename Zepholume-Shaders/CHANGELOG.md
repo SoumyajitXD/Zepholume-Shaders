@@ -1,5 +1,34 @@
 # Changelog
 
+## 1.0.8 — finalized for local export 2026-11-25
+
+- Unified the Overworld horizon palette across sky, terrain fog, and clouds for smoother transitions at twilight and in rain. High and Ultra now use moon-directed cloud lighting and fade fine cloud detail at a distance.
+- Reduced indirect nighttime water brightness and made twilight reflections directional. Enclosed water retains its lightmapped transmission, Nether water omits sky reflections, and waterfall diagonal-seam protections remain in place.
+- Fixed missing entity hurt and flash tints. Refined enclosed block-light warmth and made terrain material shading fade to neutral at a distance.
+- Stabilized foliage and water animation across legacy camera-coordinate resets.
+- Reduced shader work in Potato and Low, including simpler Low foliage and less work before fog begins or after distant ripples fade.
+- Strengthened shader portability and loader preprocessing checks. Standalone transformation checks passed on four Iris/Oculus lanes; Minecraft runtime, visuals, and gameplay performance were not tested for this release.
+
+## 1.0.8-dev — advanced candidate, unreleased
+
+- Align the sky horizon, fogged geometry and clouds to a shared open-air palette. Dark fog retains its loader brightness, and Nether and End use their own fog responses.
+- Refine night water, directional twilight reflections and upper-tier sky gradation. Fully enclosed water keeps its lightmapped transmission, and distant ripples stop evaluating after they fade out.
+- Restore entity overlay tint and confine opaque material shaping to terrain. Keep block-light colour readable in enclosed areas and return distant material shading to neutral.
+- Keep foliage and water motion continuous across legacy camera-coordinate rebases. Low foliage uses a single spatial field.
+- Skip directional fog work before the loader fog start and remove unused celestial paths from cheaper profiles and applicable dimensions.
+
+## 1.0.8-dev.2 — unreleased
+
+- Suppress analytical sky reflections in the Nether, where vanilla has no skylight; retain transmitted illumination. End water still uses a skylight exposure proxy.
+- Add focused foliage, fog, water and frame-time analysis regression coverage. Runtime visual and performance qualification remain pending.
+
+## 1.0.8-dev — unreleased
+
+- Align fogged cloud twilight colour with directional terrain fog on Balanced and above, with bounded rain input.
+- Gate analytical water sky reflection by local skylight in all dimensions, including enclosed Nether and End water.
+- Compile the secondary vegetation gust out of Low; higher profiles retain it.
+- Strengthen variant coverage and regression fixtures. Minecraft visual and GPU performance qualification remain pending.
+
 ## 1.0.7 — released 2026-11-07
 
 - Blended Overworld sky into horizon fog at the sky-disc boundary, eliminating the hard horizontal sunset horizon line.

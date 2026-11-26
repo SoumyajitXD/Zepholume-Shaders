@@ -52,7 +52,7 @@ def reference(n, v, sun, moon, tier, dimension, rain, corrected=True, current_lo
         ndh = max(dot(n, h), 0.0)
         lobe = ndh ** 64 if tier == 1 else 0.88 * ndh ** 64 + 0.12 * ndh ** 16
         scale = lobe * weight * incidence * strength * (1 - sat(rain) * 0.85)
-        scale *= 0.35 if tier == 1 else 1.20 if tier == 4 else 1.0
+        scale *= 0.35 if tier == 1 else 1.20 if tier == 4 and not current_low else 1.0
         result = [a + c * scale for a, c in zip(result, colour)]
     return tuple(result)
 

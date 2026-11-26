@@ -10,4 +10,4 @@ The next useful work is targeted validation, not another speculative rendering f
 
 Fog endpoint hoisting and common-subexpression rewrites were previously proposed but remain deferred. Reopen them only if compiler output shows duplicate work and a controlled benchmark supports a change.
 
-For the current evidence boundary, see [V1.0.7 final release](V1.0.7_FINAL_RELEASE.md) and [Compatibility](../../docs/COMPATIBILITY.md).
+See the [V1.0.8 release notes](V1.0.8_RELEASE.md) and [known issues](KNOWN_ISSUES.md) for current test coverage.

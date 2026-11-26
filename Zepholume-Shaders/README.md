@@ -1,12 +1,14 @@
 # Zepholume Shaders
 
-Zepholume is a Minecraft Java shader pack with a small, direct rendering path. It focuses on atmospheric lighting, fog and water without adding shadow maps or a multi-pass post-processing pipeline.
+Zepholume is an original, direct-path Minecraft Java shader pack for clean survival play. It focuses on controlled exposure, atmospheric depth, and stable frame pacing—not heavyweight cinematic effects.
 
 ## Status and supported evidence
 
-**V1.0.7 final release** is packaged as `Zepholume-Shaders-1.0.7.zip`. The release includes horizon blending, corrected fog direction, dark Potato fog, skylight-gated water highlights, flat waterfall classification, layered clouds and hand lightmap fixes. Local Fabric 26.1.2 / Iris 1.10.9 testing covered the release candidate's horizon and profile loading. The final ZIP has not had a full cross-loader, cross-GPU or gameplay performance test. See the [release notes](docs/V1.0.7_RELEASE_NOTES.md), [final release report](docs/V1.0.7_FINAL_RELEASE.md) and [known test gaps](docs/KNOWN_ISSUES.md).
+**Zepholume Shaders V1.0.8.** Sky, terrain fog and clouds share a horizon palette. The pack refines nighttime and twilight water, restores entity overlays, and stabilizes water and foliage movement across camera rebases. Balanced is the default.
 
-The analytical water reflection model has been gated by local skylight exposure to suppress celestial highlights in caves and enclosed areas. Waterfall interpolation is flat-gated to eliminate diagonal shearing. OptiFine is unsupported. Other Minecraft version families and GPU vendors carry no runtime compatibility guarantee.
+Minecraft runtime qualification: **NOT TESTED** for V1.0.8. Offline compilation and loader transformation checks do not verify in-game rendering, gameplay performance, or compatibility across all configurations.
+
+Analytical water reflections use local skylight exposure in the Overworld and End; the Nether omits sky reflections because vanilla Nether has no skylight. The pack retains flat water material classification and view-space interpolation protections against diagonal waterfall seams. OptiFine is unsupported.
 
 ## Profiles
 
@@ -23,7 +25,7 @@ Balanced is the default. Selecting a profile applies its full baseline; the grou
 ## Install
 
 1. Use a Minecraft Java instance with a matching Iris installation. Oculus uses the legacy compatibility path but remains unqualified for this release; see the compatibility notes for the exact evidence boundary.
-2. Copy `Zepholume-Shaders-1.0.7.zip` directly into your Minecraft Java instance's `shaderpacks` directory; keep the ZIP intact.
+2. Copy `Zepholume-Shaders-1.0.8.zip` directly into your Minecraft Java instance's `shaderpacks` directory; keep the ZIP intact.
 3. Select the pack in the shader menu and choose Balanced, the recommended default. Potato, Low, High and Ultra are available through the Profile control.
 4. If checking a rendering problem, retain the exact ZIP hash, `latest.log` and loader-patched shader output. Installation and pack selection alone do not establish visual correctness.
 

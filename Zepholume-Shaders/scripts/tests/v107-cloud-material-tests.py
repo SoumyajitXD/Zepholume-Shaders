@@ -9,9 +9,10 @@ root = Path(__file__).resolve().parents[2] / 'shaders/lib'
 cloud = (root / 'cloud_fragment.glsl').read_text(encoding='utf-8')
 material = (root / 'translucent_material.glsl').read_text(encoding='utf-8')
 water = (root / 'water.glsl').read_text(encoding='utf-8')
-for token in ('smoothstep(0.22 - 0.10 * weather, 0.76 - 0.10 * weather, cloudField)',
-              'mix(cloudBody, 1.0, weather * 0.55)',
-              '(1.0 - cloudField) * (1.0 - zephCloudNormalUp)'):
+for token in ('mix(0.48, 0.29, weather)',
+              'clamp(fwidth(cloudField) * 0.8, 0.035, 0.16)',
+              'smoothstep(threshold - edgeWidth, threshold + edgeWidth, cloudField)',
+              'source.a *= mix(0.08, 1.0, coverage)'):
     assert token in cloud
 for token in ('0.32 * grazing', '0.30 * grazing', 'if (material < 0.5) return colour;',
               'dot(max(colour, vec3(0.0)), vec3(0.2126, 0.7152, 0.0722))'):
@@ -24,18 +25,19 @@ def smoothstep(a, b, x):
     t = min(1.0, max(0.0, (x-a)/(b-a)))
     return t*t*(3-2*t)
 
-def alpha(field, weather):
-    coverage = smoothstep(.22-.10*weather, .76-.10*weather, field)
-    body = .58 + .42*coverage
-    return body + (1-body)*weather*.55
+def alpha(field, weather, width):
+    threshold = .48 + (.29 - .48) * weather
+    coverage = smoothstep(threshold - width, threshold + width, field)
+    return .08 + .92 * coverage
 
-for field in [i/100 for i in range(101)]:
-    values = [alpha(field, i/100) for i in range(101)]
-    assert all(math.isfinite(x) and .58 <= x <= 1 for x in values)
-    assert all(a <= b + 1e-12 for a,b in zip(values, values[1:]))
-for weather in [i/100 for i in range(101)]:
-    values = [alpha(i/100, weather) for i in range(101)]
-    assert all(a <= b + 1e-12 for a,b in zip(values, values[1:]))
+for width in (.035, .08, .16):
+    for field in [i/100 for i in range(101)]:
+        values = [alpha(field, i/100, width) for i in range(101)]
+        assert all(math.isfinite(x) and .08 <= x <= 1 for x in values)
+        assert all(a <= b + 1e-12 for a,b in zip(values, values[1:]))
+    for weather in [i/100 for i in range(101)]:
+        values = [alpha(i/100, weather, width) for i in range(101)]
+        assert all(a <= b + 1e-12 for a,b in zip(values, values[1:]))
 # These material calculations contain no additive light: zero stays zero.
 for grazing in [i/100 for i in range(101)]:
     assert 0 * (1 + .08*grazing) == 0

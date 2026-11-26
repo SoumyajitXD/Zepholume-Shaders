@@ -23,9 +23,9 @@ def weights(up, sun_dot, daylight, twilight, storm, tier):
     horizon = 1.0 - smoothstep(0.0, 0.38, altitude)
     side = sat(sun_dot * 0.5 + 0.5)
     clear = twilight * (1.0 - storm)
-    warm = clear * horizon * side * side * 0.58
+    warm = clear * horizon * side * side * 0.52
     arch = smoothstep(0.02, 0.16, altitude) * (1.0 - smoothstep(0.28, 0.65, altitude))
-    cool = clear * arch * (1.0 - side) ** 2 * 0.30 if tier >= 2 else 0.0
+    cool = clear * arch * (1.0 - side) ** 2 * 0.25 if tier >= 2 else 0.0
     haze = sat(sun_dot) ** 4 * daylight * (1.0 - storm) * 0.14 if tier >= 3 else 0.0
     return gradient, warm, cool, haze
 
@@ -33,13 +33,13 @@ def weights(up, sun_dot, daylight, twilight, storm, tier):
 def main():
     sky = (ROOT / 'shaders/lib/sky_fragment.glsl').read_text(encoding='utf-8')
     fog = (ROOT / 'shaders/lib/fog.glsl').read_text(encoding='utf-8')
-    for token in ('smoothstep(0.0, 0.38, altitude)', 'twilight * (1.0 - zephSaturate(storm))',
-                  'horizonLayer * sunward * sunward', 'clearTwilight * warmBand * 0.58',
-                  'smoothstep(0.02, 0.16, altitude)', 'haze *= haze;',
+    for token in ('smoothstep(0.0, 0.38, altitude)', 'zephClearTwilight(sunElevation, storm)',
+                  'horizonLayer * sunward * sunward', 'clearTwilight * warmBand * 0.52',
+                  'smoothstep(0.02, 0.16, altitude)', 'forwardLobe *= forwardLobe;',
                   '#if ZEPH_EFFECTIVE_PROFILE_TIER >= 3'):
         assert token in sky, token
     for token in ('if (isEyeInWater >= 2) return fogColor;',
-                  'towardSun * towardSun', '#if ZEPH_EFFECTIVE_PROFILE_TIER >= 2'):
+                  'sunDot = dot(direction, sunDir);', '#if ZEPH_EFFECTIVE_PROFILE_TIER >= 2'):
         assert token in fog, token
     count = 0
     for tier in range(1, 5):

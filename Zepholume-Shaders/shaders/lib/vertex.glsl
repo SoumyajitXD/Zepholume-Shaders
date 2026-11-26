@@ -4,8 +4,13 @@
 #include "/lib/common.glsl"
 #include "/lib/water.glsl"
 #if defined(ZEPH_TERRAIN_PROGRAM) && ZEPH_EFFECTIVE_PROFILE_TIER > 0
+uniform mat4 gbufferModelViewInverse;
+uniform vec3 cameraPosition;
 attribute vec4 mc_Entity;
 attribute vec2 mc_midTexCoord;
+#if ZEPH_EFFECTIVE_MATERIAL_QUALITY > 0
+flat varying float zephTerrainMaterial;
+#endif
 
 vec4 zephMoveFoliage(vec4 p) {
     float id = mc_Entity.x;
@@ -15,12 +20,13 @@ vec4 zephMoveFoliage(vec4 p) {
     // a continuous world-space field rather than per-block random offsets.
     float weight = id > 10102.5 ? 0.32 :
                    (id > 10101.5 ? 1.0 : float(gl_MultiTexCoord0.t < mc_midTexCoord.t));
-    vec3 relative = (gbufferModelViewInverse * (gl_ModelViewMatrix * p)).xyz;
-    vec2 world = relative.xz + mod(cameraPosition.xz, 256.0);
-    // Integer spatial frequencies are periodic over 256 blocks: camera
-    // modulo wrap and chunk boundaries are continuous; loader origin resets
-    // or teleports can still change the phase.
-    float phase = (world.x + 2.0 * world.y) * 0.0245436926 + frameTimeCounter * 0.900589893;
+    if (weight == 0.0) return p;
+
+    // Work from the existing view-space vertex. The wavelength divides Iris's
+    // 30,000-block camera rebase stride, keeping either side in the same phase.
+    const float spatialFrequency = 6.28318530718 / 240.0;
+    vec2 world = (gbufferModelViewInverse * p).xz + mod(cameraPosition.xz, 240.0);
+    float phase = (world.x + 2.0 * world.y) * spatialFrequency + frameTimeCounter * 0.900589893;
     float strength = 0.018;
 #if ZEPH_EFFECTIVE_PROFILE_TIER >= 2
     strength = 0.035 * (1.0 + 0.3 * clamp(rainStrength, 0.0, 1.0));
@@ -28,8 +34,13 @@ vec4 zephMoveFoliage(vec4 p) {
     // A broad traveling gust varies bend across the landscape instead of
     // rocking all vegetation on a single axis in lockstep. Both harmonics
     // remain continuous at the camera and frame-time wrap boundaries.
-    float gust = sin((2.0 * world.x - world.y) * 0.0245436926 + frameTimeCounter * 0.0977384381);
+#if ZEPH_EFFECTIVE_PROFILE_TIER >= 2
+    float gust = sin((2.0 * world.x - world.y) * spatialFrequency + frameTimeCounter * 0.0977384381);
     float sway = (sin(phase) + 0.30 * gust) * strength * weight;
+#else
+    // Low retains anchored motion with one periodic field and no gust sine.
+    float sway = sin(phase) * strength * weight;
+#endif
     vec2 movement = vec2(sway, sway * 0.45);
 #if ZEPH_EFFECTIVE_PROFILE_TIER >= 3
     // A small quadrature component breaks the rigid single-axis motion at
@@ -37,10 +48,15 @@ vec4 zephMoveFoliage(vec4 p) {
     // halves of tall plants continuous. The period matches the time reset.
     movement.y += sin(phase + 1.570796327) * strength * weight * 0.22;
 #endif
+#if ZEPH_EFFECTIVE_PROFILE_TIER >= 4
+    // The same slow gust controls bend amplitude as well as drift. This lets
+    // stands briefly settle and pick up again without another sampled field.
+    movement *= 0.85 + 0.15 * gust;
+#endif
     // Leaf canopies and rooted plants lean in different directions without an
     // extra trigonometric evaluation or a per-block discontinuous hash.
     if (id > 10102.5) movement.y = -movement.y;
-    p.xz += movement;
+    p.xyz += gbufferModelView[0].xyz * movement.x + gbufferModelView[2].xyz * movement.y;
     return p;
 }
 #endif
@@ -69,9 +85,6 @@ varying vec3 zephNormalView;
 varying vec3 zephViewDirection;
 void main() {
     vec4 position = gl_Vertex;
-#if defined(ZEPH_TERRAIN_PROGRAM) && ZEPH_EFFECTIVE_PROFILE_TIER > 0
-    position = zephMoveFoliage(position);
-#endif
 #ifdef ZEPH_WATER_PROGRAM
 #if (ZEPH_EFFECTIVE_WATER_TIER > 0 && ZEPH_EFFECTIVE_WATER_QUALITY > 0) || (ZEPH_EFFECTIVE_WATER_TIER >= 2 && ZEPH_EFFECTIVE_WATER_WAVES == 1)
     zephIsWater = abs(mc_Entity.x - 10001.0) < 0.5 ? 1.0 : 0.0;
@@ -90,6 +103,12 @@ void main() {
 #endif
 #endif
     vec4 viewPosition = gl_ModelViewMatrix * position;
+#if defined(ZEPH_TERRAIN_PROGRAM) && ZEPH_EFFECTIVE_PROFILE_TIER > 0
+#if ZEPH_EFFECTIVE_MATERIAL_QUALITY > 0
+    zephTerrainMaterial = float(mc_Entity.x >= 10100.0 && mc_Entity.x <= 10103.0);
+#endif
+    viewPosition = zephMoveFoliage(viewPosition);
+#endif
 #if !defined(ZEPH_HAND_PROGRAM) && (ZEPH_EFFECTIVE_FACE_LIGHTING_QUALITY > 0 || ZEPH_EFFECTIVE_MATERIAL_QUALITY > 0 || (defined(ZEPH_WATER_PROGRAM) && ZEPH_EFFECTIVE_WATER_TIER > 0 && ZEPH_EFFECTIVE_WATER_QUALITY > 0))
     vec3 surfaceNormal = gl_Normal;
     zephNormalView = gl_NormalMatrix * surfaceNormal;

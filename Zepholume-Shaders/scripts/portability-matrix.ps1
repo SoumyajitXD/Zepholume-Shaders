@@ -71,7 +71,23 @@ foreach ($stage in $stages) {
     $includeCount = 0
     $expanded = Expand-ZephInclude $stage.FullName ([System.Collections.Generic.List[string]]::new()) ([ref]$includeCount)
     if ($expanded -match '#include\s+"') { throw "Unexpanded include in $($stage.FullName)" }
-    $expandedStages[$stage.FullName] = [ordered]@{ source=$expanded; includeCount=$includeCount }
+    if ($expanded -notmatch '\A(#version[^\r\n]*\r?\n)') { throw "Missing initial #version directive: $($stage.FullName)" }
+    $version = $Matches[1]
+    $expandedStages[$stage.FullName] = [ordered]@{ version=$version; body=$expanded.Substring($version.Length); includeCount=$includeCount }
+}
+# Profile substitution is independent of vendor, loader and capability macros.
+# Reuse these bodies for every mock environment selecting the same profile.
+$profiledStages = @{}
+foreach ($profile in $profiles) {
+    $profileBodies = @{}
+    foreach ($stage in $stages) {
+        $body = $expandedStages[$stage.FullName].body
+        foreach ($option in $profile.values.Keys) {
+            $body = [regex]::Replace($body, "(?m)^#define $option \d+", "#define $option $($profile.values[$option])")
+        }
+        $profileBodies[$stage.FullName] = $body
+    }
+    $profiledStages[$profile.name] = $profileBodies
 }
 $manifest = [System.Collections.Generic.List[object]]::new()
 $totalCases = $vendors.Count * $loaders.Count * $profiles.Count * $dimensions.Count * $capabilities.Count
@@ -82,9 +98,9 @@ foreach ($vendor in $vendors) { foreach ($loader in $loaders) { foreach ($profil
     $caseMacros = @($vendor.macros + $loader.macros + $capability.macros)
     $macroPrefix = ($caseMacros | ForEach-Object { "#define $_" }) -join "`n"
     foreach ($stage in $stagesByDimension[$dimension]) {
-        $expanded = $expandedStages[$stage.FullName].source
-        foreach ($option in $profile.values.Keys) { $expanded = [regex]::Replace($expanded, "(?m)^#define $option \d+", "#define $option $($profile.values[$option])") }
-        $expanded = "$macroPrefix`n$expanded"
+        $stageSource = $expandedStages[$stage.FullName]
+        $body = $profiledStages[$profile.name][$stage.FullName]
+        $expanded = "$($stageSource.version)$macroPrefix`n$body"
         $bytes = [Text.Encoding]::UTF8.GetBytes($expanded)
         $sha = [Convert]::ToHexString([Security.Cryptography.SHA256]::HashData($bytes))
         $caseRows.Add([ordered]@{ stage=[IO.Path]::GetRelativePath($shaderRoot,$stage.FullName).Replace('\','/'); expandedBytes=$bytes.Length; includeCount=$expandedStages[$stage.FullName].includeCount; sha256=$sha })
@@ -110,13 +126,14 @@ $stopwatch.Stop()
     stagesPerCase = @($stagesByDimension['overworld']).Count
     elapsedSeconds = [math]::Round($stopwatch.Elapsed.TotalSeconds, 3)
     detailed = [bool]$Detailed
-    evidenceScope = 'Mocked include/profile corpus with explicit macro prefixes and dimension wrapper selection; not loader-patched, driver, GPU, or runtime execution.'
+    evidenceScope = 'Mocked include/profile corpus with macros after the GLSL version directive and dimension wrapper selection; not loader-patched, driver, GPU, or runtime execution.'
 } | ConvertTo-Json | Set-Content -LiteralPath (Join-Path $output 'completion.json.tmp') -Encoding utf8NoBOM
 Move-Item -LiteralPath (Join-Path $output 'completion.json.tmp') -Destination (Join-Path $output 'completion.json')
 Write-Host "Portability matrix passed: $($manifest.Count) mocked cases; $(@($stagesByDimension['overworld']).Count) stages per case; elapsed $([math]::Round($stopwatch.Elapsed.TotalSeconds, 1)) s. Detailed case files: $Detailed. Output: $output"
 }
 
 if ($Worker) {
+    if ($SelectedProfiles) { $SelectedProfiles = $SelectedProfiles -split ',' }
     Invoke-PortabilityMatrixWorker
     exit 0
 }
@@ -139,7 +156,11 @@ $startInfo.RedirectStandardOutput = $true
 $startInfo.RedirectStandardError = $true
 foreach ($argument in @('-NoLogo','-NoProfile','-File',$PSCommandPath,'-Root',$Root,'-OutputRoot',$stagingOutput,'-TimeoutSeconds',$TimeoutSeconds,'-ProgressEvery',$ProgressEvery,'-Worker')) { [void]$startInfo.ArgumentList.Add([string]$argument) }
 if ($Detailed) { [void]$startInfo.ArgumentList.Add('-Detailed') }
-foreach ($profile in @($SelectedProfiles)) { [void]$startInfo.ArgumentList.Add('-SelectedProfiles'); [void]$startInfo.ArgumentList.Add($profile) }
+# A child pwsh -File invocation cannot bind repeated or array parameters.
+if ($SelectedProfiles) {
+    [void]$startInfo.ArgumentList.Add('-SelectedProfiles')
+    [void]$startInfo.ArgumentList.Add($SelectedProfiles -join ',')
+}
 $process = [Diagnostics.Process]::new()
 $process.StartInfo = $startInfo
 if (-not $process.Start()) { throw 'Failed to start portability-matrix worker.' }

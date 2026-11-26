@@ -10,9 +10,10 @@ $common = Get-Content -LiteralPath (Join-Path $root 'shaders/lib/common.glsl') -
 # source-execution tests separately cover output and enclosed skylight.
 foreach ($pair in @(
     @($water, 'float sunWeight = zephSolarIllumination(sunElevation, storm);'),
-    @($water, 'float moonWeight = zephLunarIllumination(sunElevation, zephWorldElevation(moonDir), storm);'),
-    @($water, 'if (sunWeight > 0.0 && skyExposure > 0.0)'),
-    @($water, 'if (daylight < 1.0 && skyExposure > 0.0)'),
+    @($water, 'float moonWeight = zephLunarIllumination(sunElevation, dot(moonDir, worldUp), storm);'),
+    @($water, 'if (skyExposure <= 0.0) return transmission;'),
+    @($water, 'if (sunWeight > 0.0)'),
+    @($water, 'if (daylight < 1.0)'),
     @($water, 'if (moonWeight > 0.0)'),
     @($water, 'celestialSpecular *= skyExposure;'),
     @($common, 'zephSaturate(sunElevation * 6.0 + 0.1) * (1.0 - 0.85 * zephSaturate(weather))'),

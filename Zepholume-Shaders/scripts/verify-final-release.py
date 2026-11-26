@@ -25,6 +25,7 @@ def main():
     source_commit = git('rev-parse', args.source_commit or 'HEAD')
     sources = {p.relative_to(root).as_posix(): p for p in (root / 'shaders').rglob('*') if p.is_file()}
     sources.update({name: root / name for name in ('README.md', 'CHANGELOG.md', 'THIRD_PARTY_NOTICES.md')})
+    sources.update({name: root.parent / name for name in ('LICENSE', 'NOTICE')})
     entries = []
     with zipfile.ZipFile(args.archive) as archive:
         assert archive.testzip() is None, 'CRC failure'
@@ -38,8 +39,12 @@ def main():
             assert '..' not in name.split('/'), name
             assert entry.date_time == (1980, 1, 1, 0, 0, 0), name
             data = archive.read(entry)
-            assert data == sources[name].read_bytes(), f'Source mismatch: {name}'
-            committed = subprocess.check_output(['git', '-C', str(root.parent), 'show', f'{source_commit}:{root.name}/{name}'])
+            expected = sources[name].read_bytes()
+            if name in ('LICENSE', 'NOTICE'):
+                expected = expected.replace(b'\r\n', b'\n').replace(b'\n', b'\r\n')
+            assert data == expected, f'Source mismatch: {name}'
+            repo_path = sources[name].relative_to(root.parent).as_posix()
+            committed = subprocess.check_output(['git', '-C', str(root.parent), 'show', f'{source_commit}:{repo_path}'])
             assert committed.replace(b'\r\n', b'\n') == data.replace(b'\r\n', b'\n'), f'Frozen commit mismatch: {name}'
             entries.append(dict(path=name, size=len(data), sha256=sha(data), crc32=f'{entry.CRC:08X}'))
         properties = archive.read('shaders/shaders.properties').decode('utf-8-sig')
@@ -57,10 +62,11 @@ def main():
                    for prefix in ('', 'world0/', 'world-1/', 'world1/'))
     digest = sha(args.archive.read_bytes())
     manifest = json.loads(Path(str(args.archive) + '.manifest.json').read_text(encoding='utf-8-sig'))
+    assert manifest['archive'] == args.archive.name, 'Manifest archive name differs'
     assert manifest['archiveSha256'] == digest and manifest['commit'] == source_commit
     assert manifest['sourceState'] == 'clean', 'Package was not built from a clean checkout'
     assert {entry['path']: entry['sha256'] for entry in manifest['entries']} == {entry['path']: entry['sha256'] for entry in entries}
-    assert Path(str(args.archive) + '.sha256').read_text(encoding='utf-8-sig').split()[0] == digest
+    assert Path(str(args.archive) + '.sha256').read_text(encoding='utf-8-sig').split() == [digest, args.archive.name]
     assert args.archive.read_bytes() == args.repeat.read_bytes(), 'Rebuild differs'
     if args.export:
         assert args.export.read_bytes() == args.archive.read_bytes(), 'Export differs'

@@ -5,7 +5,7 @@
 varying vec2 zephCloudTexCoord;
 varying vec4 zephCloudVertexColour;
 varying vec3 zephCloudViewPosition;
-#if ZEPH_EFFECTIVE_CLOUD_QUALITY > 0 && ZEPH_EFFECTIVE_CLOUD_TIER >= 1
+#if !defined(ZEPH_DIM_NETHER) && !defined(ZEPH_DIM_END) && ZEPH_EFFECTIVE_CLOUD_QUALITY > 0 && ZEPH_EFFECTIVE_CLOUD_TIER >= 1
 varying float zephCloudNormalUp;
 // Low clouds need only two draw-uniform solar weights. Evaluate them per
 // vertex instead of repeating direction normalization across cloud pixels.
@@ -26,15 +26,13 @@ void main() {
     // Interpolate the affine position; corner lengths are not affine and
     // made the fog amount depend on the cloud mesh's triangle diagonal.
     zephCloudViewPosition = viewPosition.xyz;
-#if ZEPH_EFFECTIVE_CLOUD_QUALITY > 0 && ZEPH_EFFECTIVE_CLOUD_TIER >= 1
+#if !defined(ZEPH_DIM_NETHER) && !defined(ZEPH_DIM_END) && ZEPH_EFFECTIVE_CLOUD_QUALITY > 0 && ZEPH_EFFECTIVE_CLOUD_TIER >= 1
     vec3 cloudNormal = zephSafeNormalize(gl_NormalMatrix * gl_Normal);
-    zephCloudNormalUp = clamp(zephWorldElevation(cloudNormal) * 0.5 + 0.5, 0.0, 1.0);
+    vec3 worldUp = zephWorldUpView();
+    zephCloudNormalUp = zephSaturate(dot(cloudNormal, worldUp) * 0.5 + 0.5);
 #if ZEPH_EFFECTIVE_CLOUD_TIER == 1
-    // Match the existing bounded double-normalization even for degenerate
-    // loader input; this value is uniform across the primitive.
-    float solarElevation = zephWorldElevation(zephSafeNormalize(sunPosition));
-    zephCloudSolar = vec2(zephDaylightFromElevation(solarElevation),
-                          clamp(solarElevation * 0.5 + 0.5, 0.0, 1.0));
+    float solarElevation = dot(zephSafeNormalize(sunPosition), worldUp);
+    zephCloudSolar = vec2(zephDaylightFromElevation(solarElevation), solarElevation);
 #endif
 #if ZEPH_EFFECTIVE_CLOUD_TIER >= 2
     // Facet illumination is evaluated per vertex on the existing cloud mesh.

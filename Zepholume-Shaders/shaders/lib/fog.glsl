@@ -48,6 +48,8 @@ vec3 zephFogColour(vec3 viewDir) {
     vec3 endTint = mix(vec3(0.20, 0.16, 0.25), vec3(0.13, 0.16, 0.30), up);
     return zephHazeTint(fogColor, endTint, 0.24);
 #endif
+#elif ZEPH_EFFECTIVE_PROFILE_TIER == 0
+    return fogColor;
 #else
     vec3 sunDir = zephSafeNormalize(sunPosition);
     // Both palette weights use the same world-space elevation. Compute it
@@ -57,33 +59,17 @@ vec3 zephFogColour(vec3 viewDir) {
     float daylight = zephDaylightFromElevation(sunElevation);
     float storm = zephSaturate(rainStrength);
     float clearTwilight = zephClearTwilight(sunElevation, storm);
-    vec3 haze = zephAtmosphereColour(fogColor, daylight, storm);
-    // Low-order horizon warmth connects fog to the sky without replacing
-    // biome/loader fog colour or producing a hard sunset band.
-#if ZEPH_EFFECTIVE_PROFILE_TIER == 0
-    return haze * mix(vec3(1.0), vec3(1.08, 0.97, 0.91), clearTwilight * 0.10);
-#else
-    float warmWeight = clearTwilight * 0.10;
+    float elevation = 0.0;
+    float sunDot = 0.0;
 #if ZEPH_EFFECTIVE_PROFILE_TIER >= 2
-    // The fog palette follows the same broad solar direction as the sky.
-    // Restrict the effect near the horizon; looking downward in caves must
-    // not acquire a sunset-coloured veil. No extra sample or render target.
-    vec3 direction = zephSafeNormalize(viewDir);
-    float elevation = abs(dot(direction, worldUp));
-    float horizon = 1.0 - zephSaturate(elevation * 2.0);
-    float towardSun = zephSaturate(dot(direction, sunDir) * 0.5 + 0.5);
-    float warm = clearTwilight * horizon * towardSun * towardSun;
-    // Combining two mixes with the same luminance-matched target avoids a
-    // second tint evaluation; tinting preserves luminance by construction.
-    warmWeight += (1.0 - warmWeight) * warm * 0.10;
+    if (clearTwilight > 0.0) {
+        vec3 direction = zephSafeNormalize(viewDir);
+        elevation = dot(direction, worldUp);
+        sunDot = dot(direction, sunDir);
+    }
 #endif
-    return zephHazeTint(haze, vec3(0.82, 0.48, 0.32), warmWeight);
+    return zephOpenAirHaze(fogColor, daylight, storm, clearTwilight, elevation, sunDot);
 #endif
-#endif
-}
-
-vec3 zephFogColour() {
-    return zephFogColour(vec3(0.0, 0.0, 1.0));
 }
 
 float zephFogFactor(float d, float viewDirectionY) {

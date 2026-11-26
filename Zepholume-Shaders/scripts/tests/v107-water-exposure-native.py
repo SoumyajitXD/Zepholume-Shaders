@@ -18,11 +18,11 @@ water = (root / 'shaders/lib/water.glsl').read_text()
 fixture = module.NativeFixture(common, water)
 count = 0
 try:
-    def draw(tier=2, dimension='Overworld', exposure=1.0, rain=0.0, night=False, colour=(0.0, 0.0, 0.0)):
+    def draw(tier=2, dimension='Overworld', exposure=1.0, rain=0.0, night=False, colour=(0.0, 0.0, 0.0), sky=(0.0, 0.0, 0.0)):
         global count
         count += 1
         return fixture.draw(dict(tier=tier, dimension=dimension, exposure=exposure, rain=rain,
-            normal=(0.0, 1.0, 0.0), view=(0.0, 1.0, 0.0), colour=colour,
+            normal=(0.0, 1.0, 0.0), view=(0.0, 1.0, 0.0), colour=colour, sky=sky,
             sun=(0.0, -1.0 if night else 1.0, 0.0),
             moon=(0.0, 1.0 if night else -1.0, 0.0)))
 
@@ -30,7 +30,7 @@ try:
         return max(abs(x-y) for x, y in zip(a, b)) < tol
 
     evidence = {}
-    for tier in (1, 2):
+    for tier in (1, 2, 3, 4):
         for night in (False, True):
             closed = draw(tier, exposure=0, night=night)
             opened = draw(tier, exposure=1, night=night)
@@ -51,8 +51,24 @@ try:
         dark = draw(tier, exposure=0)
         assert sum(lit) > .05 and near(dark, (0, 0, 0))
         for dim in ('Nether', 'End'):
-            assert near(draw(tier, dim, exposure=0, colour=(.4, .25, .1)),
-                        draw(tier, dim, exposure=1, colour=(.4, .25, .1)))
+            # The dimension sky contributes only where local skylight permits
+            # it.  Zero exposure retains transmitted, block-lit water.
+            closed = draw(tier, dim, exposure=0, sky=(.6, .5, .4))
+            mid = draw(tier, dim, exposure=.5, sky=(.6, .5, .4))
+            opened = draw(tier, dim, exposure=1, sky=(.6, .5, .4))
+            assert near(closed, (0, 0, 0))
+            if dim == 'Nether':
+                # No vanilla Nether skylight: even unexpected nonzero input
+                # must not introduce an ungrounded dimension-sky reflection.
+                assert near(mid, closed) and near(opened, closed)
+            else:
+                assert sum(opened) > 0
+                assert all(abs(m - o * .5) < 2e-6 for m, o in zip(mid, opened))
+            lit = draw(tier, dim, exposure=0, colour=(.4, .25, .1), sky=(.6, .5, .4))
+            assert sum(lit) > .05
+            if dim == 'Nether':
+                unexpected = draw(tier, dim, exposure=1, colour=(.4, .25, .1), sky=(.6, .5, .4))
+                assert near(lit, unexpected)
     print(json.dumps({'evidence_class':'NATIVE_SOURCE_LIBRARY_RGBA32F', 'driver':fixture.driver,
                       'draws':count, 'programs':len(fixture.programs), 'measurements':evidence, 'passed':True}))
 finally:

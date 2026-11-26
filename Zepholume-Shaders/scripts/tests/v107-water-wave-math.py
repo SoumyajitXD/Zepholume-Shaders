@@ -17,7 +17,9 @@ def source_contract(water_source, vertex_source):
     # implemented geometry; material and interpolation have separate tests.
     for required in (
         '#if ZEPH_EFFECTIVE_WATER_TIER >= 2 && ZEPH_EFFECTIVE_WATER_WAVES == 1',
-        'dot(world, vec2(3.0, 2.0)) * 0.024543692606 + frameTimeCounter * 0.5235987756',
+        'const float zephWaterPhaseScale = 0.02617993878;',
+        'mod(cameraPosition.xz, 240.0)',
+        'dot(world, vec2(3.0, 2.0)) * zephWaterPhaseScale + frameTimeCounter * 0.5235987756',
         'p.y += sin(phase) * 0.025;',
     ):
         if required not in water_source:
@@ -38,7 +40,7 @@ for mutated in (water.replace('* 0.025;', '* 2.025;', 1),
 
 
 def height(x, z, t):
-    return .025 * math.sin(math.tau * ((3*x + 2*z)/256 + t/12))
+    return .025 * math.sin(math.tau * ((3*x + 2*z)/240 + t/12))
 
 
 max_derivative_error = 0.0
@@ -48,11 +50,12 @@ for x in (-1000, -37, 0, 19, 1000):
         for t in (0, .5, 32, 3600):
             h = height(x, z, t)
             assert math.isfinite(h) and abs(h) <= .025
-            for other in (height(x+256, z, t), height(x, z+256, t), height(x, z, t+3600)):
+            for other in (height(x+240, z, t), height(x, z+240, t), height(x, z, t+3600),
+                          height(x+30_000, z, t), height(x, z-30_000, t)):
                 assert abs(h-other) < 1e-12
             eps = 1e-3
             derivative = (height(x+eps, z, t)-height(x-eps, z, t))/(2*eps)
-            bound = .025 * math.tau * 3 / 256
+            bound = .025 * math.tau * 3 / 240
             assert abs(derivative) <= bound + 1e-10
             max_derivative_error = max(max_derivative_error, abs(derivative))
             cases += 1

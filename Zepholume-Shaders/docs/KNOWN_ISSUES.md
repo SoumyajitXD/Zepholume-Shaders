@@ -1,12 +1,12 @@
 # Known issues and test gaps
 
-This page tracks **V1.0.7**. Older development notes that said the pack had never been loaded in Minecraft no longer describe the current release.
+This page tracks **V1.0.8**. See the [release and validation notes](V1.0.8_RELEASE.md) for the exact build and offline checks.
 
 ## What has not been fully checked
 
-- The V1.0.7 release candidate was tested locally with Fabric 26.1.2, Iris 1.10.9 and Intel UHD Graphics 730. The exported final ZIP has **not** been put through a complete scene, dimension and profile test matrix.
-- Oculus/Forge, other game versions and other GPU vendors still need direct testing. Standalone GLSL checks do not establish loader compatibility.
-- There is no controlled real-game FPS or frame-time benchmark for V1.0.7. Performance improvements should not be assumed.
+- V1.0.8 has no exact-ZIP gameplay result. Standalone GLSL and loader patcher checks cover source and fixture behavior. In-game preprocessing, shader reloads, and rendering still need direct tests.
+- The V1.0.7 release candidate was tested locally with Fabric 26.1.2, Iris 1.10.9 and Intel UHD Graphics 730. See the [V1.0.7 release record](V1.0.7_FINAL_RELEASE.md) for that historical evidence.
+- Controlled Minecraft FPS and frame-time measurements are unavailable for V1.0.8. The benchmark tools and synthetic GPU timing fixtures measure different things.
 
 ## Visual cases worth retesting
 
@@ -15,8 +15,8 @@ This page tracks **V1.0.7**. Older development notes that said the pack had neve
 - **Hands and held items:** lightmap routing was corrected, but dark interiors, emissive items and translucent items need matched in-game checks.
 - **Clouds and fog:** check profile changes, weather transitions, low-angle views and dimension transitions on the exact release ZIP.
 
-Include the shader profile, loader versions, GPU/driver, full `latest.log` and a reproducible screenshot or scene when reporting one of these cases. See [Troubleshooting](../../docs/TROUBLESHOOTING.md) and [Compatibility](../../docs/COMPATIBILITY.md).
+When reporting one of these cases, include the ZIP SHA-256, shader profile, game and loader versions, GPU and driver, relevant `latest.log` output, and a reproducible screenshot or scene. Review logs for private details before sharing. See [Troubleshooting](../../docs/TROUBLESHOOTING.md) and [Compatibility](../../docs/COMPATIBILITY.md).
 
 ## Older development notes
 
-During the V1.0.1 development line, both `gbuffers_skybasic` wrappers had a malformed `#define #define ZEPH_NO_FOG` directive. It was fixed before later releases. Earlier launcher-access and profile-testing blockers were specific to that stage and should not be reported as current V1.0.7 failures.
+During the V1.0.1 development line, both `gbuffers_skybasic` wrappers had a malformed `#define #define ZEPH_NO_FOG` directive. It was fixed before later releases.

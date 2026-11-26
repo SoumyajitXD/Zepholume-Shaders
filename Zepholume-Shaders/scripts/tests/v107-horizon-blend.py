@@ -2,8 +2,9 @@
 from pathlib import Path
 
 source = (Path(__file__).resolve().parents[2] / "shaders/lib/sky_fragment.glsl").read_text()
-assert "float horizonDistance = abs(dot(skyDir, zephWorldUpView()));" in source
-assert "mix(fogColor, result, smoothstep(0.0, 0.16, horizonDistance))" in source
+assert "float elevation = dot(skyDir, worldUp);" in source
+assert "mix(haze, result, smoothstep(0.0, 0.16, abs(elevation)))" in source
+assert "smoothstep(-0.23, 0.0, elevation)" in source
 
 def weight(distance):
     t = max(0.0, min(1.0, abs(distance) / 0.16))

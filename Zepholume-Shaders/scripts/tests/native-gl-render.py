@@ -33,6 +33,8 @@ def main():
     parser.add_argument("--albedo", type=float, default=0.65)
     parser.add_argument("--light", type=float, default=1.0)
     parser.add_argument("--alpha", type=float, default=0.75)
+    parser.add_argument("--entity-color", type=float, nargs=4, metavar=("R", "G", "B", "WEIGHT"),
+                        help="Synthetic loader entityColor overlay")
     parser.add_argument("--fog-start", type=float, default=100.0)
     parser.add_argument("--fog-end", type=float, default=200.0)
     parser.add_argument("--fog-color", type=float, nargs=3, default=(0.2, 0.3, 0.4))
@@ -57,10 +59,13 @@ def main():
     parser.add_argument("--depth", type=float, default=0.5, help="Positive view-space depth")
     parser.add_argument("--skip-draw", action="store_true", help="Negative self-test: require clear-color detection")
     parser.add_argument("--skip-png", action="store_true", help="Keep float pixels and JSON without a normalized preview")
+    parser.add_argument("--size", type=int, default=32, help="Square fixture size, 32–1024 pixels")
     parser.add_argument("--timing-draws", type=int, default=0, help="GPU timer-query workload per repetition")
     args = parser.parse_args()
     if not all(math.isfinite(v) for v in (args.camera_pitch, args.camera_yaw, args.quad_offset_x, args.quad_offset_y)):
         parser.error("camera rotations and quad offsets must be finite")
+    if args.entity_color is not None and not all(0 <= v <= 1 for v in args.entity_color):
+        parser.error("entity colour and weight must be within [0, 1]")
     pitch, yaw = map(math.radians, (args.camera_pitch, args.camera_yaw))
     cp, sp, cy, sy = math.cos(pitch), math.sin(pitch), math.cos(yaw), math.sin(yaw)
     rotation = ((cy, 0.0, sy), (sp * sy, cp, -sp * cy), (-cp * sy, sp, cp * cy))
@@ -108,6 +113,7 @@ def main():
         uniform_1i = bind("glUniform1i", None, i, i)
         uniform_1f = bind("glUniform1f", None, i, f)
         uniform_3f = bind("glUniform3f", None, i, f, f, f)
+        uniform_4f = bind("glUniform4f", None, i, f, f, f, f)
         uniform_matrix_4fv = bind("glUniformMatrix4fv", None, i, i, C.c_ubyte, C.POINTER(f))
         attrib_location = bind("glGetAttribLocation", i, u, C.c_char_p)
         vertex_attrib_1f = bind("glVertexAttrib1f", None, u, f)
@@ -158,7 +164,9 @@ def main():
         gl.get_program_iv(program, 0x8B82, C.byref(ok))
         if not ok.value:
             raise RuntimeError("Program link failed: " + gl.log(program, False))
-        width = height = 32
+        width = height = args.size
+        if not 32 <= width <= 1024:
+            raise ValueError("size must be between 32 and 1024")
         textures = (u * 3)()
         gen_textures(3, textures)
         resources.append(("textures", textures))
@@ -236,6 +244,9 @@ def main():
                     "isEyeInWater": args.eye_medium if args.eye_medium is not None else int(args.underwater), "frameTimeCounter": 0.0}
         for name, values in uniforms.items():
             set_uniform(name, values)
+        if args.entity_color is not None:
+            uniforms["entityColor"] = tuple(args.entity_color)
+            uniform_4f(uniform_location(program, b"entityColor"), *args.entity_color)
         normal(0, 0, 1)
         color(1, 1, 1, 1)
         material_attribute = attrib_location(program, b"mc_Entity")
@@ -259,7 +270,8 @@ def main():
         pixels = (f * (width * height * 4))()
         read_pixels(0, 0, width, height, 0x1908, 0x1406, C.cast(pixels, p))
         error = get_error()
-        center = list(pixels[4 * (16 * width + 16):4 * (16 * width + 16) + 4])
+        center_offset = 4 * ((height // 2) * width + width // 2)
+        center = list(pixels[center_offset:center_offset + 4])
         finite = all(math.isfinite(v) for v in pixels)
         changed = any(abs(center[j] - [0.03125, 0.0625, 0.125, 0.25][j]) > 0.01 for j in range(4))
         if error or not finite or not changed:
@@ -310,7 +322,7 @@ def main():
                                            "triangulation": args.triangulation, "perspective": args.perspective,
                                            "normal": "+Z", "camera_pitch": args.camera_pitch, "camera_yaw": args.camera_yaw, "projection_counter_rotated": True},
                               "textures": "1x1 RGBA8 nearest clamp"},
-                  "framebuffer": "32x32 RGBA32F float, sRGB conversion disabled; PNG is clipped normalized RGBA8 preview; blending/depth/cull/dither disabled",
+                  "framebuffer": f"{width}x{height} RGBA32F float, sRGB conversion disabled; PNG is clipped normalized RGBA8 preview; blending/depth/cull/dither disabled",
                   "readback_probe_rgba32f": readback_probe, "out_of_normalized_range_channels": out_of_normalized_range,
                   "center_rgba_float": center, "range": [min(pixels), max(pixels)], "finite": finite,
                   "draw_changed_clear": changed, "gl_error": error, "timing": timing, "png": str(png_path) if png_path else None}

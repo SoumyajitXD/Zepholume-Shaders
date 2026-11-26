@@ -9,19 +9,20 @@ assert f.index('#if ZEPH_EFFECTIVE_CLOUD_TIER >= 4') < f.index('float relief')
 assert '0.14 * (cloudField - 0.5)' in f
 assert '(0.35 + 0.65 * zephCloudNormalUp)' in f
 assert 'cloud *= relief;' in f
-assert 'zephSafeNormalize(zephCloudViewPosition)' in f
+assert 'zephCloudViewPosition / max(distance, 0.0001)' in f
+assert 'dot(viewDir, moonDir)' in f
 assert 'clamp(source.a, 0.0, 1.0)' in f
 
 # Inputs match bounded normalized directions, normal and clamped weather.
 for day in (0, .2, .5, .8, 1):
     for rain in (0, .5, 1):
         for up in (0, .5, 1):
-            for cos_angle in (-1, -.5, 0, .5, 1):
-                sun, moon = max(cos_angle, 0)**4, max(-cos_angle, 0)**4
-                terms = [up*(1-rain)*(.14*sun*day + .025*moon*(1-day)),
-                         up*(1-rain)*(.11*sun*day + .032*moon*(1-day)),
-                         up*(1-rain)*(.08*sun*day + .048*moon*(1-day))]
-                assert all(isfinite(x) and 0 <= x <= .14 for x in terms)
+            for solar_dot, lunar_dot in ((-1, -1), (-1, 1), (1, -1), (1, 1), (.5, .5)):
+                sun, moon = max(solar_dot, 0)**4, max(lunar_dot, 0)**4
+                terms = [up*(1-rain)*(.24*sun*day + .037*moon*(1-day)),
+                         up*(1-rain)*(.185*sun*day + .048*moon*(1-day)),
+                         up*(1-rain)*(.13*sun*day + .073*moon*(1-day))]
+                assert all(isfinite(x) and 0 <= x <= .24 for x in terms)
                 if rain == 1 or up == 0:
                     assert all(x == 0 for x in terms)
                 storm = rain * (1-up) * .55
