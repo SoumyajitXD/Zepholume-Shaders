@@ -1,10 +1,32 @@
-# Compatibility and evidence — V1.0.7
+# Compatibility and evidence — V1.0.8
 
-**Current release:** [Zepholume-Shaders-1.0.7.zip](../Releases/Zepholume-Shaders-1.0.7.zip) is present in the GitHub Releases directory. A final-named ZIP and offline compiler passes do not prove all Minecraft versions, GPUs or shader loaders are supported.
+The development target is Minecraft Java 1.20–26.3 with Iris as the primary loader and an Oculus compatibility path. The finalized source and [local export record](../Zepholume-Shaders/docs/V1.0.8_RELEASE.md) do not establish support for every version in that range.
+
+| Evidence | V1.0.8 status |
+| --- | --- |
+| Local export | Finalized November 25, 2026; SHA-256 recorded in the release record |
+| Iris 1.7.6 / Minecraft 1.20.1 | Standalone patcher fixture exercised |
+| Oculus 1.8.0 / Minecraft 1.20.1 | Standalone patcher fixture exercised |
+| Iris 1.10.7 / Minecraft 1.21.11 | Standalone patcher fixture exercised |
+| Iris 1.10.9 / Fabric 26.1.2 fixture | Standalone patcher fixture exercised; JAR labelled 26.1.1 |
+| Exact final ZIP in Minecraft | Not gameplay- or visually qualified |
+| Cross-vendor GPUs, additional versions and loaders | Not established |
+| Gameplay FPS and frame times | Not measured for this release |
+| OptiFine | Unsupported |
+
+The patcher probe uses pre-expanded shaders and fixture geometry in a standalone JVM. It cannot demonstrate the full Minecraft loader path, profile menu, dimension transitions, graphics-driver behavior or rendered scenes. Synthetic GPU results likewise do not establish gameplay performance.
+
+Retest covered nighttime water, flowing water, held items, clouds and fog on the exact ZIP. Local skylight is an exposure proxy, not directional raytraced occlusion. See [known issues](../Zepholume-Shaders/docs/KNOWN_ISSUES.md), [installation](INSTALLATION.md), and [CI qualification](CI_AND_RELEASE_QUALIFICATION.md).
+
+---
+
+## Historical V1.0.7 evidence
+
+**Archived release:** [Zepholume-Shaders-1.0.7.zip](../Releases/Zepholume-Shaders-1.0.7.zip) is present in the GitHub Releases directory. A final-named ZIP and offline compiler passes do not prove all Minecraft versions, GPUs or shader loaders are supported.
 
 ## V1.0.7 qualification summary
 
-| Environment / evidence | Current status | Limit |
+| Environment / evidence | V1.0.7 status | Limit |
 | --- | --- | --- |
 | Final ZIP / deterministic archive | **EXPORTED; INTEGRITY CHECKS REPORTED PASS** | 67,750 bytes, 137 entries; SHA-256 `79CF6F63E7BA609D734FE653A34321BB79DC5EBAFCC80C1FD5A190471EC5BEB8` recorded by release engineer |
 | Standalone GLSL 330 | **OFFLINE PASS (reported)** | 320 stages / 420 links; 5,040 logical configurations; not loader-patched compilation |
@@ -21,7 +43,7 @@ See [V1.0.7 release notes](../Zepholume-Shaders/docs/V1.0.7_RELEASE_NOTES.md), [
 
 ## Historical V1.0.6 qualification (archived for reference)
 
-The remainder of this document describes the **previous V1.0.6 release**, not the current V1.0.7 build. Statements that the V1.0.6 final ZIP was not runtime-tested must not be applied to the V1.0.7 release-candidate evidence.
+The remainder of this document describes the **historical V1.0.6 release**, not V1.0.8. Statements that the V1.0.6 final ZIP was not runtime-tested must not be applied to the V1.0.7 release-candidate evidence.
 
 Zepholume targets **Minecraft Java Edition** and requires a separate shader loader. **Game-version tags, static compiler coverage and a final-named ZIP are not runtime compatibility tests.**
 
@@ -47,7 +69,7 @@ Historical environment details and loader contracts: [V1.0.6 source compatibilit
 
 The [final verification report](../Zepholume-Shaders/docs/V1.0.6_FINAL_RELEASE.md) records **272/272 GLSL stages, 420/420 links and 630/630 mocked portability cases**. Native fixtures passed **63 hand, 52 water and 24 camera draws**, alongside source-bound profile/dimension regressions. The portability matrix does not represent 630 real computers or shader-loader runs.
 
-**Hosted CI is separate:** GitHub Actions' latest main-branch aggregate is failing a clean-tree check. Do not describe hosted CI as passing solely because the final local source suite passed.
+**Historical hosted CI:** V1.0.6 had a failing clean-tree check. See [CI qualification](CI_AND_RELEASE_QUALIFICATION.md) for dated evidence rather than treating historical failures as the current status.
 
 ## Known visual and runtime limitations
 

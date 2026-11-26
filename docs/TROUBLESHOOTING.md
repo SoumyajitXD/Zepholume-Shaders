@@ -1,14 +1,12 @@
 # Troubleshooting
 
-**Current version: V1.0.7.** Download the [GitHub ZIP](../Releases/Zepholume-Shaders-1.0.7.zip) or an actually listed [CurseForge file](https://www.curseforge.com/minecraft/shaders/zepholume-shaders/files). The local Iris/Intel candidate was tested, but full final-ZIP, cross-loader and GPU-vendor compatibility is unqualified. See [Compatibility](COMPATIBILITY.md).
-
-Start with the checks below before changing shader settings or reinstalling the loader.
+**Current source: V1.0.8.** Choose an available [CurseForge file](https://www.curseforge.com/minecraft/shaders/zepholume-shaders/files) or [GitHub ZIP archive](../Releases/), or build V1.0.8 using the [release instructions](../Zepholume-Shaders/docs/V1.0.8_RELEASE.md). The final V1.0.8 ZIP has no Minecraft gameplay or visual qualification. See [Compatibility](COMPATIBILITY.md).
 
 ## Shader pack does not appear
 
 Check that:
 
-- a valid `Zepholume-Shaders-1.0.7.zip` from the [GitHub archive](../Releases/Zepholume-Shaders-1.0.7.zip), or a version actually listed on [CurseForge Files](https://www.curseforge.com/minecraft/shaders/zepholume-shaders/files), is inside the correct instance's `shaderpacks` folder
+- a valid Zepholume shaderpack ZIP from a published file or a source build is inside the correct instance's `shaderpacks` folder
 - the release archive has not been placed inside another ZIP
 - you are launching the same Minecraft instance whose folder you edited
 - the intended shader loader is actually installed and loading
@@ -18,7 +16,7 @@ Check that:
 1. Confirm the exact Minecraft version and compare it with the documented compatibility lane.
 2. Confirm the exact Iris/Oculus version.
 3. Confirm required loader dependencies are present.
-4. Confirm you are testing `Zepholume-Shaders-1.0.7.zip` rather than an older archive.
+4. Confirm the exact Zepholume version and archive SHA-256; do not mix evidence from different builds.
 5. Try the same release in a minimal clean instance.
 6. Read the complete `latest.log` and search for shader compilation/preprocessor errors.
 7. If the loader exposes patched shader output, preserve it for diagnosis.
@@ -129,7 +127,7 @@ Also inspect:
 
 A profile comparison is only meaningful when the scene and settings stay fixed.
 
-V1.0.7 does not currently have a completed controlled real-loader A/B benchmark, so do not compare your result against invented official FPS numbers—there are none.
+V1.0.8 has no completed controlled Minecraft A/B benchmark. Synthetic GPU timings are not a gameplay FPS target.
 
 ## Stutter or bad frame pacing
 
@@ -185,6 +183,6 @@ Screenshot/video attached: yes/no
 
 ## Support boundary
 
-For **Zepholume V1.0.7**, there is limited Minecraft 26.1.2 Fabric/Iris/Intel release-candidate and Ultra horizon evidence. The final ZIP was copied into shaderpacks, but a comprehensive exact-archive profile/dimension or cross-vendor matrix has not been verified. Historical 1.20.1 and experimental 26.2 lanes are not automatically final V1.0.7 compatibility evidence, nor are intermediate versions through 26.3.
+For V1.0.8, standalone shader and loader-patcher checks do not establish in-game compatibility or FPS. V1.0.7's historical Minecraft 26.1.2 Fabric/Iris/Intel candidate evidence does not qualify the new release. See the [V1.0.8 known issues](../Zepholume-Shaders/docs/KNOWN_ISSUES.md).
 
 OptiFine is not a supported Zepholume target. Broad GPU, driver, loader, or performance claims require completed real runtime evidence rather than static validation alone.

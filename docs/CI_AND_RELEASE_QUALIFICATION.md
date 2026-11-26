@@ -1,10 +1,16 @@
 # Continuous integration and release qualification
 
-## V1.0.7 qualification snapshot (2026-11-09)
+## V1.0.8 qualification snapshot (2026-11-26)
+
+Source finalized for local export on November 25. See the [V1.0.8 release record](../Zepholume-Shaders/docs/V1.0.8_RELEASE.md) for the archive digest, build instructions and four standalone Iris/Oculus patcher lanes. The final ZIP is not yet in the repository's archive directory. No exact-ZIP gameplay, visual or performance qualification is recorded.
+
+[Hosted CI run 45802341436](https://github.com/SoumyajitXD/Zepholume-Shaders/actions/runs/45802341436) completed successfully on source commit `bfaf6df88cbc94356f695b1cf447cafcaa2ffeda`. This is dated evidence for that commit, not a guarantee for subsequent commits. Check [Actions](https://github.com/SoumyajitXD/Zepholume-Shaders/actions) for newer results.
+
+## Historical V1.0.7 qualification snapshot (2026-11-09)
 
 **Exported locally: YES. Fully cross-vendor and cross-loader qualified: NOT ESTABLISHED.** The [V1.0.7 ZIP](../Releases/Zepholume-Shaders-1.0.7.zip) is present in the repository; the [final release report](../Zepholume-Shaders/docs/V1.0.7_FINAL_RELEASE.md) records 320 standalone GLSL-stage checks, 420 links and deterministic packaging. Local Minecraft 26.1.2/Fabric/Iris/Intel release-candidate runtime evidence does not imply cross-vendor support or measured FPS gains.
 
-**Hosted CI is a separate acceptance gate.** At the audit, [run 42600623873](https://github.com/SoumyajitXD/Zepholume-Shaders/actions/runs/42600623873) was in progress and [run 42596047328](https://github.com/SoumyajitXD/Zepholume-Shaders/actions/runs/42596047328) had failed. Check [current Actions status](https://github.com/SoumyajitXD/Zepholume-Shaders/actions) instead of assuming a prior or partial run makes `main` green.
+**Historical hosted CI:** At that audit, [run 42600623873](https://github.com/SoumyajitXD/Zepholume-Shaders/actions/runs/42600623873) was in progress and [run 42596047328](https://github.com/SoumyajitXD/Zepholume-Shaders/actions/runs/42596047328) had failed. Check [current Actions status](https://github.com/SoumyajitXD/Zepholume-Shaders/actions) instead of assuming a prior or partial run makes `main` green.
 
 ## Automated checks
 
@@ -39,7 +45,7 @@ Do not make compatibility claims based solely on these checks.
 - [Run 40680015526](https://github.com/SoumyajitXD/Zepholume-Shaders/actions/runs/40680015526) on commit `b4f101d`: **Full regression tests FAILED**, because the clean-tree guard detected modifications to tracked files after running tests. The required aggregate also failed.
 - The observed tracked modifications were `Zepholume-Shaders/bench/run-manifest-template.json`, `Zepholume-Shaders/bench/v103-control.json` and `Zepholume-Shaders/docs/BENCHMARK_PROTOCOL.md`. This is a test side-effect/source-isolation defect, **not** evidence of a GLSL compilation failure in this run.
 - In that run, workflow policy, GLSL compiler validation, mocked portability, Windows smoke, deterministic packaging, independent Windows packaging and cross-runner package contents **passed**.
-- This documentation update intentionally does **not** alter the protected `Zepholume-Shaders/` source or weaken the clean-tree check. The fixture/test code must be repaired in a separately authorised change, and a complete new hosted workflow run must pass before claiming CI green.
+- This documentation update intentionally does **not** alter the protected `Zepholume-Shaders/` source or weaken the clean-tree check. This describes the historical failure; see the dated V1.0.8 CI result above for later evidence.
 
 Final V1.0.6 packaging is separately documented in the [release report](../Zepholume-Shaders/docs/V1.0.6_FINAL_RELEASE.md). That report's offline pass and final archive export do not establish in-game qualification or passing hosted CI.
 
@@ -121,7 +127,7 @@ A/A and A/B protocol in
 Sanitize logs and never commit account credentials, player identities, IPs,
 private saves or raw confidential data to the public repository.
 
-**FULL MULTI-LOADER/VENDOR QUALIFICATION: NOT ESTABLISHED.** This remains distinct from V1.0.7's completed local export. This manual integrity checker is *not* a hosted Minecraft launcher or graphics-driver validation system.
+**FULL MULTI-LOADER/VENDOR QUALIFICATION: NOT ESTABLISHED.** This remains distinct from a completed local export of V1.0.8. This manual integrity checker is *not* a hosted Minecraft launcher or graphics-driver validation system.
 
 ## GitHub repository settings
 

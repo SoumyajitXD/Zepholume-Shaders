@@ -1,8 +1,6 @@
 # Architecture Overview
 
-**Current release: V1.0.7.** The GLSL 330 direct-path, single-colour-target renderer remains. The later V1.0.7 improvements add smooth sky/horizon fog blending, corrected directional fog, Potato darkness preservation, layered block clouds, local skylight-gated water glints and flat waterfall material classification. V1.0.6 sections below describe the historical baseline; see [V1.0.7 release notes](../Zepholume-Shaders/docs/V1.0.7_RELEASE_NOTES.md).
-
-Zepholume is designed as a lightweight, direct-path Minecraft Java shader pack. Its architecture favours predictable rendering cost, portability, and maintainability over stacking expensive effects simply because they exist.
+**Current source: V1.0.8.** The GLSL 330 direct-path, single-colour-target renderer remains. V1.0.8 shares the Overworld horizon palette across sky, terrain fog and clouds; adds upper-tier moon-directed cloud lighting and distance-faded cloud detail; and refines directional twilight water reflection, enclosed block-light warmth and distant material neutrality. Nether water omits analytical sky reflection. Hurt/flash overlays and camera-rebase animation continuity were corrected in source, while cheaper profiles avoid selected redundant work. See the [release record](../Zepholume-Shaders/docs/V1.0.8_RELEASE.md) and [changelog](../Zepholume-Shaders/CHANGELOG.md). The older model details below describe the historical baseline.
 
 ## Core rendering boundary
 
@@ -109,7 +107,7 @@ Water/scene view rays now interpolate affine information and calculate distance 
 
 Camera-space world-up computations align with normals and directions in view space. Fog preserves small, valid positive loader ranges and defines safe equal/reversed-endpoint behavior. No new pass, buffer or speculative global exposure correction was added.
 
-**Current V1.0.7 model limitation:** celestial water highlights are gated by local skylight exposure, reducing cave glints. Directional terrain occlusion remains analytical rather than raytraced, so this does not guarantee physically accurate reflections under all cover. See [V1.0.7 release evidence](../Zepholume-Shaders/docs/V1.0.7_FINAL_RELEASE.md).
+**Continuing model limitation:** celestial water highlights are gated by local skylight exposure, reducing cave glints. Directional terrain occlusion remains analytical rather than raytraced, so this does not guarantee physically accurate reflections under all cover. See [V1.0.7 release evidence](../Zepholume-Shaders/docs/V1.0.7_FINAL_RELEASE.md).
 
 ## Underwater fog
 
@@ -159,7 +157,7 @@ Those checks can catch source, preprocessing, and numerical regressions. They ca
 - gameplay performance
 - cross-vendor parity
 
-V1.0.7 has limited Iris/Intel release-candidate visual/runtime evidence; it still needs broader GPU/loader/gameplay verification and controlled benchmarking before those wider claims are justified.
+V1.0.7 has historical Iris/Intel release-candidate visual/runtime evidence. V1.0.8 has standalone patcher and shader-fixture evidence, not exact-ZIP Minecraft runtime, gameplay visual or performance qualification.
 
 ## Performance philosophy
 
