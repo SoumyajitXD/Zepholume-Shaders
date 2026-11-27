@@ -1,12 +1,12 @@
 # Architecture Overview
 
-**Current source: V1.0.8.** The GLSL 330 direct-path, single-colour-target renderer remains. V1.0.8 shares the Overworld horizon palette across sky, terrain fog and clouds; adds upper-tier moon-directed cloud lighting and distance-faded cloud detail; and refines directional twilight water reflection, enclosed block-light warmth and distant material neutrality. Nether water omits analytical sky reflection. Hurt/flash overlays and camera-rebase animation continuity were corrected in source, while cheaper profiles avoid selected redundant work. See the [release record](../Zepholume-Shaders/docs/V1.0.8_RELEASE.md) and [changelog](../Zepholume-Shaders/CHANGELOG.md). The older model details below describe the historical baseline.
+**Current source: V1.0.8.** The GLSL 330 direct-path, single-colour-target renderer remains. V1.0.8 shares the Overworld horizon palette across sky, terrain fog and clouds; adds upper-tier moon-directed cloud lighting and distance-faded cloud detail; and refines directional twilight water reflection, enclosed block-light warmth and distant material neutrality. Nether water omits analytical sky reflection. Hurt/flash overlays and camera-rebase animation continuity were corrected in source, while cheaper profiles avoid selected redundant work. See the [release record](../Zepholume-Shaders/docs/V1.0.8_RELEASE.md) and [changelog](../Zepholume-Shaders/CHANGELOG.md). The detailed lighting and water sections below describe the V1.0.6 baseline; use the release record and current source for newer implementation details.
 
 ## Core rendering boundary
 
 The current shader source is built around **GLSL 330 compatibility**, **14 root vertex/fragment program pairs** (with complete Overworld/Nether/End wrapper sets; 112 program files total), and a **single colour target** (`gl_FragData[0]`).
 
-The project intentionally avoids heavyweight renderer subsystems such as:
+The renderer does not use:
 
 - shadow-map passes
 - composite/deferred post-processing chains
