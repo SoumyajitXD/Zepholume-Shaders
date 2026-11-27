@@ -1,6 +1,6 @@
 # Development Guide
 
-This document describes the development expectations for Zepholume Shaders. The implementation lives under `/Zepholume-Shaders`; this guide focuses on how changes should be approached and validated.
+The shader source and tooling live in [Zepholume-Shaders/](../Zepholume-Shaders/). This guide covers how to change and test them.
 
 ## Project priorities
 
@@ -17,7 +17,7 @@ A feature that looks impressive in one screenshot but adds fragile code, major f
 
 ## Keep the architecture lean
 
-Zepholume deliberately uses a lightweight direct-path design. Do not introduce heavyweight rendering systems casually.
+Zepholume deliberately uses a lightweight direct-path design. Keep new effects in existing passes where possible.
 
 Before adding a new effect, answer:
 
@@ -29,8 +29,6 @@ Before adding a new effect, answer:
 - Does it create temporal state?
 - Does it weaken Iris/Oculus or cross-vendor portability?
 - How will it be validated visually and structurally?
-
-“No, but other shader packs have it” is not an architecture argument.
 
 ## Shader style
 
@@ -92,7 +90,7 @@ For before/after comparisons, keep constant:
 - VSync/FPS cap
 - shader profile and non-target options
 
-Capture the same viewpoints. Otherwise a screenshot comparison can become accidental marketing rather than evidence.
+Capture the same viewpoints. Changing the scene between captures makes it hard to tell whether the shader change helped.
 
 ## Performance testing
 
