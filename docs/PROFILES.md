@@ -1,6 +1,6 @@
 # Quality Profiles
 
-Zepholume exposes five quality profiles so the shader can scale across different hardware without changing its core direct-path rendering philosophy.
+Zepholume has five quality profiles. They change the amount of rendering work, not the renderer itself.
 
 ## Recommended default: Balanced
 
@@ -16,8 +16,6 @@ The selected profile caps which capability tiers are allowed to compile. Lower o
 | **High** | Systems with more headroom | Adds refined face/cloud/water/weather detail, dual-hemisphere ambient fill, fifth-power water response, and top-facet cloud solar rim |
 | **Ultra** | Maximum current Zepholume quality | Maximum bounded analytical detail within the same renderer; still no shadows, temporal effects, or framebuffer expansion |
 
-`Ultra Lite` remains a **deprecated compatibility alias for Low** so older selections remain meaningful.
-
 ## V1.0.8 profile behaviour
 
 Five profiles remain selectable in source: Potato, Low, Balanced (default), High and Ultra. Profile switching was smoke-tested on V1.0.7; the exact V1.0.8 ZIP still needs in-game checks.
@@ -32,7 +30,7 @@ Five profiles remain selectable in source: Potato, Low, Balanced (default), High
 
 ## What profiles do not do
 
-High and Ultra do not secretly replace Zepholume with a different renderer. The project deliberately avoids using higher presets as an excuse to add:
+Even High and Ultra omit:
 
 - shadow maps
 - screen-space reflections
@@ -45,8 +43,6 @@ High and Ultra do not secretly replace Zepholume with a different renderer. The 
 - geometry/tessellation stages
 - SSBO/image pipelines
 - heavyweight full-resolution post-processing buffers
-
-The profiles scale quality **inside the same direct-path architectural boundary**.
 
 ## Choosing the right profile
 
@@ -84,4 +80,4 @@ If you are losing FPS or frame-time consistency:
 
 When comparing profiles, keep the world, position, camera direction, weather, time, render distance, resolution, and FPS/VSync settings fixed. Wait for shader compilation and chunk loading to settle before recording results. Repeat each run and note both average FPS and frame-time spikes.
 
-Zepholume does not publish profile-specific FPS percentages without controlled runtime measurements. V1.0.8 has not completed a controlled real-loader A/B benchmark pass, so no profile performance delta should be invented from static source metrics or mathematical regression tests.
+Zepholume does not publish profile-specific FPS percentages without controlled runtime measurements. V1.0.8 has not completed a controlled real-loader A/B benchmark pass, so static source metrics and maths tests cannot establish a gameplay performance gain.
