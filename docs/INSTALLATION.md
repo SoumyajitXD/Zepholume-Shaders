@@ -35,17 +35,19 @@ V1.0.8 has standalone Iris patcher evidence, but no exact-ZIP gameplay qualifica
 
 ## Install with Oculus (unqualified compatibility path)
 
-Create a Forge instance with compatible **Oculus**, **Embeddium** and dependencies, then copy the ZIP into its `shaderpacks` directory and select Zepholume. A staged 1.20.1 stack used Forge 47.4.22, Oculus 1.8.0, Embeddium 0.3.31 and Java 17, but V1.0.8 exercised the Oculus 1.8.0 standalone patcher, but **has not completed Oculus gameplay qualification**.
+Create a Forge instance with compatible **Oculus**, **Embeddium** and dependencies, then copy the ZIP into its `shaderpacks` directory and select Zepholume. A staged 1.20.1 stack used Forge 47.4.22, Oculus 1.8.0, Embeddium 0.3.31 and Java 17. V1.0.8 was checked with the Oculus 1.8.0 standalone patcher, but **has not completed Oculus gameplay qualification**.
 
 Experimental modern Oculus ports have additional limitations. OptiFine is not supported or tested.
 
 ## Find the shaderpacks directory
 
-The typical Windows directory is:
+The default Minecraft game directory varies by OS. On Windows, use:
 
 ```text
 %APPDATA%\.minecraft\shaderpacks
 ```
+
+On Linux, the default is `~/.minecraft/shaderpacks`; on macOS, it is `~/Library/Application Support/minecraft/shaderpacks`.
 
 Third-party launchers and per-instance profiles can use a different game folder. Use the one belonging to **the actual instance you launch**. Create its `shaderpacks` directory if needed. The ZIP must have `shaders/` directly at its root; do not nest an extracted folder inside another folder.
 
