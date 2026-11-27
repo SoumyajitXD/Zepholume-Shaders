@@ -1,6 +1,6 @@
 # Zepholume Shaders
 
-Zepholume Shaders is a performance-conscious shader pack for **Minecraft Java Edition**, focused on atmospheric lighting, fog, clouds and water. It uses a direct rendering path without shadow maps or expensive post-processing pipelines.
+Zepholume is a lightweight shader pack for **Minecraft Java Edition** that focuses on lighting, fog, clouds and water. It uses a direct rendering path without shadow maps or expensive post-processing pipelines.
 
 ![Archived vanilla vs Zepholume comparison](Screenshots/01-vanilla-vs-zepholume.png)
 
@@ -24,14 +24,13 @@ The V1.0.8 source was finalized for local export on November 25, 2026. It is ava
 
 V1.0.8 has offline GLSL, standalone loader-patcher and packaging evidence, not Minecraft gameplay or visual qualification. Four Iris/Oculus patcher lanes were exercised. Synthetic GPU timings are not gameplay FPS measurements. See [compatibility](docs/COMPATIBILITY.md) and [CI status](docs/CI_AND_RELEASE_QUALIFICATION.md).
 
-## What Zepholume focuses on
+## Features
 
 - Atmospheric sky, lighting, fog, clouds and weather
 - Controlled exposure, contrast, colour temperature and material response
 - Restrained water shading and optional low-amplitude waves
 - Five compile-time quality tiers
 - Maintainable shared GLSL 330-compatible source
-- Portability as an engineering goal, not a blanket GPU guarantee
 
 The renderer intentionally avoids shadow maps, SSR, SSAO, bloom pipelines, temporal history/TAA, volumetric pipelines, ray tracing, compute shaders and additional full-resolution colour passes.
 
@@ -89,7 +88,7 @@ Zepholume-Shaders/
 
 ## Reporting a bug
 
-Provide the Zepholume version and ZIP SHA-256, Minecraft and loader versions, profile, GPU/driver, Java, rendering mods, reproduction steps and sanitized `latest.log`. Supply matched images for visual issues when possible. Use [GitHub Issues](https://github.com/SoumyajitXD/Zepholume-Shaders/issues).
+Include the shader version, Minecraft and loader versions, profile, GPU/driver, Java, rendering mods, reproduction steps and a sanitized `logs/latest.log`. For visual bugs, add a screenshot and describe what looks wrong. Include the ZIP SHA-256 if available; save the log before restarting Minecraft. Use [GitHub Issues](https://github.com/SoumyajitXD/Zepholume-Shaders/issues).
 
 ## License
 
