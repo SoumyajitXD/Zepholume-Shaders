@@ -7,7 +7,7 @@
 Check that:
 
 - a valid Zepholume shaderpack ZIP from a published file or a source build is inside the correct instance's `shaderpacks` folder
-- the release archive has not been placed inside another ZIP
+- `shaders/` is at the root of the ZIP, not inside an extra wrapper folder
 - you are launching the same Minecraft instance whose folder you edited
 - the intended shader loader is actually installed and loading
 
@@ -21,7 +21,7 @@ Check that:
 6. Read the complete `latest.log` and search for shader compilation/preprocessor errors.
 7. If the loader exposes patched shader output, preserve it for diagnosis.
 
-Copy `logs/latest.log` from the affected instance before relaunching: the next launch can replace it. Include the first shader error and its surrounding lines.
+Copy `logs/latest.log` from the affected instance before relaunching: the next launch can replace it. Include the first shader error and its surrounding lines. Before attaching the log, redact account tokens, server addresses and other private information.
 
 ## Minecraft 26.2-specific problems
 
@@ -49,7 +49,7 @@ Record:
 - screenshot or short video of the problem
 - complete `latest.log`
 
-Then reproduce in a minimal instance. If the problem disappears there, reintroduce rendering/resource-pack mods in small groups until the conflict returns.
+Turn shaders off and back on once to see whether the problem survives a reload. Then reproduce in a minimal instance. If the problem disappears there, reintroduce rendering/resource-pack mods in small groups until the conflict returns.
 
 ## Cave/interior lighting looks wrong
 
